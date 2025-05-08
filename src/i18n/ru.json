@@ -1,0 +1,101 @@
+{
+  "error": "Ошибка",
+  "success": "Успешно",
+  "common": {
+    "ok": "OK",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "loading": "Загрузка...",
+    "retry": "Повторить",
+    "error": "Ошибка",
+    "success": "Успешно"
+  },
+  "auth": {
+    "welcome": "Добро пожаловать",
+    "loginPrompt": "Войдите в свой аккаунт",
+    "createAccount": "Создать аккаунт",
+    "registerPrompt": "Заполните форму для регистрации",
+    "email": "Email",
+    "emailPlaceholder": "Введите ваш email",
+    "password": "Пароль",
+    "passwordPlaceholder": "Введите ваш пароль",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "phone": "Телефон",
+    "login": "Войти",
+    "register": "Зарегистрироваться",
+    "noAccount": "Нет аккаунта? Зарегистрируйтесь",
+    "haveAccount": "Уже есть аккаунт? Войдите",
+    "fillAllFields": "Пожалуйста, заполните все поля",
+    "fillRequiredFields": "Пожалуйста, заполните обязательные поля",
+    "invalidCredentials": "Неверный email или пароль",
+    "registrationFailed": "Ошибка при регистрации",
+    "invalidEmail": "Неверный формат email",
+    "passwordTooShort": "Пароль должен содержать минимум 6 символов",
+    "passwordsDoNotMatch": "Пароли не совпадают"
+  },
+  "profile": {
+    "title": "Профиль",
+    "editProfile": "Редактировать профиль",
+    "changePassword": "Изменить пароль",
+    "logout": "Выйти",
+    "settings": "Настройки",
+    "notifications": "Уведомления",
+    "language": "Язык",
+    "theme": "Тема",
+    "about": "О приложении",
+    "help": "Помощь",
+    "privacy": "Конфиденциальность",
+    "terms": "Условия использования"
+  },
+  "clinic": {
+    "details": {
+      "address": "Адрес",
+      "call": "Позвонить",
+      "workingHours": "Часы работы",
+      "services": "Услуги",
+      "description": "Описание",
+      "navigate": "Проложить маршрут",
+      "website": "Веб-сайт",
+      "reviews": "Отзывы"
+    },
+    "search": {
+      "placeholder": "Поиск клиник...",
+      "filters": "Фильтры",
+      "sort": "Сортировка",
+      "rating": "По рейтингу",
+      "distance": "По расстоянию",
+      "price": "По цене"
+    }
+  },
+  "article": {
+    "readMore": "Читать далее",
+    "share": "Поделиться",
+    "bookmark": "Закладка",
+    "author": "Автор",
+    "date": "Дата",
+    "category": "Категория",
+    "tags": "Теги",
+    "related": "Похожие статьи"
+  },
+  "map": {
+    "myLocation": "Мое местоположение",
+    "searchNearby": "Поиск поблизости",
+    "directions": "Маршрут",
+    "distance": "Расстояние",
+    "duration": "Время в пути"
+  },
+  "settings": {
+    "title": "Настройки",
+    "notifications": "Уведомления",
+    "language": "Язык",
+    "theme": "Тема",
+    "about": "О приложении",
+    "help": "Помощь",
+    "privacy": "Конфиденциальность",
+    "terms": "Условия использования",
+    "logout": "Выйти"
+  }
+} 

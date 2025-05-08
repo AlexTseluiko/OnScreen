@@ -1,16 +1,26 @@
 {
   "expo": {
-    "name": "OnScreen",
-    "slug": "OnScreen",
+    "name": "medical-map-app",
+    "slug": "medical-map-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "server": {
+      "url": "http://192.168.0.234:8081"
+    },
+    "packagerOpts": {
+      "sourceExts": ["js", "jsx", "ts", "tsx", "json"],
+      "port": 8081,
+      "assetExts": ["ttf", "png", "jpg"]
     },
     "ios": {
       "supportsTablet": true

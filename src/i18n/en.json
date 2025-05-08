@@ -1,0 +1,101 @@
+{
+  "error": "Error",
+  "success": "Success",
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "loginPrompt": "Sign in to your account",
+    "createAccount": "Create Account",
+    "registerPrompt": "Fill in the form to register",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "noAccount": "Don't have an account? Sign Up",
+    "haveAccount": "Already have an account? Sign In",
+    "fillAllFields": "Please fill in all fields",
+    "fillRequiredFields": "Please fill in required fields",
+    "invalidCredentials": "Invalid email or password",
+    "registrationFailed": "Registration failed",
+    "invalidEmail": "Invalid email format",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordsDoNotMatch": "Passwords do not match"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "logout": "Logout",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "about": "About",
+    "help": "Help",
+    "privacy": "Privacy",
+    "terms": "Terms of Use"
+  },
+  "clinic": {
+    "details": {
+      "address": "Address",
+      "call": "Call",
+      "workingHours": "Working Hours",
+      "services": "Services",
+      "description": "Description",
+      "navigate": "Get Directions",
+      "website": "Website",
+      "reviews": "Reviews"
+    },
+    "search": {
+      "placeholder": "Search clinics...",
+      "filters": "Filters",
+      "sort": "Sort",
+      "rating": "By Rating",
+      "distance": "By Distance",
+      "price": "By Price"
+    }
+  },
+  "article": {
+    "readMore": "Read More",
+    "share": "Share",
+    "bookmark": "Bookmark",
+    "author": "Author",
+    "date": "Date",
+    "category": "Category",
+    "tags": "Tags",
+    "related": "Related Articles"
+  },
+  "map": {
+    "myLocation": "My Location",
+    "searchNearby": "Search Nearby",
+    "directions": "Directions",
+    "distance": "Distance",
+    "duration": "Duration"
+  },
+  "settings": {
+    "title": "Settings",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "about": "About",
+    "help": "Help",
+    "privacy": "Privacy",
+    "terms": "Terms of Use",
+    "logout": "Logout"
+  }
+} 

@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        style-src 'self' 'unsafe-inline' https://www.gstatic.com https://translate.googleapis.com;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://translate.googleapis.com;
+        img-src 'self' data: https:;
+        font-src 'self' data:;
+        connect-src 'self' ws: wss: http://*:* https://*:*;
+    ">
+    <title>OnScreen - Админ-панель</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-link.active {
+            background: #3498db;
+            color: white;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stat-card i {
+            font-size: 2rem;
+            color: #3498db;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #e3f2fd;
+        }
+        .review-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .review-item .rating {
+            color: #f1c40f;
+        }
+        .clinic-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .clinic-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="sidebar">
+        <h3 class="mb-4">OnScreen</h3>
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#dashboard" data-section="dashboard">
+                <i class="bi bi-speedometer2 me-2"></i>Панель управления
+            </a>
+            <a class="nav-link" href="#users" data-section="users">
+                <i class="bi bi-people me-2"></i>Пользователи
+            </a>
+            <a class="nav-link" href="#clinics" data-section="clinics">
+                <i class="bi bi-building me-2"></i>Клиники
+            </a>
+            <a class="nav-link" href="#reviews" data-section="reviews">
+                <i class="bi bi-star me-2"></i>Отзывы
+            </a>
+            <a class="nav-link" href="#notifications" data-section="notifications">
+                <i class="bi bi-bell me-2"></i>Уведомления
+            </a>
+            <a class="nav-link" href="#feedback" data-section="feedback">
+                <i class="bi bi-chat-dots me-2"></i>Обратная связь
+            </a>
+            <a class="nav-link" href="#articles" data-section="articles">
+                <i class="bi bi-newspaper me-2"></i>Статьи
+            </a>
+            <a class="nav-link" href="#doctor-requests" data-section="doctor-requests">
+                <i class="bi bi-person-badge me-2"></i>Запросы врачей
+            </a>
+            <a class="nav-link" href="#settings" data-section="settings">
+                <i class="bi bi-gear me-2"></i>Настройки
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <!-- Панель управления -->
+        <div id="dashboard" class="section">
+            <h2 class="mb-4">Панель управления</h2>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="bi bi-building"></i>
+                        <h3 id="totalClinics">0</h3>
+                        <p>Всего клиник</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="bi bi-star"></i>
+                        <h3 id="totalReviews">0</h3>
+                        <p>Всего отзывов</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="bi bi-people"></i>
+                        <h3 id="totalUsers">0</h3>
+                        <p>Пользователей</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="bi bi-bell"></i>
+                        <h3 id="totalNotifications">0</h3>
+                        <p>Уведомлений</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Пользователи -->
+        <div id="users" class="section d-none">
+            <h2 class="mb-4">Управление пользователями</h2>
+            <div class="table-container">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select id="userRoleFilter" class="form-select" onchange="loadUsers()">
+                                <option value="">Все роли</option>
+                                <option value="patient">Пациенты</option>
+                                <option value="doctor">Врачи</option>
+                                <option value="admin">Администраторы</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" id="userSearchInput" class="form-control" placeholder="Поиск по имени или email..." onkeyup="loadUsers()">
+                        </div>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Дата регистрации</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <!-- Пользователи будут добавлены динамически -->
+                    </tbody>
+                </table>
+                <!-- Добавляем блок пагинации -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span id="usersTotal">0</span> пользователей
+                    </div>
+                    <div id="usersPagination" class="d-flex align-items-center">
+                        <!-- Пагинация будет добавлена динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Клиники -->
+        <div id="clinics" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Клиники</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClinicModal">
+                    <i class="bi bi-plus"></i> Добавить клинику
+                </button>
+            </div>
+            <div class="row" id="clinicsList">
+                <!-- Клиники будут добавлены динамически -->
+            </div>
+        </div>
+
+        <!-- Отзывы -->
+        <div id="reviews" class="section d-none">
+            <h2 class="mb-4">Отзывы</h2>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Клиника</th>
+                            <th>Пользователь</th>
+                            <th>Оценка</th>
+                            <th>Текст</th>
+                            <th>Дата</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewsList">
+                        <!-- Отзывы будут добавлены динамически -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Уведомления -->
+        <div id="notifications" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Уведомления</h2>
+                <button class="btn btn-primary" onclick="sendBroadcastNotification()">
+                    <i class="bi bi-broadcast"></i> Отправить всем
+                </button>
+            </div>
+            <div class="table-container">
+                <div id="notificationsList">
+                    <!-- Уведомления будут добавлены динамически -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Обратная связь -->
+        <div id="feedback" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Обратная связь</h2>
+                <div>
+                    <select class="form-select me-2 d-inline-block" style="width: auto;" id="feedbackTypeFilter">
+                        <option value="all">Все типы</option>
+                        <option value="suggestion">Предложения</option>
+                        <option value="bug">Ошибки</option>
+                        <option value="other">Другое</option>
+                    </select>
+                    <button class="btn btn-outline-primary" onclick="loadFeedback()">
+                        <i class="bi bi-arrow-clockwise"></i> Обновить
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Текст</th>
+                            <th>Email</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feedbackList">
+                        <!-- Обратная связь будет добавлена динамически -->
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span id="feedbackTotal">0</span> отзывов
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="changeFeedbackPage(-1)">Назад</button>
+                        <button class="btn btn-outline-primary" disabled id="currentPage">1</button>
+                        <button class="btn btn-outline-primary" onclick="changeFeedbackPage(1)">Вперед</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статьи -->
+        <div id="articles" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Статьи</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addArticleModal">
+                    <i class="bi bi-plus"></i> Создать статью
+                </button>
+            </div>
+            <div class="table-container">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select id="articleCategoryFilter" class="form-select" onchange="loadArticles()">
+                                <option value="">Все категории</option>
+                                <option value="Общее">Общее</option>
+                                <option value="Новости">Новости</option>
+                                <option value="Советы">Советы</option>
+                                <option value="Исследования">Исследования</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="articlePublishedFilter" class="form-select" onchange="loadArticles()">
+                                <option value="">Все статьи</option>
+                                <option value="true">Опубликованные</option>
+                                <option value="false">Черновики</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" id="articleSearchInput" class="form-control" placeholder="Поиск..." onkeyup="loadArticles()">
+                        </div>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Заголовок</th>
+                            <th>Категория</th>
+                            <th>Автор</th>
+                            <th>Статус</th>
+                            <th>Дата создания</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="articlesList">
+                        <!-- Статьи будут добавлены динамически -->
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span id="articlesCount">0</span> статей
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="changeArticlesPage(-1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" disabled>
+                            <span id="articlesCurrentPage">1</span>
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="changeArticlesPage(1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Запросы врачей -->
+        <div id="doctor-requests" class="section d-none">
+            <h2 class="mb-4">Запросы на роль врача</h2>
+            <div class="table-container">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select id="requestStatusFilter" class="form-select" onchange="loadDoctorRequests()">
+                                <option value="">Все статусы</option>
+                                <option value="pending">Ожидающие</option>
+                                <option value="approved">Одобренные</option>
+                                <option value="rejected">Отклоненные</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" id="requestSearchInput" class="form-control" placeholder="Поиск по имени или email..." onkeyup="loadDoctorRequests()">
+                        </div>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Врач</th>
+                            <th>Специализация</th>
+                            <th>Дата запроса</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctorRequestsList">
+                        <!-- Запросы докторов будут добавлены динамически -->
+                    </tbody>
+                </table>
+                <div id="doctorRequestsPagination" class="d-flex justify-content-center mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Настройки -->
+        <div id="settings" class="section d-none">
+            <h2 class="mb-4">Настройки</h2>
+            <div class="table-container">
+                <form id="settingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">Название системы</label>
+                        <input type="text" class="form-control" id="systemName" value="OnScreen">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email для уведомлений</label>
+                        <input type="email" class="form-control" id="notificationEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Время работы</label>
+                        <input type="text" class="form-control" id="workingHours" value="9:00 - 18:00">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления клиники -->
+    <div class="modal fade" id="addClinicModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить клинику</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClinicForm">
+                        <div class="mb-3">
+                            <label class="form-label">Название</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <textarea class="form-control" name="description" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Адрес</label>
+                            <input type="text" class="form-control" name="address.street" placeholder="Улица" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" name="address.city" placeholder="Город" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" name="address.state" placeholder="Область/регион" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="address.zipCode" placeholder="Почтовый индекс" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Широта</label>
+                                    <input type="number" step="0.000001" class="form-control" name="address.coordinates.latitude" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Долгота</label>
+                                    <input type="number" step="0.000001" class="form-control" name="address.coordinates.longitude" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Фотографии</label>
+                            <input type="file" class="form-control" name="photos" multiple accept="image/*">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="addClinic()">Добавить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно авторизации -->
+    <div class="modal fade" id="loginModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Вход в панель администратора</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <div id="loginError" class="alert alert-danger d-none"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="login()">Войти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Добавляем модальное окно редактирования клиники -->
+    <div class="modal fade" id="editClinicModal" tabindex="-1" aria-labelledby="editClinicModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editClinicModalLabel">Редактирование клиники</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editClinicForm">
+                        <input type="hidden" name="clinicId" id="editClinicId">
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">Название клиники</label>
+                            <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">Описание</label>
+                            <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Адрес</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control mb-2" id="editAddressStreet" name="address.street" placeholder="Улица" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control mb-2" id="editAddressCity" name="address.city" placeholder="Город" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control mb-2" id="editAddressState" name="address.state" placeholder="Область/Регион" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control mb-2" id="editAddressZipCode" name="address.zipCode" placeholder="Почтовый индекс" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Координаты</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="number" step="any" class="form-control" id="editAddressLat" name="address.coordinates.latitude" placeholder="Широта" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="number" step="any" class="form-control" id="editAddressLng" name="address.coordinates.longitude" placeholder="Долгота" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPhone" class="form-label">Телефон</label>
+                            <input type="tel" class="form-control" id="editPhone" name="phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editWebsite" class="form-label">Вебсайт</label>
+                            <input type="url" class="form-control" id="editWebsite" name="website">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Текущие фотографии</label>
+                            <div id="currentPhotos" class="d-flex flex-wrap gap-2 mb-2"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPhotos" class="form-label">Добавить фотографии</label>
+                            <input type="file" class="form-control" id="editPhotos" name="photos" multiple accept="image/*">
+                            <small class="text-muted">Вы можете выбрать несколько файлов.</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger me-auto" onclick="deleteClinic()">Удалить клинику</button>
+                    <button type="button" class="btn btn-primary" onclick="updateClinic()">Сохранить изменения</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статья редактора -->
+    <div class="modal fade" id="addArticleModal" tabindex="-1" aria-labelledby="addArticleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addArticleModalLabel">Создание статьи</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="articleForm">
+                        <input type="hidden" id="articleId">
+                        <div class="mb-3">
+                            <label for="articleTitle" class="form-label">Заголовок</label>
+                            <input type="text" class="form-control" id="articleTitle" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="articleCategory" class="form-label">Категория</label>
+                                <select class="form-select" id="articleCategory" required>
+                                    <option value="">Выберите категорию</option>
+                                    <option value="Общее">Общее</option>
+                                    <option value="Новости">Новости</option>
+                                    <option value="Советы">Советы</option>
+                                    <option value="Исследования">Исследования</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="articleTags" class="form-label">Теги (через запятую)</label>
+                                <input type="text" class="form-control" id="articleTags" placeholder="здоровье, профилактика, диагностика">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleContent" class="form-label">Содержание</label>
+                            <textarea class="form-control" id="articleContent" rows="10" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleImageUrl" class="form-label">URL изображения</label>
+                            <input type="url" class="form-control" id="articleImageUrl" placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="articlePublished">
+                            <label class="form-check-label" for="articlePublished">
+                                Опубликовать сразу
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveArticle()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно изменения роли пользователя -->
+    <div class="modal fade" id="changeRoleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Изменение роли пользователя</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changeRoleForm">
+                        <input type="hidden" id="changeRoleUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Текущая роль</label>
+                            <input type="text" class="form-control" id="currentRole" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Новая роль</label>
+                            <select class="form-select" id="newRole" required>
+                                <option value="">Выберите роль</option>
+                                <option value="patient">Пациент</option>
+                                <option value="doctor">Врач</option>
+                                <option value="admin">Администратор</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="changeUserRole()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Добавляем модальное окно для отображения деталей запроса врача -->
+    <div class="modal fade" id="doctorRequestModal" tabindex="-1" aria-labelledby="doctorRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="doctorRequestModalLabel">Детали запроса врача</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <span id="requestStatus" class="badge bg-warning mb-2">Ожидает</span>
+                        <h6>Информация о враче</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Имя:</strong> <span id="requestUserName"></span></p>
+                                <p class="mb-1"><strong>Email:</strong> <span id="requestUserEmail"></span></p>
+                            </div>
+                        </div>
+                        <h6>Профессиональная информация</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Специализация:</strong> <span id="requestSpecialization"></span></p>
+                                <p class="mb-1"><strong>Опыт работы:</strong> <span id="requestExperience"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Образование:</strong> <span id="requestEducation"></span></p>
+                                <p class="mb-1"><strong>Номер лицензии:</strong> <span id="requestLicenseNumber"></span></p>
+                            </div>
+                        </div>
+                        <h6>О себе</h6>
+                        <p id="requestAbout" class="mb-3"></p>
+                        <h6>Даты</h6>
+                        <p class="mb-1"><strong>Дата создания:</strong> <span id="requestCreatedAt"></span></p>
+                        <p class="mb-1"><strong>Дата обработки:</strong> <span id="requestProcessedAt"></span></p>
+                    </div>
+                </div>
+                <div class="modal-footer" id="requestActions">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <div id="pendingActions" class="d-none">
+                        <button type="button" class="btn btn-danger me-2" onclick="rejectRequestModal()">Отклонить</button>
+                        <button type="button" class="btn btn-success" onclick="approveRequestModal()">Одобрить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/socket.io.min.js"></script>
+    <script>
+        // Получаем текущий хост из window.location
+        const currentHost = window.location.hostname;
+        const port = '5000'; // Фиксированный порт
+        
+        // Проверяем авторизацию при загрузке страницы
+        window.addEventListener('DOMContentLoaded', checkAuth);
+        
+        // Функция для проверки авторизации
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                showLoginModal();
+                return;
+            }
+            
+            try {
+                // Проверяем токен через API
+                const response = await fetch(`${getApiBaseUrl()}/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    // Если токен недействителен, показываем форму логина
+                    localStorage.removeItem('token');
+                    showLoginModal();
+                    return;
+                }
+                
+                // Если всё хорошо, инициализируем приложение
+                initializeApp();
+            } catch (error) {
+                console.error('Ошибка при проверке авторизации:', error);
+                showLoginModal();
+            }
+        }
+        
+        // Показываем модальное окно входа
+        function showLoginModal() {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }
+        
+        // Функция для авторизации
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+            
+            errorElement.classList.add('d-none');
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    errorElement.textContent = data.message || 'Ошибка авторизации';
+                    errorElement.classList.remove('d-none');
+                    return;
+                }
+                
+                // Сохраняем токен в localStorage
+                localStorage.setItem('token', data.token);
+                
+                // Закрываем модальное окно
+                bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                
+                // Инициализируем приложение
+                initializeApp();
+            } catch (error) {
+                console.error('Ошибка авторизации:', error);
+                errorElement.textContent = 'Произошла ошибка при авторизации';
+                errorElement.classList.remove('d-none');
+            }
+        }
+        
+        // Инициализация приложения
+        let socket = null;
+        let currentClinicId = null;
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Инициализируем приложение после авторизации
+        function initializeApp() {
+            // Навигация между разделами
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.getAttribute('data-section');
+                    
+                    // Скрываем все разделы
+                    document.querySelectorAll('.section').forEach(el => el.classList.add('d-none'));
+                    
+                    // Показываем выбранный раздел
+                    document.getElementById(section).classList.remove('d-none');
+                    
+                    // Обновляем активный класс у ссылок
+                    navLinks.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Загружаем данные для выбранного раздела
+                    if (section === 'dashboard') {
+                        loadDashboardData();
+                    } else if (section === 'clinics') {
+                        loadClinics();
+                    } else if (section === 'reviews') {
+                        loadReviews();
+                    } else if (section === 'notifications') {
+                        loadNotifications();
+                    } else if (section === 'feedback') {
+                        loadFeedback();
+                    } else if (section === 'articles') {
+                        loadArticles();
+                    } else if (section === 'users') {
+                        loadUsers();
+                    } else if (section === 'doctor-requests') {
+                        loadDoctorRequests();
+                    }
+                });
+            });
+            
+            // Загружаем данные для дашборда при запуске
+            loadDashboardData();
+            
+            // Инициализируем веб-сокет для уведомлений в реальном времени
+            initializeWebSocket();
+        }
+
+        // Получение базового URL API
+        function getApiBaseUrl() {
+            return `http://${currentHost}:${port}/api`;
+        }
+
+        // Инициализация WebSocket
+        function initializeWebSocket() {
+            const token = localStorage.getItem('token');
+            socket = io(`http://${currentHost}:${port}`, {
+                auth: {
+                    token: token
+                },
+                transports: ['polling'] // Используем long-polling вместо WebSocket
+            });
+            
+            socket.on('connect', () => {
+                console.log('WebSocket подключен');
+            });
+            
+            socket.on('connect_error', (error) => {
+                console.error('Ошибка подключения WebSocket:', error);
+            });
+            
+            socket.on('notification', (notification) => {
+                // Обновляем счетчик уведомлений и данные при получении нового уведомления
+                loadNotifications();
+                loadDashboardData();
+            });
+
+            // Добавляем обработку события новой обратной связи
+            socket.on('newFeedback', (feedback) => {
+                console.log('Получена новая обратная связь:', feedback);
+                if (document.getElementById('feedback').classList.contains('d-none') === false) {
+                    // Если мы находимся в разделе обратной связи, обновляем данные
+                    loadFeedback();
+                }
+                // Обновляем счетчики на дашборде
+                loadDashboardData();
+            });
+        }
+
+        // Загрузка данных
+        async function loadDashboardData() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/admin/test-stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await response.json();
+                
+                document.getElementById('totalClinics').textContent = data.totalClinics;
+                document.getElementById('totalReviews').textContent = data.totalReviews;
+                document.getElementById('totalUsers').textContent = data.totalUsers;
+                document.getElementById('totalNotifications').textContent = data.totalNotifications;
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Загрузка клиник
+        async function loadClinics() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/clinics`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'X-Is-Admin': 'true' // Добавляем заголовок для идентификации запроса от админки
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка загрузки клиник: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Данные клиник получены:', data);
+                
+                // Обрабатываем данные независимо от формата (массив или объект с полем clinics)
+                const clinics = Array.isArray(data) ? data : (data.clinics || []);
+                
+                if (clinics.length === 0) {
+                    document.getElementById('clinicsList').innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                Клиники не найдены. Добавьте первую клинику, нажав кнопку "Добавить клинику" выше.
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const clinicsList = document.getElementById('clinicsList');
+                clinicsList.innerHTML = clinics.map(clinic => `
+                    <div class="col-md-4 mb-4">
+                        <div class="clinic-card">
+                            <img src="${clinic.photos?.length ? '/uploads/' + clinic.photos[0] : '/images/placeholder.html'}" alt="${clinic.name}" onerror="this.src='/images/placeholder.html'">
+                            <h4 class="mt-3">${clinic.name}</h4>
+                            <p>${clinic.description ? (clinic.description.length > 100 ? clinic.description.substring(0, 100) + '...' : clinic.description) : 'Нет описания'}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="rating">
+                                    ${'★'.repeat(Math.round(clinic.rating || 0))}${'☆'.repeat(5-Math.round(clinic.rating || 0))}
+                                </span>
+                                <button class="btn btn-sm btn-primary" onclick="editClinic('${clinic._id}')">
+                                    Редактировать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Ошибка при загрузке клиник:', error);
+                document.getElementById('clinicsList').innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            Ошибка при загрузке клиник: ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Загрузка отзывов
+        async function loadReviews() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/admin/reviews`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await response.json();
+                const reviews = Array.isArray(data) ? data : [];
+                
+                const reviewsList = document.getElementById('reviewsList');
+                reviewsList.innerHTML = reviews.map(review => `
+                    <tr>
+                        <td>${review.clinic?.name || 'Нет данных'}</td>
+                        <td>${review.user?.name || 'Нет данных'}</td>
+                        <td>${'★'.repeat(review.rating || 0)}${'☆'.repeat(5-(review.rating || 0))}</td>
+                        <td>${review.text || ''}</td>
+                        <td>${new Date(review.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteReview('${review._id}')">
+                                Удалить
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            }
+        }
+
+        // Загрузка уведомлений
+        async function loadNotifications() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/admin/notifications`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await response.json();
+                const notifications = Array.isArray(data) ? data : [];
+                
+                const notificationsList = document.getElementById('notificationsList');
+                notificationsList.innerHTML = notifications.map(notification => `
+                    <div class="notification-item ${notification.isRead ? '' : 'unread'}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>${notification.title || 'Без заголовка'}</h5>
+                            <small>${new Date(notification.createdAt).toLocaleDateString()}</small>
+                        </div>
+                        <p>${notification.message || ''}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">${notification.type || 'Уведомление'}</span>
+                            <button class="btn btn-sm btn-primary" onclick="markNotificationAsRead('${notification._id}')">
+                                Отметить как прочитанное
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Добавление клиники
+        async function addClinic() {
+            const form = document.getElementById('addClinicForm');
+            
+            // Создаем объект FormData
+            const formData = new FormData();
+            
+            // Создаем объект данных для отправки
+            const clinicData = {
+                name: form.querySelector('[name="name"]').value,
+                description: form.querySelector('[name="description"]').value,
+                address: {
+                    street: form.querySelector('[name="address.street"]').value,
+                    city: form.querySelector('[name="address.city"]').value,
+                    state: form.querySelector('[name="address.state"]').value,
+                    zipCode: form.querySelector('[name="address.zipCode"]').value,
+                    coordinates: {
+                        latitude: parseFloat(form.querySelector('[name="address.coordinates.latitude"]').value),
+                        longitude: parseFloat(form.querySelector('[name="address.coordinates.longitude"]').value)
+                    }
+                },
+                phone: form.querySelector('[name="phone"]').value,
+                email: form.querySelector('[name="email"]').value
+            };
+            
+            // Добавляем веб-сайт, если он указан
+            const websiteInput = form.querySelector('[name="website"]');
+            if (websiteInput && websiteInput.value.trim()) {
+                clinicData.website = websiteInput.value.trim();
+            }
+            
+            console.log('Подготовленные данные клиники:', clinicData);
+            
+            // Добавляем JSON данные в FormData
+            formData.append('clinicData', JSON.stringify(clinicData));
+            
+            // Добавляем фотографии, если они есть
+            const photosInput = form.querySelector('[name="photos"]');
+            if (photosInput && photosInput.files.length > 0) {
+                console.log('Добавляем фотографии:', photosInput.files.length);
+                Array.from(photosInput.files).forEach(file => {
+                    formData.append('photos', file);
+                });
+            }
+            
+            try {
+                console.log('Отправляем данные на сервер...');
+                
+                // Отправка данных на сервер
+                const response = await fetch(`${getApiBaseUrl()}/clinics`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('addClinicModal')).hide();
+                    alert('Клиника успешно добавлена!');
+                    loadClinics();
+                } else {
+                    console.error('Ошибка при добавлении клиники:', responseData);
+                    alert(`Ошибка при добавлении клиники: ${responseData.error || 'Неизвестная ошибка'}`);
+                }
+            } catch (error) {
+                console.error('Error adding clinic:', error);
+                alert('Ошибка при добавлении клиники');
+            }
+        }
+
+        // Отправка уведомления всем пользователям
+        async function sendBroadcastNotification() {
+            const title = prompt('Введите заголовок уведомления:');
+            const message = prompt('Введите текст уведомления:');
+            
+            if (title && message) {
+                try {
+                    await fetch(`${getApiBaseUrl()}/admin/notifications/broadcast`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ title, message })
+                    });
+                    
+                    loadNotifications();
+                } catch (error) {
+                    console.error('Error sending broadcast notification:', error);
+                }
+            }
+        }
+
+        // Отметка уведомления как прочитанного
+        async function markNotificationAsRead(notificationId) {
+            try {
+                await fetch(`${getApiBaseUrl()}/admin/notifications/${notificationId}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Удаление отзыва
+        async function deleteReview(reviewId) {
+            if (confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+                try {
+                    await fetch(`${getApiBaseUrl()}/admin/reviews/${reviewId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    loadReviews();
+                } catch (error) {
+                    console.error('Error deleting review:', error);
+                }
+            }
+        }
+
+        // Функция загрузки данных клиники для редактирования
+        async function editClinic(clinicId) {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/clinics/${clinicId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'X-Is-Admin': 'true'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось получить данные клиники');
+                }
+                
+                const clinic = await response.json();
+                
+                // Заполняем форму данными клиники
+                document.getElementById('editClinicId').value = clinic._id;
+                document.getElementById('editName').value = clinic.name;
+                document.getElementById('editDescription').value = clinic.description;
+                document.getElementById('editAddressStreet').value = clinic.address.street;
+                document.getElementById('editAddressCity').value = clinic.address.city;
+                document.getElementById('editAddressState').value = clinic.address.state;
+                document.getElementById('editAddressZipCode').value = clinic.address.zipCode;
+                document.getElementById('editAddressLat').value = clinic.address.coordinates.latitude;
+                document.getElementById('editAddressLng').value = clinic.address.coordinates.longitude;
+                document.getElementById('editPhone').value = clinic.phone;
+                document.getElementById('editEmail').value = clinic.email;
+                document.getElementById('editWebsite').value = clinic.website || '';
+                
+                // Отображаем текущие фотографии
+                const photosContainer = document.getElementById('currentPhotos');
+                photosContainer.innerHTML = '';
+                
+                if (clinic.photos && clinic.photos.length > 0) {
+                    clinic.photos.forEach((photo, index) => {
+                        const photoDiv = document.createElement('div');
+                        photoDiv.className = 'position-relative';
+                        photoDiv.innerHTML = `
+                            <img src="/uploads/${photo}" alt="Фото ${index + 1}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" 
+                                    onclick="removePhoto('${clinic._id}', '${photo}')">✕</button>
+                        `;
+                        photosContainer.appendChild(photoDiv);
+                    });
+                } else {
+                    photosContainer.innerHTML = '<p>Нет фотографий</p>';
+                }
+                
+                // Открываем модальное окно
+                const editModal = new bootstrap.Modal(document.getElementById('editClinicModal'));
+                editModal.show();
+            } catch (error) {
+                console.error('Ошибка при загрузке данных клиники:', error);
+                alert('Не удалось загрузить данные клиники.');
+            }
+        }
+
+        // Функция обновления клиники
+        async function updateClinic() {
+            const form = document.getElementById('editClinicForm');
+            const clinicId = document.getElementById('editClinicId').value;
+            
+            // Создаем объект FormData
+            const formData = new FormData();
+            
+            // Создаем объект данных для отправки
+            const clinicData = {
+                name: form.querySelector('[name="name"]').value,
+                description: form.querySelector('[name="description"]').value,
+                address: {
+                    street: form.querySelector('[name="address.street"]').value,
+                    city: form.querySelector('[name="address.city"]').value,
+                    state: form.querySelector('[name="address.state"]').value,
+                    zipCode: form.querySelector('[name="address.zipCode"]').value,
+                    coordinates: {
+                        latitude: parseFloat(form.querySelector('[name="address.coordinates.latitude"]').value),
+                        longitude: parseFloat(form.querySelector('[name="address.coordinates.longitude"]').value)
+                    }
+                },
+                phone: form.querySelector('[name="phone"]').value,
+                email: form.querySelector('[name="email"]').value
+            };
+            
+            // Добавляем веб-сайт, если он указан
+            const websiteInput = form.querySelector('[name="website"]');
+            if (websiteInput && websiteInput.value.trim()) {
+                clinicData.website = websiteInput.value.trim();
+            }
+            
+            // Добавляем JSON данные в FormData
+            formData.append('clinicData', JSON.stringify(clinicData));
+            
+            // Добавляем фотографии, если они есть
+            const photosInput = form.querySelector('[name="photos"]');
+            if (photosInput && photosInput.files.length > 0) {
+                Array.from(photosInput.files).forEach(file => {
+                    formData.append('photos', file);
+                });
+            }
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/clinics/${clinicId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'X-Is-Admin': 'true'
+                    },
+                    body: formData
+                });
+                
+                const responseData = await response.json();
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('editClinicModal')).hide();
+                    alert('Клиника успешно обновлена!');
+                    loadClinics();
+                } else {
+                    console.error('Ошибка при обновлении клиники:', responseData);
+                    alert(`Ошибка при обновлении клиники: ${responseData.error || 'Неизвестная ошибка'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении клиники:', error);
+                alert('Ошибка при обновлении клиники');
+            }
+        }
+
+        // Функция удаления фотографии
+        async function removePhoto(clinicId, photoUrl) {
+            if (confirm('Вы уверены, что хотите удалить эту фотографию?')) {
+                try {
+                    const filename = photoUrl.split('/').pop();
+                    
+                    const response = await fetch(`${getApiBaseUrl()}/clinics/${clinicId}/photos/${filename}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'X-Is-Admin': 'true'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // Перезагружаем форму редактирования
+                        editClinic(clinicId);
+                    } else {
+                        alert('Не удалось удалить фотографию.');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при удалении фотографии:', error);
+                    alert('Ошибка при удалении фотографии');
+                }
+            }
+        }
+
+        // Функция удаления клиники
+        async function deleteClinic() {
+            const clinicId = document.getElementById('editClinicId').value;
+            
+            if (confirm('Вы уверены, что хотите удалить эту клинику? Это действие нельзя отменить.')) {
+                try {
+                    const response = await fetch(`${getApiBaseUrl()}/clinics/${clinicId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'X-Is-Admin': 'true'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        bootstrap.Modal.getInstance(document.getElementById('editClinicModal')).hide();
+                        alert('Клиника успешно удалена!');
+                        loadClinics();
+                    } else {
+                        const responseData = await response.json();
+                        console.error('Ошибка при удалении клиники:', responseData);
+                        alert(`Ошибка при удалении клиники: ${responseData.error || 'Неизвестная ошибка'}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при удалении клиники:', error);
+                    alert('Ошибка при удалении клиники');
+                }
+            }
+        }
+
+        // Загрузка обратной связи
+        async function loadFeedback() {
+            try {
+                // Получаем текущие параметры фильтрации и пагинации
+                const typeFilter = document.getElementById('feedbackTypeFilter').value;
+                const filter = typeFilter !== 'all' ? `&type=${typeFilter}` : '';
+                
+                // Формируем URL с параметрами
+                const url = `${getApiBaseUrl()}/feedback?page=${currentPage}&limit=10${filter}`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке обратной связи');
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем пагинацию
+                document.getElementById('feedbackTotal').textContent = data.totalCount || 0;
+                document.getElementById('currentPage').textContent = data.page || 1;
+                totalPages = data.totalPages || 1;
+                
+                // Обновляем кнопки пагинации
+                document.querySelector('button[onclick="changeFeedbackPage(-1)"]').disabled = data.page <= 1;
+                document.querySelector('button[onclick="changeFeedbackPage(1)"]').disabled = data.page >= data.totalPages;
+                
+                // Отображаем данные
+                const feedbackList = document.getElementById('feedbackList');
+                
+                if (!data.feedback || data.feedback.length === 0) {
+                    feedbackList.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">Нет данных обратной связи</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                feedbackList.innerHTML = data.feedback.map(item => {
+                    // Определяем класс и текст для статуса
+                    const statusClass = item.isRead ? 'bg-success' : 'bg-warning';
+                    const statusText = item.isRead ? 'Прочитано' : 'Новое';
+                    
+                    // Определяем иконку и текст для типа
+                    let typeIcon, typeText;
+                    switch(item.feedbackType) {
+                        case 'suggestion':
+                            typeIcon = 'bi-lightbulb';
+                            typeText = 'Предложение';
+                            break;
+                        case 'bug':
+                            typeIcon = 'bi-bug';
+                            typeText = 'Ошибка';
+                            break;
+                        default:
+                            typeIcon = 'bi-chat';
+                            typeText = 'Другое';
+                    }
+                    
+                    // Форматируем дату
+                    const date = new Date(item.date).toLocaleString();
+                    
+                    // Обрезаем текст отзыва, если он слишком длинный
+                    const shortText = item.feedbackText.length > 100 
+                        ? item.feedbackText.substring(0, 97) + '...' 
+                        : item.feedbackText;
+                    
+                    return `
+                        <tr data-id="${item._id}">
+                            <td>
+                                <i class="bi ${typeIcon}"></i> ${typeText}
+                            </td>
+                            <td>
+                                <a href="#" onclick="showFeedbackDetails('${item._id}')">
+                                    ${shortText}
+                                </a>
+                            </td>
+                            <td>${item.email || '-'}</td>
+                            <td>${date}</td>
+                            <td><span class="badge ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <div class="btn-group">
+                                    ${item.isRead ? '' : `
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="markFeedbackAsRead('${item._id}')">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    `}
+                                    <button class="btn btn-sm btn-outline-secondary" 
+                                        onclick="addFeedbackNote('${item._id}')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке обратной связи:', error);
+                document.getElementById('feedbackList').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">
+                            Ошибка загрузки данных: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Изменение страницы для фидбэка
+        function changeFeedbackPage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadFeedback();
+            }
+        }
+
+        // Показать детали фидбэка
+        function showFeedbackDetails(id) {
+            // TODO: Реализовать модальное окно с деталями обратной связи
+            alert('Функционал просмотра деталей в разработке. ID: ' + id);
+        }
+
+        // Отметить фидбэк как прочитанный
+        async function markFeedbackAsRead(id) {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/feedback/${id}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    loadFeedback();
+                } else {
+                    throw new Error('Не удалось отметить как прочитанное');
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении статуса:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Добавить заметку к фидбэку
+        async function addFeedbackNote(id) {
+            const note = prompt('Введите заметку администратора:');
+            if (note === null) return; // Пользователь нажал "Отмена"
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/feedback/${id}/note`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ adminNotes: note })
+                });
+                
+                if (response.ok) {
+                    alert('Заметка добавлена');
+                    loadFeedback();
+                } else {
+                    throw new Error('Не удалось добавить заметку');
+                }
+            } catch (error) {
+                console.error('Ошибка при добавлении заметки:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Переменные для пагинации статей
+        let articlesCurrentPage = 1;
+        let articlesTotalPages = 1;
+
+        // Загрузка статей
+        async function loadArticles() {
+            try {
+                const categoryFilter = document.getElementById('articleCategoryFilter').value;
+                const publishedFilter = document.getElementById('articlePublishedFilter').value;
+                const searchQuery = document.getElementById('articleSearchInput').value;
+                
+                let url = `${getApiBaseUrl()}/articles?page=${articlesCurrentPage}`;
+                
+                if (categoryFilter) {
+                    url += `&category=${encodeURIComponent(categoryFilter)}`;
+                }
+                
+                if (publishedFilter) {
+                    url += `&published=${publishedFilter}`;
+                }
+                
+                if (searchQuery) {
+                    url += `&search=${encodeURIComponent(searchQuery)}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить статьи');
+                }
+                
+                const data = await response.json();
+                
+                // Проверяем формат ответа API
+                let articles = [];
+                let totalPages = 1;
+                
+                if (Array.isArray(data)) {
+                    // Старый формат ответа - массив статей
+                    articles = data;
+                } else {
+                    // Новый формат ответа - объект с пагинацией
+                    articles = data.articles || [];
+                    totalPages = data.totalPages || 1;
+                    articlesCurrentPage = data.page || 1;
+                }
+                
+                // Обновление счетчика и пагинации
+                document.getElementById('articlesCount').textContent = data.totalArticles || articles.length;
+                document.getElementById('articlesCurrentPage').textContent = articlesCurrentPage;
+                articlesTotalPages = totalPages;
+                
+                renderArticles(articles);
+            } catch (error) {
+                console.error('Ошибка при загрузке статей:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Отрисовка списка статей
+        function renderArticles(articles) {
+            const articlesList = document.getElementById('articlesList');
+            articlesList.innerHTML = '';
+            
+            if (articles.length === 0) {
+                articlesList.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">Статьи не найдены</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            for (const article of articles) {
+                const createdDate = new Date(article.createdAt).toLocaleDateString('ru-RU');
+                const author = article.author ? `${article.author.firstName || ''} ${article.author.lastName || ''}`.trim() : 'Неизвестно';
+                
+                articlesList.innerHTML += `
+                    <tr>
+                        <td>${article.title}</td>
+                        <td>${article.category}</td>
+                        <td>${author}</td>
+                        <td>
+                            <span class="badge ${article.published ? 'bg-success' : 'bg-secondary'}">
+                                ${article.published ? 'Опубликовано' : 'Черновик'}
+                            </span>
+                        </td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editArticle('${article._id}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle('${article._id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-${article.published ? 'warning' : 'success'}" 
+                                        onclick="toggleArticlePublishStatus('${article._id}', ${!article.published})">
+                                    <i class="bi bi-${article.published ? 'eye-slash' : 'eye'}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Изменение страницы для статей
+        function changeArticlesPage(direction) {
+            const newPage = articlesCurrentPage + direction;
+            if (newPage >= 1 && newPage <= articlesTotalPages) {
+                articlesCurrentPage = newPage;
+                loadArticles();
+            }
+        }
+
+        // Редактирование статьи
+        async function editArticle(id) {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/articles/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось получить данные статьи');
+                }
+                
+                const article = await response.json();
+                
+                // Заполняем форму
+                document.getElementById('articleId').value = article._id;
+                document.getElementById('articleTitle').value = article.title;
+                document.getElementById('articleCategory').value = article.category;
+                document.getElementById('articleTags').value = article.tags.join(', ');
+                document.getElementById('articleContent').value = article.content;
+                document.getElementById('articleImageUrl').value = article.imageUrl || '';
+                document.getElementById('articlePublished').checked = article.published;
+                
+                // Обновляем заголовок модального окна
+                document.getElementById('addArticleModalLabel').textContent = 'Редактирование статьи';
+                
+                // Открываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById('addArticleModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Ошибка при загрузке статьи:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Сохранение статьи (создание или обновление)
+        async function saveArticle() {
+            try {
+                const articleId = document.getElementById('articleId').value;
+                const title = document.getElementById('articleTitle').value;
+                const category = document.getElementById('articleCategory').value;
+                const tagsString = document.getElementById('articleTags').value;
+                const content = document.getElementById('articleContent').value;
+                const imageUrl = document.getElementById('articleImageUrl').value;
+                const published = document.getElementById('articlePublished').checked;
+                
+                if (!title || !category || !content) {
+                    alert('Пожалуйста, заполните все обязательные поля');
+                    return;
+                }
+                
+                // Разбиваем строку тегов на массив
+                const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
+                
+                const articleData = {
+                    title,
+                    category,
+                    tags,
+                    content,
+                    imageUrl,
+                    published
+                };
+                
+                let url = `${getApiBaseUrl()}/articles`;
+                let method = 'POST';
+                
+                // Если это редактирование существующей статьи
+                if (articleId) {
+                    url += `/${articleId}`;
+                    method = 'PUT';
+                }
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(articleData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось сохранить статью');
+                }
+                
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addArticleModal'));
+                modal.hide();
+                
+                // Сбрасываем форму
+                document.getElementById('articleForm').reset();
+                document.getElementById('articleId').value = '';
+                document.getElementById('addArticleModalLabel').textContent = 'Создание статьи';
+                
+                // Перезагружаем список статей
+                loadArticles();
+                
+                alert('Статья успешно сохранена');
+            } catch (error) {
+                console.error('Ошибка при сохранении статьи:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Изменение статуса публикации статьи
+        async function toggleArticlePublishStatus(id, newStatus) {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/articles/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        published: newStatus
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось изменить статус публикации');
+                }
+                
+                loadArticles();
+            } catch (error) {
+                console.error('Ошибка при изменении статуса публикации:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Удаление статьи
+        async function deleteArticle(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту статью?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/articles/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось удалить статью');
+                }
+                
+                loadArticles();
+                alert('Статья успешно удалена');
+            } catch (error) {
+                console.error('Ошибка при удалении статьи:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+        
+        // Загружаем статьи при загрузке соответствующего раздела
+        document.querySelector('a[data-section="articles"]').addEventListener('click', () => {
+            loadArticles();
+        });
+
+        // Добавление вызова loadArticles в основную функцию загрузки данных приложения, если пользователь находится в разделе статей
+        document.addEventListener('DOMContentLoaded', function() {
+            // Существующий код инициализации
+            // ...
+
+            // Проверяем, нужно ли загрузить статьи сразу
+            if (window.location.hash === '#articles') {
+                document.querySelector('a[data-section="articles"]').click();
+            }
+        });
+
+        // Загрузка пользователей
+        async function loadUsers() {
+            console.log('Загрузка пользователей');
+            const usersList = document.getElementById('usersList');
+            const roleFilter = document.getElementById('userRoleFilter').value;
+            const searchInput = document.getElementById('userSearchInput').value;
+            
+            // Показываем индикатор загрузки
+            usersList.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            try {
+                // Формируем URL с параметрами для фильтрации и поиска
+                let url = `${getApiBaseUrl()}/admin/users?page=${currentPage}&limit=10`;
+                
+                if (roleFilter) {
+                    url += `&role=${roleFilter}`;
+                }
+                
+                if (searchInput) {
+                    url += `&search=${encodeURIComponent(searchInput)}`;
+                }
+                
+                console.log('Запрос пользователей по URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                // Проверяем статус ответа
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Получены данные пользователей:', data);
+                
+                // Обработка различных форматов ответа
+                let users = [];
+                let pagination = { total: 0, page: 1, pages: 1 };
+                
+                if (data) {
+                    if (data.users && Array.isArray(data.users)) {
+                        // Стандартный формат с массивом пользователей и пагинацией
+                        users = data.users;
+                        pagination = data.pagination || pagination;
+                    } else if (Array.isArray(data)) {
+                        // Просто массив пользователей
+                        users = data;
+                    } else if (data.users) {
+                        // Если users есть, но не массив
+                        users = Array.isArray(data.users) ? data.users : [data.users].filter(Boolean);
+                    }
+                }
+                
+                console.log('Обработанные пользователи:', { 
+                    count: users.length, 
+                    pagination: pagination 
+                });
+                
+                // Обновляем информацию о страницах
+                totalPages = pagination.pages;
+                currentPage = pagination.page;
+                
+                // Если нет данных, показываем сообщение
+                if (users.length === 0) {
+                    usersList.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <p class="my-3">Пользователи не найдены</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Отображаем данные пользователей
+                usersList.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user._id}</td>
+                        <td>${user.firstName || ''} ${user.lastName || ''}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <span class="badge ${getUserRoleBadge(user.role)}">${getUserRole(user.role)}</span>
+                            ${user.isBlocked ? '<span class="badge bg-danger ms-1">Заблокирован</span>' : ''}
+                        </td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-primary" onclick="showChangeRoleModal('${user._id}', '${user.role}')">
+                                    <i class="bi bi-person-badge"></i>
+                                </button>
+                                <button class="btn ${user.isBlocked ? 'btn-success' : 'btn-warning'}" 
+                                        onclick="toggleUserBlocked('${user._id}', ${!user.isBlocked})">
+                                    <i class="bi ${user.isBlocked ? 'bi-unlock' : 'bi-lock'}"></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteUser('${user._id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Обновляем пагинацию
+                updatePagination();
+                
+                // Обновляем счетчик общего количества пользователей
+                document.getElementById('usersTotal').textContent = pagination.total;
+            } catch (error) {
+                console.error('Ошибка при загрузке пользователей:', error);
+                usersList.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="alert alert-danger my-3">
+                                Ошибка при загрузке пользователей: ${error.message}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Вспомогательная функция для отображения роли пользователя
+        function getUserRole(role) {
+            const roles = {
+                'ADMIN': 'Администратор',
+                'DOCTOR': 'Врач',
+                'PATIENT': 'Пациент'
+            };
+            return roles[role] || role;
+        }
+
+        // Вспомогательная функция для определения цвета бейджа роли
+        function getUserRoleBadge(role) {
+            const badges = {
+                'ADMIN': 'bg-danger',
+                'DOCTOR': 'bg-primary',
+                'PATIENT': 'bg-success'
+            };
+            return badges[role] || 'bg-secondary';
+        }
+
+        // Функция для обновления элементов пагинации
+        function updatePagination() {
+            const paginationElement = document.getElementById('usersPagination');
+            if (!paginationElement) return;
+            
+            // Если всего одна страница, скрываем пагинацию
+            if (totalPages <= 1) {
+                paginationElement.innerHTML = '';
+                return;
+            }
+            
+            let paginationHtml = `
+                <button class="btn btn-sm btn-outline-primary me-2 ${currentPage === 1 ? 'disabled' : ''}" 
+                        onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="mx-2">Страница ${currentPage} из ${totalPages}</span>
+                <button class="btn btn-sm btn-outline-primary ms-2 ${currentPage === totalPages ? 'disabled' : ''}" 
+                        onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            `;
+            
+            paginationElement.innerHTML = paginationHtml;
+        }
+        
+        // Обновляем функцию для отображения модального окна изменения роли
+
+        // Функция для отображения модального окна изменения роли
+        function showChangeRoleModal(userId, currentRoleValue) {
+            document.getElementById('changeRoleUserId').value = userId;
+            
+            // Преобразуем роль для отображения
+            const roleNames = {
+                'ADMIN': 'Администратор',
+                'DOCTOR': 'Врач',
+                'PATIENT': 'Пациент',
+                'admin': 'Администратор',
+                'doctor': 'Врач',
+                'patient': 'Пациент'
+            };
+            
+            document.getElementById('currentRole').value = roleNames[currentRoleValue] || currentRoleValue;
+            
+            // Устанавливаем соответствующее значение в селекте
+            const selectEl = document.getElementById('newRole');
+            const normalizedRole = currentRoleValue.toLowerCase();
+            
+            if (normalizedRole === 'admin' || normalizedRole === 'doctor' || normalizedRole === 'patient') {
+                selectEl.value = normalizedRole;
+            } else {
+                selectEl.value = '';
+            }
+            
+            // Показываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
+            modal.show();
+        }
+
+        // Функция для изменения роли пользователя
+        async function changeUserRole() {
+            const userId = document.getElementById('changeRoleUserId').value;
+            const newRole = document.getElementById('newRole').value;
+            
+            if (!userId || !newRole) {
+                alert('Не удалось получить ID пользователя или новую роль');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ role: newRole })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                // Закрываем модальное окно
+                bootstrap.Modal.getInstance(document.getElementById('changeRoleModal')).hide();
+                
+                // Обновляем список пользователей
+                loadUsers();
+                
+                // Показываем уведомление
+                alert('Роль пользователя успешно изменена');
+            } catch (error) {
+                console.error('Ошибка при изменении роли пользователя:', error);
+                alert(`Ошибка: ${error.message}`);
+            }
+        }
+
+        // Функция для смены страницы
+        function changePage(newPage) {
+            if (newPage < 1 || newPage > totalPages) {
+                return;
+            }
+            
+            currentPage = newPage;
+            loadUsers();
+        }
+
+        // Добавляем функции для блокировки и удаления пользователей
+
+        // Функция для блокировки/разблокировки пользователя
+        async function toggleUserBlocked(userId, isBlocked) {
+            try {
+                const action = isBlocked ? 'блокировать' : 'разблокировать';
+                if (!confirm(`Вы действительно хотите ${action} этого пользователя?`)) {
+                    return;
+                }
+                
+                const response = await fetch(`${getApiBaseUrl()}/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ isBlocked })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                // Обновляем список пользователей
+                loadUsers();
+                
+                // Показываем уведомление
+                alert(`Пользователь успешно ${isBlocked ? 'заблокирован' : 'разблокирован'}`);
+            } catch (error) {
+                console.error('Ошибка при изменении статуса пользователя:', error);
+                alert(`Ошибка: ${error.message}`);
+            }
+        }
+
+        // Функция для удаления пользователя
+        async function deleteUser(userId) {
+            try {
+                if (!confirm('Вы действительно хотите удалить этого пользователя? Это действие невозможно отменить.')) {
+                    return;
+                }
+                
+                const response = await fetch(`${getApiBaseUrl()}/admin/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                // Обновляем список пользователей
+                loadUsers();
+                
+                // Показываем уведомление
+                alert('Пользователь успешно удален');
+            } catch (error) {
+                console.error('Ошибка при удалении пользователя:', error);
+                alert(`Ошибка: ${error.message}`);
+            }
+        }
+
+        // Добавляем функции для загрузки и управления запросами докторов
+        let doctorRequestsCurrentPage = 1;
+        let doctorRequestsTotalPages = 1;
+
+        // Функция для загрузки запросов докторов
+        async function loadDoctorRequests() {
+            try {
+                const status = document.getElementById('requestStatusFilter').value;
+                const search = document.getElementById('requestSearchInput').value;
+                const requestsList = document.getElementById('doctorRequestsList');
+                
+                let url = `${getApiBaseUrl()}/admin/doctor-requests?page=${doctorRequestsCurrentPage}`;
+                
+                if (status) {
+                    url += `&status=${status}`;
+                }
+                
+                if (search) {
+                    url += `&search=${encodeURIComponent(search)}`;
+                }
+                
+                console.log('Запрос запросов докторов по URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Получены данные запросов докторов:', data);
+                
+                let requests = [];
+                let pagination = { total: 0, page: 1, pages: 1 };
+                
+                if (data) {
+                    if (data.requests && Array.isArray(data.requests)) {
+                        requests = data.requests;
+                        pagination = data.pagination || pagination;
+                    } else if (Array.isArray(data)) {
+                        requests = data;
+                    }
+                }
+                
+                doctorRequestsTotalPages = pagination.pages;
+                doctorRequestsCurrentPage = pagination.page;
+                
+                if (requests.length === 0) {
+                    requestsList.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <p class="my-3">Запросы не найдены</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                requestsList.innerHTML = requests.map(request => {
+                    const user = request.user || {};
+                    const status = request.status || 'pending';
+                    const statusBadge = {
+                        'pending': 'bg-warning',
+                        'approved': 'bg-success',
+                        'rejected': 'bg-danger'
+                    }[status] || 'bg-secondary';
+                    
+                    const statusText = {
+                        'pending': 'Ожидает',
+                        'approved': 'Одобрен',
+                        'rejected': 'Отклонен'
+                    }[status] || status;
+                    
+                    return `
+                        <tr>
+                            <td>${request._id}</td>
+                            <td>
+                                <div>${user.firstName || ''} ${user.lastName || ''}</div>
+                                <small class="text-muted">${user.email || ''}</small>
+                            </td>
+                            <td>${request.specialization || 'Не указана'}</td>
+                            <td>${new Date(request.createdAt).toLocaleDateString()}</td>
+                            <td><span class="badge ${statusBadge}">${statusText}</span></td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-primary" onclick="showDoctorRequestDetails('${request._id}')">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    ${status === 'pending' ? `
+                                        <button class="btn btn-success" onclick="approveRequest('${request._id}')">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button class="btn btn-danger" onclick="rejectRequest('${request._id}')">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                updateDoctorRequestsPagination();
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке запросов докторов:', error);
+                document.getElementById('doctorRequestsList').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <div class="alert alert-danger my-3">
+                                Ошибка при загрузке запросов: ${error.message}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // Функция для обновления пагинации запросов докторов
+        function updateDoctorRequestsPagination() {
+            const paginationElement = document.getElementById('doctorRequestsPagination');
+            if (!paginationElement) return;
+            
+            if (doctorRequestsTotalPages <= 1) {
+                paginationElement.innerHTML = '';
+                return;
+            }
+            
+            let paginationHtml = `
+                <button class="btn btn-sm btn-outline-primary me-2 ${doctorRequestsCurrentPage === 1 ? 'disabled' : ''}" 
+                        onclick="changeDoctorRequestsPage(${doctorRequestsCurrentPage - 1})" ${doctorRequestsCurrentPage === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="mx-2">Страница ${doctorRequestsCurrentPage} из ${doctorRequestsTotalPages}</span>
+                <button class="btn btn-sm btn-outline-primary ms-2 ${doctorRequestsCurrentPage === doctorRequestsTotalPages ? 'disabled' : ''}" 
+                        onclick="changeDoctorRequestsPage(${doctorRequestsCurrentPage + 1})" ${doctorRequestsCurrentPage === doctorRequestsTotalPages ? 'disabled' : ''}>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            `;
+            
+            paginationElement.innerHTML = paginationHtml;
+        }
+        
+        // Функция для смены страницы запросов докторов
+        function changeDoctorRequestsPage(newPage) {
+            if (newPage < 1 || newPage > doctorRequestsTotalPages) {
+                return;
+            }
+            
+            doctorRequestsCurrentPage = newPage;
+            loadDoctorRequests();
+        }
+        
+        // Функция для отображения деталей запроса доктора
+        function showDoctorRequestDetails(requestId) {
+            // Получаем детали запроса с сервера
+            fetch(`${getApiBaseUrl()}/admin/doctor-requests/${requestId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Не удалось получить детали запроса');
+                }
+                return response.json();
+            })
+            .then(request => {
+                // Заполняем данные в модальном окне
+                document.getElementById('requestUserName').textContent = `${request.user.firstName || ''} ${request.user.lastName || ''}`;
+                document.getElementById('requestUserEmail').textContent = request.user.email || '';
+                document.getElementById('requestSpecialization').textContent = request.specialization || 'Не указана';
+                document.getElementById('requestExperience').textContent = request.experience || 'Не указан';
+                document.getElementById('requestEducation').textContent = request.education || 'Не указано';
+                document.getElementById('requestLicenseNumber').textContent = request.licenseNumber || 'Не указан';
+                document.getElementById('requestAbout').textContent = request.about || 'Информация отсутствует';
+                document.getElementById('requestCreatedAt').textContent = new Date(request.createdAt).toLocaleString();
+                
+                if (request.processedAt) {
+                    document.getElementById('requestProcessedAt').textContent = new Date(request.processedAt).toLocaleString();
+                } else {
+                    document.getElementById('requestProcessedAt').textContent = 'Еще не обработан';
+                }
+                
+                // Настраиваем статус и действия в зависимости от статуса запроса
+                const statusEl = document.getElementById('requestStatus');
+                const pendingActions = document.getElementById('pendingActions');
+                
+                if (request.status === 'pending') {
+                    statusEl.className = 'badge bg-warning mb-2';
+                    statusEl.textContent = 'Ожидает';
+                    pendingActions.classList.remove('d-none');
+                    
+                    // Сохраняем ID запроса для действий
+                    pendingActions.dataset.requestId = requestId;
+                } else if (request.status === 'approved') {
+                    statusEl.className = 'badge bg-success mb-2';
+                    statusEl.textContent = 'Одобрен';
+                    pendingActions.classList.add('d-none');
+                } else {
+                    statusEl.className = 'badge bg-danger mb-2';
+                    statusEl.textContent = 'Отклонен';
+                    pendingActions.classList.add('d-none');
+                }
+                
+                // Открываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById('doctorRequestModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Ошибка при получении деталей запроса:', error);
+                alert('Не удалось загрузить детали запроса: ' + error.message);
+            });
+        }
+        
+        // Функция для одобрения запроса из модального окна
+        function approveRequestModal() {
+            const requestId = document.getElementById('pendingActions').dataset.requestId;
+            if (!requestId) return;
+            
+            approveRequest(requestId);
+            bootstrap.Modal.getInstance(document.getElementById('doctorRequestModal')).hide();
+        }
+        
+        // Функция для отклонения запроса из модального окна
+        function rejectRequestModal() {
+            const requestId = document.getElementById('pendingActions').dataset.requestId;
+            if (!requestId) return;
+            
+            rejectRequest(requestId);
+            bootstrap.Modal.getInstance(document.getElementById('doctorRequestModal')).hide();
+        }
+    </script>
+</body>
+</html> 
