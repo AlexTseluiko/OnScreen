@@ -1,20 +1,12 @@
-import { User } from './user';
+import { User as BaseUser } from './models';
 
 export enum UserRole {
-  PATIENT = 'patient',
-  DOCTOR = 'doctor',
-  ADMIN = 'admin',
+  PATIENT = 'PATIENT',
+  DOCTOR = 'DOCTOR',
+  ADMIN = 'ADMIN',
 }
 
-export interface User {
-  id: string;
-  email: string;
-  role: UserRole;
-  name?: string;
-  photoUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type User = BaseUser;
 
 export interface AuthState {
   isAuthenticated: boolean;

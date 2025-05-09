@@ -1,13 +1,16 @@
 export interface User {
+  _id: string;
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'user' | 'admin' | 'doctor';
+  role: 'DOCTOR' | 'PATIENT' | 'ADMIN';
   avatar?: string;
   phone?: string;
   isVerified?: boolean;
   isBlocked?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserProfile extends User {

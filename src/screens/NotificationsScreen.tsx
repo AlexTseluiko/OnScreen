@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { Notification } from '../types/notification';
 import { formatDate } from '../utils/dateUtils';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { COLORS } from '../theme/colors';
+import { TYPOGRAPHY } from '../theme/typography';
 import { useUserStorage } from '../contexts/UserStorageContext';
 import { API_URL } from '../config/api';
 
@@ -137,7 +137,7 @@ export const NotificationsScreen: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={COLORS.light.primary} />
       </View>
     );
   }
@@ -181,21 +181,21 @@ export const NotificationsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   actionButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: COLORS.light.primary,
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   actionButtonText: {
-    color: colors.white,
+    color: COLORS.light.whiteText,
     fontSize: 14,
   },
   container: {
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.light.background,
     flex: 1,
   },
   deleteButton: {
-    backgroundColor: colors.error,
+    backgroundColor: COLORS.light.error,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -204,8 +204,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...TYPOGRAPHY.body1,
+    color: COLORS.light.textSecondary,
   },
   errorContainer: {
     alignItems: 'center',
@@ -214,14 +214,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: colors.error,
+    color: COLORS.light.error,
     fontSize: 16,
     marginBottom: 16,
     textAlign: 'center',
   },
   header: {
     alignItems: 'center',
-    borderBottomColor: colors.border,
+    borderBottomColor: COLORS.light.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markAllButton: {
-    ...typography.button,
-    color: colors.primary,
+    ...TYPOGRAPHY.button,
+    color: COLORS.light.primary,
   },
   notificationActions: {
     flexDirection: 'row',
@@ -245,40 +245,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationDate: {
-    ...typography.caption,
-    color: colors.textTertiary,
+    ...TYPOGRAPHY.caption,
+    color: COLORS.light.textSecondary,
   },
   notificationItem: {
-    borderBottomColor: colors.border,
+    borderBottomColor: COLORS.light.border,
     borderBottomWidth: 1,
     padding: 16,
   },
   notificationMessage: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...TYPOGRAPHY.body1,
+    color: COLORS.light.textSecondary,
     marginBottom: 8,
   },
   notificationTitle: {
-    ...typography.h3,
-    color: colors.text,
+    ...TYPOGRAPHY.h3,
+    color: COLORS.light.text,
     marginBottom: 4,
   },
   retryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: COLORS.light.primary,
     borderRadius: 8,
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
   retryButtonText: {
-    color: colors.white,
+    color: COLORS.light.whiteText,
     fontSize: 16,
     fontWeight: '500',
   },
   title: {
-    ...typography.h1,
-    color: colors.text,
+    ...TYPOGRAPHY.h1,
+    color: COLORS.light.text,
   },
   unreadNotification: {
-    backgroundColor: colors.background,
+    backgroundColor: COLORS.light.background,
   },
 });

@@ -1,118 +1,113 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../theme/ThemeContext';
-import { doctorsApi } from '../api/doctorsApi';
-import { Ionicons } from '@expo/vector-icons';
-import { DefaultAvatar } from './DefaultAvatar';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+import { COLORS } from '../theme/colors';
+import { TYPOGRAPHY } from '../theme/typography';
+
+type DoctorPatientsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface Patient {
-  id: string;
-  name: string;
-  photoUrl?: string;
-  lastVisit?: string;
-  nextAppointment?: string;
-  status: 'active' | 'inactive';
+  _id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string;
+  phone?: string;
+}
+
+interface DoctorPatientsResponse {
+  patients: Patient[];
 }
 
 interface DoctorPatientsProps {
-  doctorId: string;
-  onSelectPatient?: (patient: Patient) => void;
+  _doctorId: string;
 }
 
-export const DoctorPatients: React.FC<DoctorPatientsProps> = ({ doctorId, onSelectPatient }) => {
-  const { t } = useTranslation();
-  const { theme } = useTheme();
+export const DoctorPatients: React.FC<DoctorPatientsProps> = ({ _doctorId }) => {
+  const navigation = useNavigation<DoctorPatientsScreenNavigationProp>();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPatients = async () => {
+  const loadPatients = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await doctorsApi.getDoctorPatients(doctorId);
-      setPatients(response.data.patients);
+      // TODO: Заменить на реальный API-вызов
+      const response: DoctorPatientsResponse = {
+        patients: [
+          {
+            _id: '1',
+            firstName: 'Иван',
+            lastName: 'Иванов',
+            dateOfBirth: '1990-01-01',
+            phone: '+7 (999) 123-45-67',
+          },
+        ],
+      };
+      setPatients(response.patients);
     } catch (err) {
-      setError(t('common.error'));
+      setError('Не удалось загрузить список пациентов');
       console.error('Error loading patients:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadPatients();
-  }, [doctorId]);
+  }, [loadPatients]);
 
-  const renderPatientCard = ({ item }: { item: Patient }) => (
-    <TouchableOpacity
-      style={[styles.patientCard, { backgroundColor: theme.colors.card }]}
-      onPress={() => onSelectPatient?.(item)}
-    >
-      <View style={styles.patientCard}>
-        {item.photoUrl ? (
-          <Image source={{ uri: item.photoUrl }} style={styles.patientPhoto} />
-        ) : (
-          <DefaultAvatar size={50} />
-        )}
-        <View style={styles.patientInfo}>
-          <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
-          {item.lastVisit && (
-            <Text style={[styles.visitInfo, { color: theme.colors.textSecondary }]}>
-              {t('lastVisit')}: {new Date(item.lastVisit).toLocaleDateString()}
-            </Text>
-          )}
-          {item.nextAppointment && (
-            <Text style={[styles.visitInfo, { color: theme.colors.textSecondary }]}>
-              {t('nextAppointment')}: {new Date(item.nextAppointment).toLocaleDateString()}
-            </Text>
-          )}
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor:
-                  item.status === 'active' ? theme.colors.success : theme.colors.error,
-              },
-            ]}
-          >
-            <Text style={styles.statusText}>
-              {item.status === 'active' ? t('active') : t('inactive')}
-            </Text>
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadPatients();
+  };
+
+  const handlePatientPress = (patient: Patient) => {
+    navigation.navigate('PatientDetails', { patientId: patient._id });
+  };
+
+  const renderPatientItem = ({ item }: { item: Patient }) => (
+    <TouchableOpacity style={styles.patientCard} onPress={() => handlePatientPress(item)}>
+      <View style={styles.patientInfo}>
+        <Text style={styles.patientName}>
+          {item.firstName} {item.lastName}
+        </Text>
+        <Text style={styles.patientDetails}>
+          {item.dateOfBirth
+            ? new Date(item.dateOfBirth).toLocaleDateString()
+            : 'Дата рождения не указана'}
+        </Text>
+        {item.phone && <Text style={styles.patientDetails}>{item.phone}</Text>}
       </View>
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={COLORS.light.primary} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
-        <TouchableOpacity
-          style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-          onPress={loadPatients}
-        >
-          <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadPatients}>
+          <Text style={styles.retryButtonText}>Повторить</Text>
         </TouchableOpacity>
       </View>
     );
@@ -122,86 +117,94 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({ doctorId, onSele
     <View style={styles.container}>
       <FlatList
         data={patients}
-        renderItem={renderPatientCard}
-        keyExtractor={item => item.id}
-        ListEmptyComponent={() => (
-          <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-            {t('noPatientsFound')}
-          </Text>
-        )}
+        renderItem={renderPatientItem}
+        keyExtractor={item => item._id}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[COLORS.light.primary]}
+            tintColor={COLORS.light.primary}
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>У вас пока нет пациентов</Text>
+          </View>
+        }
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  centerContainer: {
+  centered: {
     alignItems: 'center',
+    backgroundColor: COLORS.light.background,
     flex: 1,
     justifyContent: 'center',
   },
   container: {
+    backgroundColor: COLORS.light.background,
     flex: 1,
   },
+  emptyContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
   emptyText: {
-    margin: 20,
+    ...TYPOGRAPHY.body1,
+    color: COLORS.light.textSecondary,
     textAlign: 'center',
   },
   errorText: {
-    margin: 10,
+    ...TYPOGRAPHY.body1,
+    color: COLORS.light.error,
+    marginBottom: 16,
     textAlign: 'center',
   },
+  listContent: {
+    padding: 16,
+  },
   patientCard: {
-    alignItems: 'center',
-    borderRadius: 8,
-    elevation: 2,
-    flexDirection: 'row',
-    marginHorizontal: 10,
-    marginVertical: 5,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: COLORS.light.whiteBackground,
+    borderRadius: 12,
+    elevation: 3,
+    marginBottom: 12,
+    padding: 16,
+    shadowColor: COLORS.light.semiTransparentBlack,
+    shadowOffset: {
+      height: 2,
+      width: 0,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    ...TYPOGRAPHY.body1,
+  },
+  patientDetails: {
+    ...TYPOGRAPHY.body2,
+    color: COLORS.light.textSecondary,
+    marginTop: 2,
   },
   patientInfo: {
     flex: 1,
-    marginLeft: 15,
   },
   patientName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.h5,
+    color: COLORS.light.text,
     marginBottom: 4,
   },
-  patientPhoto: {
-    borderRadius: 30,
-    height: 60,
-    width: 60,
-  },
   retryButton: {
+    backgroundColor: COLORS.light.primary,
     borderRadius: 8,
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   retryButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    borderRadius: 12,
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  statusText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  visitInfo: {
-    fontSize: 14,
-    marginBottom: 2,
+    ...TYPOGRAPHY.button,
+    color: COLORS.light.whiteText,
   },
 });

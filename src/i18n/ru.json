@@ -92,6 +92,8 @@
     "notifications": "Уведомления",
     "language": "Язык",
     "theme": "Тема",
+    "lightTheme": "Светлая тема",
+    "darkTheme": "Темная тема",
     "about": "О приложении",
     "help": "Помощь",
     "privacy": "Конфиденциальность",

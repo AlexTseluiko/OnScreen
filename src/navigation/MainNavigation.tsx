@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../contexts/AuthContext';
 import { RootStackParamList } from './types';
-import HomeScreen from '../screens/HomeScreen';
+import { HomeScreen } from '../screens/HomeScreen';
 import { FacilitiesScreen } from '../screens/FacilitiesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -27,7 +27,7 @@ const MainTabs = () => {
       <Tab.Screen name="Facilities" component={FacilitiesScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
-      {user?.role === 'admin' && (
+      {user?.role === 'ADMIN' && (
         <>
           <Tab.Screen name="AdminDashboard" component={AdminDashboard} />
           <Tab.Screen name="AdminUsers" component={AdminUsersScreen} />

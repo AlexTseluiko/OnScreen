@@ -1,7 +1,5 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Clinic } from '../types/clinic';
-import { Facility } from '../types/facility';
 import { Article } from '../types/article';
 
 export type RootStackParamList = {
@@ -23,6 +21,7 @@ export type RootStackParamList = {
   AdminUsers: undefined;
   Notifications: undefined;
   DoctorRequestDetails: { requestId: string };
+  PatientDetails: { patientId: string };
 };
 
 export type RootStackNavigationProp = StackNavigationProp<RootStackParamList>;

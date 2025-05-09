@@ -8,8 +8,16 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { DefaultAvatar } from '../components/DefaultAvatar';
+import { COLORS } from '../constants';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
+
+type MenuItem = {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  color?: string;
+};
 
 const ProfileScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -31,7 +39,7 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       title: t('profile.changePassword'),
       icon: 'lock-closed-outline',
@@ -57,7 +65,7 @@ const ProfileScreen: React.FC = () => {
           <DefaultAvatar size={80} />
           <View style={styles.userInfo}>
             <Text style={[styles.name, { color: theme.colors.text }]}>
-              {user?.name || t('common.user')}
+              {user ? `${user.firstName} ${user.lastName}` : t('common.user')}
             </Text>
             <Text style={[styles.email, { color: theme.colors.textSecondary }]}>{user?.email}</Text>
           </View>
@@ -73,11 +81,7 @@ const ProfileScreen: React.FC = () => {
             disabled={isLoading}
           >
             <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '20' }]}>
-              <Ionicons
-                name={item.icon as any}
-                size={24}
-                color={item.color || theme.colors.primary}
-              />
+              <Ionicons name={item.icon} size={24} color={item.color || theme.colors.primary} />
             </View>
             <Text style={[styles.menuItemText, { color: item.color || theme.colors.text }]}>
               {item.title}
@@ -110,7 +114,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   header: {
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: COLORS.lightGray,
     borderBottomWidth: 1,
     padding: 20,
     paddingTop: 48,

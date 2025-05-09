@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeContext';
-import { doctorsApi, Doctor } from '../api/doctorsApi';
+import { doctorsApi } from '../api/doctorsApi';
+import { Doctor } from '../types/doctor';
 import { Ionicons } from '@expo/vector-icons';
 import { DefaultAvatar } from './DefaultAvatar';
+import { COLORS } from '../constants';
 
 interface DoctorSearchProps {
   onSelectDoctor?: (doctor: Doctor) => void;
@@ -29,31 +31,34 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const searchDoctors = async (pageNum = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const searchDoctors = useCallback(
+    async (pageNum = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response = await doctorsApi.searchDoctors({
-        search: searchQuery,
-        page: pageNum,
-        limit: 10,
-      });
+        const response = await doctorsApi.searchDoctors({
+          search: searchQuery,
+          page: pageNum,
+          limit: 10,
+        });
 
-      if (pageNum === 1) {
-        setDoctors(response.data.doctors);
-      } else {
-        setDoctors(prev => [...prev, ...response.data.doctors]);
+        if (pageNum === 1) {
+          setDoctors(response);
+        } else {
+          setDoctors(prev => [...prev, ...response]);
+        }
+
+        setHasMore(response.length === 10);
+      } catch (err) {
+        setError(t('common.error'));
+        console.error('Error searching doctors:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setHasMore(response.data.doctors.length === 10);
-    } catch (err) {
-      setError(t('common.error'));
-      console.error('Error searching doctors:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [searchQuery, t]
+  );
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -64,7 +69,7 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, searchDoctors]);
 
   const loadMore = () => {
     if (!loading && hasMore) {
@@ -164,7 +169,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginVertical: 5,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

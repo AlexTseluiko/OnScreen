@@ -15,6 +15,7 @@ export const lightTheme = {
     inputBackground: COLORS.white,
     cardBackground: COLORS.white,
     disabled: COLORS.gray[300],
+    buttonText: COLORS.white,
   },
   spacing,
 } as const;
@@ -33,6 +34,7 @@ export const darkTheme = {
     inputBackground: COLORS.background.card.dark,
     cardBackground: COLORS.background.card.dark,
     disabled: COLORS.gray[700],
+    buttonText: COLORS.white,
   },
   spacing,
 } as const;

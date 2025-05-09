@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Profile } from '../types/profile';
-import { profileApi } from '../api/profileApi';
+import { getProfile, updateProfile } from '../api/profileApi';
 
 export interface ProfileContextType {
   profile: Profile | null;
@@ -23,8 +23,8 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setProfileLoading(true);
       setProfileError(null);
 
-      const response = await profileApi.getProfile();
-      setProfile(response.profile);
+      const response = await getProfile();
+      setProfile(response);
     } catch (error) {
       console.error('Error loading profile:', error);
       setProfileError(error instanceof Error ? error.message : 'Failed to load profile');
@@ -33,13 +33,13 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const updateProfile = async (data: Partial<Profile>) => {
+  const updateProfileData = async (data: Partial<Profile>) => {
     try {
       setProfileLoading(true);
       setProfileError(null);
 
-      const response = await profileApi.updateProfile(data);
-      setProfile(response.profile);
+      const updatedProfile = await updateProfile(data);
+      setProfile(updatedProfile);
     } catch (error) {
       console.error('Error updating profile:', error);
       setProfileError(error instanceof Error ? error.message : 'Failed to update profile');
@@ -61,7 +61,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         profileLoading,
         profileError,
         loadProfile,
-        updateProfile,
+        updateProfile: updateProfileData,
         clearProfile,
       }}
     >

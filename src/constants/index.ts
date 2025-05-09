@@ -5,6 +5,7 @@ export const COLORS = {
   emergency: '#FF3B30',
   background: '#FFFFFF',
   text: '#000000',
+  textSecondary: '#8E8E93',
   white: '#FFFFFF',
   black: '#000000',
   gray: '#8E8E93',
@@ -12,6 +13,7 @@ export const COLORS = {
   error: '#FF3B30',
   warning: '#FFC107',
   lightGray: '#E0E0E0',
+  whiteTransparent: 'rgba(255, 255, 255, 0.8)',
 };
 
 // Начальные координаты карты

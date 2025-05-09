@@ -12,23 +12,19 @@ import {
   Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { COLORS } from '../constants';
-import { useAppDispatch } from '../store';
-import { toggleFavorite } from '../store/slices/facilitiesSlice';
 import ReviewsSection from '../components/ReviewsSection';
 import { Clinic, Review } from '../types/clinic';
 import { ApiResponse, ClinicResponse } from '../types/api';
 import { CreateReviewParams } from '../api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { useTheme } from '../contexts/ThemeContext';
 import { apiClient } from '../api/apiClient';
 import { RouteProp } from '@react-navigation/native';
 import { API_URL } from '../config/api';
 import { useUserStorage } from '../contexts/UserStorageContext';
 
-type ClinicDetailsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ClinicDetails'>;
 type ClinicDetailsRouteProp = RouteProp<RootStackParamList, 'ClinicDetails'>;
 
 interface RouteParams {
@@ -335,7 +331,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   favoriteButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: COLORS.whiteTransparent,
     borderRadius: 20,
     padding: 10,
     position: 'absolute',

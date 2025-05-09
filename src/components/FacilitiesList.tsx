@@ -1,14 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { facilitiesApi, Facility } from '../api/facilities';
+import { facilitiesApi } from '../api/facilities';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { Facility } from '../types/facility';
+import { COLORS } from '../constants/colors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export const FacilitiesList: React.FC = () => {
-  const [facilities, setFacilities] = useState<Facility[]>([]);
+interface FacilitiesListProps {
+  facilities: Facility[];
+  onFacilityPress?: (facility: Facility) => void;
+}
+
+export const FacilitiesList: React.FC<FacilitiesListProps> = ({
+  facilities,
+  onFacilityPress: _onFacilityPress,
+}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<NavigationProp>();
@@ -16,8 +25,7 @@ export const FacilitiesList: React.FC = () => {
   const loadFacilities = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await facilitiesApi.getAll();
-      setFacilities(data);
+      await facilitiesApi.getAll();
       setError(null);
     } catch (err) {
       setError('Ошибка при загрузке учреждений');
@@ -27,16 +35,14 @@ export const FacilitiesList: React.FC = () => {
     }
   }, []);
 
-  // Начальная загрузка
   useEffect(() => {
     loadFacilities();
   }, [loadFacilities]);
 
-  // Периодическое обновление каждые 30 секунд
   useEffect(() => {
     const intervalId = setInterval(() => {
       loadFacilities();
-    }, 30000); // 30 секунд
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [loadFacilities]);
@@ -46,7 +52,7 @@ export const FacilitiesList: React.FC = () => {
       style={styles.facilityCard}
       onPress={() => navigation.navigate('FacilityDetails', { facilityId: item.id })}
     >
-      {item.images[0] && (
+      {item.images?.[0] && (
         <Image source={{ uri: item.images[0] }} style={styles.facilityImage} resizeMode="cover" />
       )}
       <View style={styles.facilityInfo}>
@@ -57,7 +63,7 @@ export const FacilitiesList: React.FC = () => {
           <Text style={styles.reviews}>({item.reviews} отзывов)</Text>
         </View>
         <View style={styles.servicesContainer}>
-          {item.services.slice(0, 3).map((service, index) => (
+          {item.services.slice(0, 3).map((service: string, index: number) => (
             <Text key={index} style={styles.serviceTag}>
               {service}
             </Text>
@@ -106,21 +112,21 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   errorText: {
-    color: 'red',
+    color: COLORS.danger,
     marginBottom: 16,
     textAlign: 'center',
   },
   facilityAddress: {
-    color: '#666',
+    color: COLORS.text.secondary.light,
     fontSize: 14,
     marginBottom: 8,
   },
   facilityCard: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.background.light,
     borderRadius: 12,
     elevation: 3,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   rating: {
-    color: '#FFA500',
+    color: COLORS.warning,
     fontSize: 16,
     fontWeight: 'bold',
     marginRight: 4,
@@ -157,23 +163,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   retryButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: 'bold',
   },
   reviews: {
-    color: '#666',
+    color: COLORS.text.secondary.light,
     fontSize: 14,
   },
   serviceTag: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: COLORS.gray[100],
     borderRadius: 12,
-    color: '#2E7D32',
+    color: COLORS.success,
     fontSize: 12,
     marginBottom: 4,
     marginRight: 8,

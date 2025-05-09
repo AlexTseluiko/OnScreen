@@ -45,11 +45,11 @@ export const authApi = {
       }
 
       console.log('Login successful, saving user data');
-      await userStorage.saveUserData({
-        user: response.data.user,
-        token: response.data.token,
-        refreshToken: response.data.refreshToken,
-      });
+      await userStorage.saveUserData(
+        response.data.user,
+        response.data.token,
+        response.data.refreshToken
+      );
 
       return response.data;
     } catch (error) {
@@ -111,11 +111,11 @@ export const authApi = {
       }
 
       console.log('Registration successful, saving user data');
-      await userStorage.saveUserData({
-        user: response.data.user,
-        token: response.data.token,
-        refreshToken: response.data.refreshToken,
-      });
+      await userStorage.saveUserData(
+        response.data.user,
+        response.data.token,
+        response.data.refreshToken
+      );
 
       return response.data;
     } catch (error) {

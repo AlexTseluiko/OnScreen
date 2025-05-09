@@ -10,6 +10,7 @@ export const COLORS = {
   // Нейтральные цвета
   white: '#FFFFFF',
   black: '#000000',
+  whiteTransparent: 'rgba(255, 255, 255, 0.8)',
   gray: {
     100: '#F5F5F5',
     200: '#EEEEEE',

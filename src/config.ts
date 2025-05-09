@@ -3,7 +3,7 @@
  */
 
 // URL API-сервера
-export const API_URL = 'http://localhost:19000/api';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Базовый URL API
 export const API_BASE_URL = 'https://api.onscreen.com';

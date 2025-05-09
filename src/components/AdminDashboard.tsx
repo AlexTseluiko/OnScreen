@@ -1,97 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
-import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { profileApi } from '../api/profile';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { adminApi, AdminStats } from '../api/admin';
+import { COLORS } from '../constants';
 
-interface UserListItem {
-  id: string;
-  name: string;
-  role: string;
-  email?: string;
-  avatar?: string;
-  verified?: boolean;
-}
+type RootStackParamList = {
+  AdminUsersScreen: undefined;
+  ClinicsManagementScreen: undefined;
+  NotificationsManagementScreen: undefined;
+};
 
 type AdminDashboardProps = {
-  navigation: StackNavigationProp<any>;
+  navigation: StackNavigationProp<RootStackParamList>;
 };
 
 export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
   const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [doctors, setDoctors] = useState<UserListItem[]>([]);
-  const [patients, setPatients] = useState<UserListItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'doctors' | 'patients'>('doctors');
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [error, setError] = useState<string | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await adminApi.getStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Ошибка при загрузке статистики:', err);
+    }
+  }, []);
+
+  const loadData = useCallback(async () => {
+    try {
+      await adminApi.getUsers({ role: 'DOCTOR' });
+      await adminApi.getUsers({ role: 'PATIENT' });
+    } catch (error) {
+      console.error('Error loading admin data:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
     loadStats();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      // Получаем список врачей
-      const doctorsData = await adminApi.getUsers({ role: 'DOCTOR' });
-      // Получаем список пациентов
-      const patientsData = await adminApi.getUsers({ role: 'PATIENT' });
-
-      setDoctors(
-        doctorsData.users.map(d => ({
-          id: d._id,
-          name: `${d.firstName || ''} ${d.lastName || ''}`.trim(),
-          role: 'doctor',
-          email: d.email,
-          avatar: d.avatar,
-          verified: d.verified,
-        }))
-      );
-
-      setPatients(
-        patientsData.users.map(p => ({
-          id: p._id,
-          name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
-          role: 'patient',
-          email: p.email,
-          avatar: p.avatar,
-        }))
-      );
-    } catch (error) {
-      console.error('Error loading admin data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const data = await adminApi.getStats();
-      setStats(data);
-      setError(null);
-    } catch (err) {
-      console.error('Ошибка при загрузке статистики:', err);
-      setError(t('admin.dashboard.loadError', 'Ошибка загрузки статистики'));
-    }
-  };
-
-  const handleVerifyDoctor = async (userId: string, verified: boolean) => {
-    try {
-      await adminApi.verifyDoctor(userId, verified);
-      loadData();
-    } catch (error) {
-      console.error('Error verifying doctor:', error);
-    }
-  };
+  }, [loadData, loadStats]);
 
   // Определяем темную тему на основе цвета фона
-  const isDarkMode = theme.colors.background === '#121212';
+  const isDarkMode = theme.colors.background === COLORS.black;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -114,7 +69,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardUser,
-              { backgroundColor: isDarkMode ? '#2a2d3a' : '#e6f2ff' },
+              isDarkMode ? styles.cardUserDark : styles.cardUserLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -134,7 +89,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardClinic,
-              { backgroundColor: isDarkMode ? '#302a3a' : '#e6fff2' },
+              isDarkMode ? styles.cardClinicDark : styles.cardClinicLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -156,7 +111,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardDoctor,
-              { backgroundColor: isDarkMode ? '#2a3a3a' : '#e6ffff' },
+              isDarkMode ? styles.cardDoctorDark : styles.cardDoctorLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -176,7 +131,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardPatient,
-              { backgroundColor: isDarkMode ? '#3a2a2a' : '#ffe6e6' },
+              isDarkMode ? styles.cardPatientDark : styles.cardPatientLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -198,7 +153,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardAppointment,
-              { backgroundColor: isDarkMode ? '#3a3a2a' : '#fffde6' },
+              isDarkMode ? styles.cardAppointmentDark : styles.cardAppointmentLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -218,7 +173,7 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
             style={[
               styles.card,
               styles.cardReview,
-              { backgroundColor: isDarkMode ? '#352a3a' : '#f2e6ff' },
+              isDarkMode ? styles.cardReviewDark : styles.cardReviewLight,
             ]}
           >
             <View style={styles.cardContent}>
@@ -240,10 +195,8 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
         <TouchableOpacity
           style={[
             styles.adminActionButton,
-            {
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
-              shadowColor: theme.colors.text,
-            },
+            isDarkMode ? styles.adminActionButtonDark : styles.adminActionButtonLight,
+            { shadowColor: theme.colors.text },
           ]}
           onPress={() => navigation.navigate('AdminUsersScreen')}
         >
@@ -259,10 +212,8 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
         <TouchableOpacity
           style={[
             styles.adminActionButton,
-            {
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
-              shadowColor: theme.colors.text,
-            },
+            isDarkMode ? styles.adminActionButtonDark : styles.adminActionButtonLight,
+            { shadowColor: theme.colors.text },
           ]}
           onPress={() => navigation.navigate('ClinicsManagementScreen')}
         >
@@ -278,10 +229,8 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
         <TouchableOpacity
           style={[
             styles.adminActionButton,
-            {
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
-              shadowColor: theme.colors.text,
-            },
+            isDarkMode ? styles.adminActionButtonDark : styles.adminActionButtonLight,
+            { shadowColor: theme.colors.text },
           ]}
           onPress={() => navigation.navigate('NotificationsManagementScreen')}
         >
@@ -309,9 +258,6 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
 };
 
 const styles = StyleSheet.create({
-  activeTab: {
-    borderBottomWidth: 2,
-  },
   adminActionButton: {
     alignItems: 'center',
     borderRadius: 12,
@@ -324,15 +270,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  adminActionButtonDark: {
+    backgroundColor: COLORS.darkBackground,
+  },
+  adminActionButtonLight: {
+    backgroundColor: COLORS.white,
+  },
   adminActions: {
     marginBottom: 24,
     padding: 16,
-  },
-  avatar: {
-    borderRadius: 25,
-    height: 50,
-    marginRight: 15,
-    width: 50,
   },
   buttonContent: {
     alignItems: 'center',
@@ -344,25 +290,75 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 12,
-    elevation: 3,
+    flex: 1,
+    marginHorizontal: 8,
     padding: 16,
-    width: '48%',
   },
-  cardAppointment: {},
-  cardClinic: {},
+  cardAppointment: {
+    backgroundColor: COLORS.warning,
+  },
+  cardAppointmentDark: {
+    backgroundColor: COLORS.darkAppointment,
+  },
+  cardAppointmentLight: {
+    backgroundColor: COLORS.lightAppointment,
+  },
+  cardClinic: {
+    backgroundColor: COLORS.secondary,
+  },
+  cardClinicDark: {
+    backgroundColor: COLORS.darkClinic,
+  },
+  cardClinicLight: {
+    backgroundColor: COLORS.lightClinic,
+  },
   cardContent: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  cardDoctor: {},
+  cardDoctor: {
+    backgroundColor: COLORS.success,
+  },
+  cardDoctorDark: {
+    backgroundColor: COLORS.darkDoctor,
+  },
+  cardDoctorLight: {
+    backgroundColor: COLORS.lightDoctor,
+  },
   cardLabel: {
     fontSize: 14,
+    textAlign: 'center',
   },
-  cardPatient: {},
-  cardReview: {},
-  cardUser: {},
+  cardPatient: {
+    backgroundColor: COLORS.danger,
+  },
+  cardPatientDark: {
+    backgroundColor: COLORS.darkPatient,
+  },
+  cardPatientLight: {
+    backgroundColor: COLORS.lightPatient,
+  },
+  cardReview: {
+    backgroundColor: COLORS.emergency,
+  },
+  cardReviewDark: {
+    backgroundColor: COLORS.darkReview,
+  },
+  cardReviewLight: {
+    backgroundColor: COLORS.lightReview,
+  },
+  cardUser: {
+    backgroundColor: COLORS.primary,
+  },
+  cardUserDark: {
+    backgroundColor: COLORS.black,
+  },
+  cardUserLight: {
+    backgroundColor: COLORS.primary,
+  },
   cardValue: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 4,
   },
   container: {
     flex: 1,
@@ -380,23 +376,24 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    borderBottomColor: '#ddd',
+    borderBottomColor: COLORS.lightGray,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   iconContainer: {
+    alignItems: 'center',
+    backgroundColor: COLORS.whiteTransparent,
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
     marginBottom: 8,
-  },
-  noData: {
-    fontSize: 16,
-    marginTop: 50,
-    textAlign: 'center',
+    width: 48,
   },
   row: {
     flexDirection: 'row',
@@ -406,48 +403,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     padding: 16,
   },
-  tab: {
-    marginRight: 10,
-    padding: 10,
-  },
-  tabContainer: {
-    borderBottomColor: '#e1e1e1',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 15,
-  },
-  tabText: {
-    fontSize: 16,
-  },
   themeToggle: {
     padding: 8,
-  },
-  userEmail: {
-    color: '#666',
-    fontSize: 14,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userItem: {
-    alignItems: 'center',
-    borderBottomColor: '#e1e1e1',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    padding: 15,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  verifyButton: {
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  verifyButtonText: {
-    color: 'white',
-    fontSize: 12,
   },
 });

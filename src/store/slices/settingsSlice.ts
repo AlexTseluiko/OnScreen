@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { userStorage } from '../../utils/userStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppDispatch } from '../store';
+import { AppDispatch } from '../types';
 
 export interface SettingsState {
   theme: 'light' | 'dark';

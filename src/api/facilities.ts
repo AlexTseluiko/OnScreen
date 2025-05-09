@@ -101,4 +101,5 @@ export const facilitiesApi = {
   getFacilityReviews,
   createFacilityReview,
   uploadFacilityImage,
+  getAll: () => getFacilities(),
 };

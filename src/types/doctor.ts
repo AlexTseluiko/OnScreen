@@ -20,7 +20,9 @@ export interface DoctorRequest {
 
 export interface Doctor {
   _id: string;
+  id: string;
   userId: string;
+  name: string;
   specialization: string;
   experience: string;
   education: string;
@@ -29,6 +31,8 @@ export interface Doctor {
   rating: number;
   reviewsCount: number;
   isVerified: boolean;
+  photoUrl?: string;
+  clinic?: string;
   createdAt: string;
   updatedAt: string;
 }

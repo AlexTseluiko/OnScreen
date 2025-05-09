@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import { API_KEYS } from '../constants';
+import { API_KEYS } from '../constants/index';
 import { getMarkerColor } from '../utils/mapUtils';
 import { useTheme } from '../contexts/ThemeContext';
 import { Clinic } from '../types/clinic';

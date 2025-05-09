@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,7 +20,7 @@ export const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,30 +41,18 @@ export const ChatScreen: React.FC = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
+  const handleSend = () => {
+    if (messageText.trim()) {
       const message: Message = {
         id: Date.now().toString(),
-        text: newMessage,
+        text: messageText.trim(),
         senderId: user?.id || '',
+        receiverId: 'recipient-id', // TODO: Заменить на реальный ID получателя
         timestamp: new Date().toISOString(),
+        status: 'sent',
       };
-
-      // Здесь будет запрос к API для отправки сообщения
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
-      });
-
       setMessages([...messages, message]);
-      setNewMessage('');
-    } catch (error) {
-      console.error('Ошибка при отправке сообщения:', error);
+      setMessageText('');
     }
   };
 
@@ -107,19 +94,19 @@ export const ChatScreen: React.FC = () => {
           style={[styles.input, { color: theme.colors.text }]}
           placeholder={t('typeMessage')}
           placeholderTextColor={theme.colors.textSecondary}
-          value={newMessage}
-          onChangeText={setNewMessage}
+          value={messageText}
+          onChangeText={setMessageText}
           multiline
         />
         <TouchableOpacity
           style={[
             styles.sendButton,
             {
-              backgroundColor: newMessage.trim() ? theme.colors.primary : theme.colors.disabled,
+              backgroundColor: messageText.trim() ? theme.colors.primary : theme.colors.disabled,
             },
           ]}
-          onPress={sendMessage}
-          disabled={!newMessage.trim()}
+          onPress={handleSend}
+          disabled={!messageText.trim()}
         >
           <Text style={styles.sendButtonText}>{t('send')}</Text>
         </TouchableOpacity>
@@ -130,60 +117,59 @@ export const ChatScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: COLORS.light.background,
     flex: 1,
   },
-  messagesList: {
-    padding: 16,
+  input: {
+    backgroundColor: COLORS.light.whiteBackground,
+    borderRadius: 20,
+    flex: 1,
+  },
+  inputContainer: {
+    alignItems: 'center',
+    backgroundColor: COLORS.light.whiteBackground,
+    borderTopColor: COLORS.light.border,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    padding: 10,
   },
   messageContainer: {
-    maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 8,
+    alignItems: 'flex-end',
+    marginVertical: 5,
+    paddingHorizontal: 10,
   },
-  sentMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: COLORS.primary,
+  messageText: {
+    color: COLORS.light.text,
+    fontSize: 16,
+  },
+  messagesList: {
+    flex: 1,
+    padding: 10,
   },
   receivedMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.secondary,
-  },
-  messageText: {
-    fontSize: 16,
-    color: COLORS.white,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: COLORS.white,
-    opacity: 0.7,
-    marginTop: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    fontSize: 16,
+    backgroundColor: COLORS.light.lightGray,
   },
   sendButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    paddingHorizontal: 16,
+    alignItems: 'center',
+    backgroundColor: COLORS.light.primary,
+    borderRadius: 25,
+    height: 50,
     justifyContent: 'center',
+    marginLeft: 10,
+    width: 50,
   },
   sendButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: COLORS.light.whiteText,
+    fontSize: 20,
+  },
+  sentMessage: {
+    alignSelf: 'flex-end',
+    backgroundColor: COLORS.light.primary,
+  },
+  timestamp: {
+    color: COLORS.light.whiteText,
+    fontSize: 12,
+    marginTop: 4,
   },
 });

@@ -7,31 +7,31 @@ import { LoginScreen } from '../screens/LoginScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { FacilitiesMapScreen } from '../screens/FacilitiesMapScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import HomeScreen from '../screens/HomeScreen';
+import { HomeScreen } from '../screens/HomeScreen';
 import { ArticlesScreen } from '../screens/ArticlesScreen';
 import { ChatScreen } from '../screens/ChatScreen';
 import { ScreeningProgramsScreen } from '../screens/ScreeningProgramsScreen';
 import { ClinicDetailsScreen } from '../screens/ClinicDetailsScreen';
 import { FeedbackScreen } from '../screens/FeedbackScreen';
-import { userStorage } from '../utils/userStorage';
-import { View, ActivityIndicator, Alert } from 'react-native';
+import { View, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { EmergencyAIAssistantScreen } from '../screens/EmergencyAIAssistantScreen';
 import { AdminUsersScreen } from '../screens/AdminUsersScreen';
-import { DoctorRequestsScreen, DoctorRequestDetailsScreen } from '../screens/DoctorRequestsScreen';
+import { DoctorRequestsScreen } from '../screens/DoctorRequestsScreen';
 import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
 import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 export type RootStackParamList = {
   Home: undefined;
   Facilities: undefined;
   FacilityDetails: { facilityId: string };
-  ClinicDetails: { clinicId: string } | { clinic: any };
+  ClinicDetails: { clinicId: string } | { clinic: Record<string, unknown> };
   Register: undefined;
   Login: undefined;
   ForgotPassword: undefined;
@@ -46,7 +46,6 @@ export type RootStackParamList = {
   EmergencyAIAssistant: undefined;
   AdminUsers: undefined;
   DoctorRequests: undefined;
-  DoctorRequestDetails: { requestId: string };
   ChangePassword: undefined;
   Favorites: undefined;
   Notifications: undefined;
@@ -54,13 +53,20 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+const styles = StyleSheet.create({
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+});
+
 export const AppNavigator: React.FC = () => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
-  const { user, authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // Когда контекст авторизации загружен, снимаем состояние загрузки
     if (!authLoading) {
       setIsLoading(false);
       console.log(
@@ -71,23 +77,20 @@ export const AppNavigator: React.FC = () => {
   }, [authLoading, user]);
 
   useEffect(() => {
-    // Отслеживаем изменения авторизации для обновления навигации при выходе
     if (!authLoading) {
       console.log(
         'Статус авторизации изменился. Пользователь:',
         user ? 'авторизован' : 'не авторизован'
       );
 
-      // Если пользователь не авторизован, перенаправляем на страницу входа
       if (!user && !isLoading) {
         console.log('Пользователь не авторизован, перенаправление на экран входа');
       }
     }
   }, [user, authLoading, isLoading]);
 
-  // Проверка прав доступа к административным экранам
-  const checkAdminAccess = (navigation: any) => {
-    if (!user || user.role !== 'admin') {
+  const checkAdminAccess = (navigation: StackNavigationProp<RootStackParamList>) => {
+    if (!user || user.role !== 'ADMIN') {
       Alert.alert('Доступ запрещен', 'У вас нет прав для доступа к этому разделу');
       navigation.goBack();
       return false;
@@ -97,7 +100,7 @@ export const AppNavigator: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
@@ -248,29 +251,6 @@ export const AppNavigator: React.FC = () => {
           component={DoctorRequestsScreen}
           options={{
             title: t('admin.doctorRequests'),
-          }}
-          listeners={({ navigation }) => ({
-            beforeRemove: e => {
-              if (!checkAdminAccess(navigation)) {
-                e.preventDefault();
-              }
-            },
-            focus: () => {
-              checkAdminAccess(navigation);
-            },
-          })}
-        />
-        <Stack.Screen
-          name="DoctorRequestDetails"
-          component={DoctorRequestDetailsScreen}
-          options={{
-            title: t('admin.doctorRequestDetails'),
-            cardStyle: { backgroundColor: '#fff' },
-            cardStyleInterpolator: ({ current: { progress } }) => ({
-              cardStyle: {
-                opacity: progress,
-              },
-            }),
           }}
           listeners={({ navigation }) => ({
             beforeRemove: e => {

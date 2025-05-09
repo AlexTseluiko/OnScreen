@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { COLORS } from '../theme/colors';
 
 // Интерфейс для рабочих часов
 interface WorkingHours {
@@ -65,7 +66,7 @@ export const DoctorProfileForm = ({
   const { t } = useTranslation();
 
   // Проверяем наличие темного режима
-  const isDarkMode = theme.colors.background === '#121212';
+  const isDarkMode = theme.colors.background === COLORS.dark.background;
 
   // Инициализируем данные формы
   const [formData, setFormData] = useState<DoctorFormData>({
@@ -91,7 +92,6 @@ export const DoctorProfileForm = ({
     profilePhoto: null,
   });
 
-  const [loading, setLoading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -108,20 +108,27 @@ export const DoctorProfileForm = ({
   }, [initialData]);
 
   // Обработчики для полей формы
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (
+    field: keyof DoctorFormData,
+    value: DoctorFormData[keyof DoctorFormData]
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleWorkingHourChange = (day: string, field: string, value: any) => {
+  const handleWorkingHourChange = (
+    day: keyof DoctorFormData['workingHours'],
+    field: keyof WorkingHours,
+    value: string | boolean
+  ) => {
     setFormData(prev => ({
       ...prev,
       workingHours: {
         ...prev.workingHours,
         [day]: {
-          ...prev.workingHours[day as keyof typeof prev.workingHours],
+          ...prev.workingHours[day],
           [field]: value,
         },
       },
@@ -246,7 +253,7 @@ export const DoctorProfileForm = ({
     }
   };
 
-  if (loading) {
+  if (savingProfile) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -271,7 +278,7 @@ export const DoctorProfileForm = ({
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
+      style={styles.flex1}
     >
       <ScrollView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -292,8 +299,13 @@ export const DoctorProfileForm = ({
               </View>
             )}
             {isEditable && (
-              <View style={styles.editPhotoButton}>
-                <Ionicons name="camera" size={20} color="white" />
+              <View
+                style={[
+                  styles.editPhotoButton,
+                  { backgroundColor: COLORS.dark.semiTransparentBlack },
+                ]}
+              >
+                <Ionicons name="camera" size={20} color={COLORS.light.whiteText} />
               </View>
             )}
           </TouchableOpacity>
@@ -322,13 +334,15 @@ export const DoctorProfileForm = ({
               style={[
                 styles.input,
                 {
-                  backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                  backgroundColor: isDarkMode
+                    ? COLORS.dark.inputBackground
+                    : COLORS.light.inputBackground,
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
                 },
               ]}
               value={formData.specialization}
-              onChangeText={value => handleChange('specialization', value)}
+              onChangeText={value => handleChange('specialization', value as string)}
               placeholder={t('profile.doctor.specializationPlaceholder', 'Например: Кардиолог')}
               placeholderTextColor={theme.colors.text + '80'}
               editable={isEditable}
@@ -344,7 +358,9 @@ export const DoctorProfileForm = ({
                 styles.input,
                 styles.textArea,
                 {
-                  backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                  backgroundColor: isDarkMode
+                    ? COLORS.dark.inputBackground
+                    : COLORS.light.inputBackground,
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
                 },
@@ -352,7 +368,7 @@ export const DoctorProfileForm = ({
               multiline
               numberOfLines={5}
               value={formData.bio}
-              onChangeText={value => handleChange('bio', value)}
+              onChangeText={value => handleChange('bio', value as string)}
               placeholder={t(
                 'profile.doctor.bioPlaceholder',
                 'Краткая информация о себе и своем опыте...'
@@ -370,13 +386,15 @@ export const DoctorProfileForm = ({
               style={[
                 styles.input,
                 {
-                  backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                  backgroundColor: isDarkMode
+                    ? COLORS.dark.inputBackground
+                    : COLORS.light.inputBackground,
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
                 },
               ]}
               value={formData.education}
-              onChangeText={value => handleChange('education', value)}
+              onChangeText={value => handleChange('education', value as string)}
               placeholder={t('profile.doctor.educationPlaceholder', 'Ваше образование')}
               placeholderTextColor={theme.colors.text + '80'}
               editable={isEditable}
@@ -391,13 +409,15 @@ export const DoctorProfileForm = ({
               style={[
                 styles.input,
                 {
-                  backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                  backgroundColor: isDarkMode
+                    ? COLORS.dark.inputBackground
+                    : COLORS.light.inputBackground,
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
                 },
               ]}
               value={formData.experience}
-              onChangeText={value => handleChange('experience', value)}
+              onChangeText={value => handleChange('experience', value as string)}
               placeholder={t('profile.doctor.experiencePlaceholder', 'Например: 10')}
               placeholderTextColor={theme.colors.text + '80'}
               keyboardType="number-pad"
@@ -413,13 +433,15 @@ export const DoctorProfileForm = ({
               style={[
                 styles.input,
                 {
-                  backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                  backgroundColor: isDarkMode
+                    ? COLORS.dark.inputBackground
+                    : COLORS.light.inputBackground,
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
                 },
               ]}
               value={formData.consultationFee}
-              onChangeText={value => handleChange('consultationFee', value)}
+              onChangeText={value => handleChange('consultationFee', value as string)}
               placeholder={t('profile.doctor.consultationFeePlaceholder', 'Например: 2000')}
               placeholderTextColor={theme.colors.text + '80'}
               keyboardType="number-pad"
@@ -441,7 +463,9 @@ export const DoctorProfileForm = ({
                   styles.input,
                   styles.dynamicInput,
                   {
-                    backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                    backgroundColor: isDarkMode
+                      ? COLORS.dark.inputBackground
+                      : COLORS.light.inputBackground,
                     color: theme.colors.text,
                     borderColor: theme.colors.border,
                   },
@@ -490,7 +514,9 @@ export const DoctorProfileForm = ({
                   styles.input,
                   styles.dynamicInput,
                   {
-                    backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                    backgroundColor: isDarkMode
+                      ? COLORS.dark.inputBackground
+                      : COLORS.light.inputBackground,
                     color: theme.colors.text,
                     borderColor: theme.colors.border,
                   },
@@ -551,7 +577,7 @@ export const DoctorProfileForm = ({
                   ]}
                   onPress={() =>
                     handleWorkingHourChange(
-                      day.key as string,
+                      day.key as keyof typeof formData.workingHours,
                       'isWorking',
                       !formData.workingHours[day.key as keyof typeof formData.workingHours]
                         .isWorking
@@ -572,7 +598,7 @@ export const DoctorProfileForm = ({
                               : 0,
                           },
                         ],
-                        backgroundColor: 'white',
+                        backgroundColor: COLORS.light.whiteBackground,
                       },
                     ]}
                   />
@@ -589,7 +615,9 @@ export const DoctorProfileForm = ({
                       style={[
                         styles.timeInput,
                         {
-                          backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                          backgroundColor: isDarkMode
+                            ? COLORS.dark.inputBackground
+                            : COLORS.light.inputBackground,
                           color: theme.colors.text,
                           borderColor: theme.colors.border,
                         },
@@ -597,7 +625,13 @@ export const DoctorProfileForm = ({
                       value={
                         formData.workingHours[day.key as keyof typeof formData.workingHours].start
                       }
-                      onChangeText={value => handleWorkingHourChange(day.key, 'start', value)}
+                      onChangeText={value =>
+                        handleWorkingHourChange(
+                          day.key as keyof typeof formData.workingHours,
+                          'start',
+                          value
+                        )
+                      }
                       placeholder="09:00"
                       placeholderTextColor={theme.colors.text + '80'}
                       editable={isEditable}
@@ -614,7 +648,9 @@ export const DoctorProfileForm = ({
                       style={[
                         styles.timeInput,
                         {
-                          backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                          backgroundColor: isDarkMode
+                            ? COLORS.dark.inputBackground
+                            : COLORS.light.inputBackground,
                           color: theme.colors.text,
                           borderColor: theme.colors.border,
                         },
@@ -622,7 +658,13 @@ export const DoctorProfileForm = ({
                       value={
                         formData.workingHours[day.key as keyof typeof formData.workingHours].end
                       }
-                      onChangeText={value => handleWorkingHourChange(day.key, 'end', value)}
+                      onChangeText={value =>
+                        handleWorkingHourChange(
+                          day.key as keyof typeof formData.workingHours,
+                          'end',
+                          value
+                        )
+                      }
                       placeholder="18:00"
                       placeholderTextColor={theme.colors.text + '80'}
                       editable={isEditable}
@@ -671,7 +713,7 @@ export const DoctorProfileForm = ({
                   styles.toggleKnob,
                   {
                     transform: [{ translateX: formData.acceptingNewPatients ? 18 : 0 }],
-                    backgroundColor: 'white',
+                    backgroundColor: COLORS.light.whiteBackground,
                   },
                 ]}
               />
@@ -709,7 +751,7 @@ export const DoctorProfileForm = ({
                   styles.toggleKnob,
                   {
                     transform: [{ translateX: formData.telemedicineAvailable ? 18 : 0 }],
-                    backgroundColor: 'white',
+                    backgroundColor: COLORS.light.whiteBackground,
                   },
                 ]}
               />
@@ -728,7 +770,9 @@ export const DoctorProfileForm = ({
               styles.input,
               styles.textArea,
               {
-                backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+                backgroundColor: isDarkMode
+                  ? COLORS.dark.inputBackground
+                  : COLORS.light.inputBackground,
                 color: theme.colors.text,
                 borderColor: theme.colors.border,
               },
@@ -736,7 +780,7 @@ export const DoctorProfileForm = ({
             multiline
             numberOfLines={3}
             value={formData.clinicAddress}
-            onChangeText={value => handleChange('clinicAddress', value)}
+            onChangeText={value => handleChange('clinicAddress', value as string)}
             placeholder={t('profile.doctor.clinicAddressPlaceholder', 'Полный адрес клиники')}
             placeholderTextColor={theme.colors.text + '80'}
             editable={isEditable}
@@ -763,15 +807,17 @@ export const DoctorProfileForm = ({
                 styles.button,
                 styles.saveButton,
                 { backgroundColor: theme.colors.primary },
-                savingProfile && { opacity: 0.7 },
+                savingProfile && { opacity: COLORS.light.opacity70 },
               ]}
               onPress={handleSubmit}
               disabled={savingProfile}
             >
               {savingProfile ? (
-                <ActivityIndicator color="white" size="small" />
+                <ActivityIndicator color={COLORS.light.whiteText} size="small" />
               ) : (
-                <Text style={styles.saveButtonText}>{t('common.save', 'Сохранить')}</Text>
+                <Text style={[styles.saveButtonText, { color: COLORS.light.whiteText }]}>
+                  {t('common.save', 'Сохранить')}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -852,7 +898,7 @@ const styles = StyleSheet.create({
   },
   editPhotoButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: COLORS.dark.semiTransparentBlack,
     borderRadius: 15,
     bottom: 0,
     height: 30,
@@ -860,6 +906,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     width: 30,
+  },
+  flex1: {
+    flex: 1,
   },
   formRow: {
     marginBottom: 16,
@@ -947,7 +996,7 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   saveButtonText: {
-    color: 'white',
+    color: COLORS.light.whiteText,
     fontSize: 16,
     fontWeight: '500',
   },

@@ -1,20 +1,15 @@
-export interface Profile {
-  id: string;
-  userId: string;
-  role: string;
-  name: string;
-  email: string;
-  phone?: string;
-  photoUrl?: string;
-  specialization?: string;
-  experience?: number;
-  rating?: number;
-  clinic?: string;
+import { User } from './user';
+
+export interface Profile extends User {
+  birthDate?: string;
+  gender?: string;
   address?: string;
-  workingHours?: string;
-  languages?: string[];
-  education?: string[];
-  certifications?: string[];
-  createdAt: string;
-  updatedAt: string;
+  medicalHistory?: string[];
+  allergies?: string[];
+  medications?: string[];
+  emergencyContacts?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  }[];
 }

@@ -14,12 +14,16 @@ import { COLORS } from '../constants';
 import { useTranslation } from 'react-i18next';
 import { feedbackApi } from '../api/feedback';
 import { useTheme } from '../theme/ThemeContext';
-import { useAppSelector } from '../store';
+
+type IconName =
+  | 'bulb-outline'
+  | 'bug-outline'
+  | 'help-circle-outline'
+  | 'information-circle-outline';
 
 export const FeedbackScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const darkMode = useAppSelector(state => state.settings.darkMode);
 
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackType, setFeedbackType] = useState<'suggestion' | 'bug' | 'other'>('suggestion');
@@ -35,8 +39,7 @@ export const FeedbackScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      // Отправка обратной связи на сервер
-      const response = await feedbackApi.sendFeedback({
+      await feedbackApi.sendFeedback({
         feedbackText,
         feedbackType,
         email: email.trim() || undefined,
@@ -58,7 +61,7 @@ export const FeedbackScreen: React.FC = () => {
 
   const renderFeedbackTypeButton = (
     type: 'suggestion' | 'bug' | 'other',
-    icon: string,
+    icon: IconName,
     label: string
   ) => (
     <TouchableOpacity
@@ -73,7 +76,7 @@ export const FeedbackScreen: React.FC = () => {
       onPress={() => setFeedbackType(type)}
     >
       <Ionicons
-        name={icon as any}
+        name={icon}
         size={24}
         color={feedbackType === type ? COLORS.white : theme.colors.primary}
       />
@@ -116,7 +119,7 @@ export const FeedbackScreen: React.FC = () => {
             {
               backgroundColor: theme.colors.card,
               color: theme.colors.text,
-              borderColor: darkMode ? '#555' : '#e0e0e0',
+              borderColor: theme.colors.border,
             },
           ]}
           multiline
@@ -139,7 +142,7 @@ export const FeedbackScreen: React.FC = () => {
             {
               backgroundColor: theme.colors.card,
               color: theme.colors.text,
-              borderColor: darkMode ? '#555' : '#e0e0e0',
+              borderColor: theme.colors.border,
             },
           ]}
           placeholder={t('feedback.emailPlaceholder')}
@@ -201,8 +204,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   input: {
-    backgroundColor: COLORS.white,
-    borderColor: '#e0e0e0',
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
@@ -235,8 +236,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   textArea: {
-    backgroundColor: COLORS.white,
-    borderColor: '#e0e0e0',
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
@@ -245,22 +244,21 @@ const styles = StyleSheet.create({
   },
   typeButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.primary,
     borderRadius: 8,
     borderWidth: 1,
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginHorizontal: 4,
-    paddingVertical: 12,
+    padding: 12,
   },
   typeButtonText: {
-    color: COLORS.primary,
     fontSize: 14,
-    marginTop: 8,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   typesContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 24,
   },
 });
