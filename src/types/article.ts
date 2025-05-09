@@ -16,4 +16,4 @@ export interface Article {
     avatar?: string;
   };
   isBookmarked?: boolean;
-} 
+}

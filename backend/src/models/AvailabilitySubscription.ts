@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export enum SubscriptionStatus {
   ACTIVE = 'ACTIVE',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export interface IAvailabilitySubscription extends Document {
@@ -28,14 +28,18 @@ const availabilitySubscriptionSchema = new Schema<IAvailabilitySubscription>(
       ref: 'Doctor',
       required: true,
     },
-    preferredDates: [{
-      type: Date,
-      required: true,
-    }],
-    preferredTimes: [{
-      type: String,
-      required: true,
-    }],
+    preferredDates: [
+      {
+        type: Date,
+        required: true,
+      },
+    ],
+    preferredTimes: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     status: {
       type: String,
       enum: Object.values(SubscriptionStatus),
@@ -58,4 +62,4 @@ availabilitySubscriptionSchema.index({ status: 1, lastNotified: 1 });
 export const AvailabilitySubscription = mongoose.model<IAvailabilitySubscription>(
   'AvailabilitySubscription',
   availabilitySubscriptionSchema
-); 
+);

@@ -41,23 +41,39 @@ export interface ToggleUserStatusParams {
 
 export interface ApiClient {
   // Users
-  getUsers: (params: GetUsersParams) => Promise<ApiResponse<{ users: User[]; pagination?: PaginationData }>>;
+  getUsers: (
+    params: GetUsersParams
+  ) => Promise<ApiResponse<{ users: User[]; pagination?: PaginationData }>>;
   updateUserRole: (params: UpdateUserRoleParams) => Promise<void>;
   toggleUserStatus: (params: ToggleUserStatusParams) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
 
   // Articles
-  getArticles: (params: GetArticlesParams) => Promise<ApiResponse<{ articles: Article[]; pagination?: PaginationData }>>;
+  getArticles: (
+    params: GetArticlesParams
+  ) => Promise<ApiResponse<{ articles: Article[]; pagination?: PaginationData }>>;
   getArticleById: (id: string) => Promise<ApiResponse<{ article: Article }>>;
-  createArticle: (article: Omit<Article, '_id' | 'createdAt' | 'updatedAt'>) => Promise<ApiResponse<{ article: Article }>>;
-  updateArticle: (id: string, article: Partial<Article>) => Promise<ApiResponse<{ article: Article }>>;
+  createArticle: (
+    article: Omit<Article, '_id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<ApiResponse<{ article: Article }>>;
+  updateArticle: (
+    id: string,
+    article: Partial<Article>
+  ) => Promise<ApiResponse<{ article: Article }>>;
   deleteArticle: (id: string) => Promise<void>;
 
   // Clinics
-  getClinics: (params: GetClinicsParams) => Promise<ApiResponse<{ clinics: Clinic[]; pagination?: PaginationData }>>;
+  getClinics: (
+    params: GetClinicsParams
+  ) => Promise<ApiResponse<{ clinics: Clinic[]; pagination?: PaginationData }>>;
   getClinicById: (id: string) => Promise<ApiResponse<{ clinic: Clinic }>>;
-  createClinic: (clinic: Omit<Clinic, '_id' | 'createdAt' | 'updatedAt'>) => Promise<ApiResponse<{ clinic: Clinic }>>;
+  createClinic: (
+    clinic: Omit<Clinic, '_id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<ApiResponse<{ clinic: Clinic }>>;
   updateClinic: (id: string, clinic: Partial<Clinic>) => Promise<ApiResponse<{ clinic: Clinic }>>;
   deleteClinic: (id: string) => Promise<void>;
-  createReview: (clinicId: string, review: CreateReviewParams) => Promise<ApiResponse<{ review: any }>>;
-} 
+  createReview: (
+    clinicId: string,
+    review: CreateReviewParams
+  ) => Promise<ApiResponse<{ review: any }>>;
+}

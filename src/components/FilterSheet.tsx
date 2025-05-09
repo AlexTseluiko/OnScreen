@@ -62,7 +62,7 @@ const FilterSheet = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{t('filters.title')}</Text>
-      
+
       {/* Search */}
       <View style={styles.searchContainer}>
         <TextInput
@@ -83,14 +83,16 @@ const FilterSheet = () => {
                 key={specialty}
                 style={[
                   styles.filterButton,
-                  filters.specialties.includes(specialty) && styles.activeFilter
+                  filters.specialties.includes(specialty) && styles.activeFilter,
                 ]}
                 onPress={() => handleSpecialtyToggle(specialty)}
               >
-                <Text style={[
-                  styles.filterText,
-                  filters.specialties.includes(specialty) && styles.activeFilterText
-                ]}>
+                <Text
+                  style={[
+                    styles.filterText,
+                    filters.specialties.includes(specialty) && styles.activeFilterText,
+                  ]}
+                >
                   {t(`specialties.${specialty}`)}
                 </Text>
               </TouchableOpacity>
@@ -109,14 +111,16 @@ const FilterSheet = () => {
                 key={service}
                 style={[
                   styles.filterButton,
-                  filters.services.includes(service) && styles.activeFilter
+                  filters.services.includes(service) && styles.activeFilter,
                 ]}
                 onPress={() => handleServiceToggle(service)}
               >
-                <Text style={[
-                  styles.filterText,
-                  filters.services.includes(service) && styles.activeFilterText
-                ]}>
+                <Text
+                  style={[
+                    styles.filterText,
+                    filters.services.includes(service) && styles.activeFilterText,
+                  ]}
+                >
                   {t(`services.${service}`)}
                 </Text>
               </TouchableOpacity>
@@ -132,16 +136,12 @@ const FilterSheet = () => {
           {[1, 2, 3, 4, 5].map(rating => (
             <TouchableOpacity
               key={rating}
-              style={[
-                styles.ratingButton,
-                filters.rating === rating && styles.activeRating
-              ]}
+              style={[styles.ratingButton, filters.rating === rating && styles.activeRating]}
               onPress={() => handleRatingChange(rating)}
             >
-              <Text style={[
-                styles.ratingText,
-                filters.rating === rating && styles.activeRatingText
-              ]}>
+              <Text
+                style={[styles.ratingText, filters.rating === rating && styles.activeRatingText]}
+              >
                 {rating}+
               </Text>
             </TouchableOpacity>
@@ -156,16 +156,15 @@ const FilterSheet = () => {
           {['openNow', '24/7', 'all'].map(hours => (
             <TouchableOpacity
               key={hours}
-              style={[
-                styles.hoursButton,
-                filters.operatingHours === hours && styles.activeHours
-              ]}
+              style={[styles.hoursButton, filters.operatingHours === hours && styles.activeHours]}
               onPress={() => handleOperatingHoursChange(hours as 'openNow' | '24/7' | 'all')}
             >
-              <Text style={[
-                styles.hoursText,
-                filters.operatingHours === hours && styles.activeHoursText
-              ]}>
+              <Text
+                style={[
+                  styles.hoursText,
+                  filters.operatingHours === hours && styles.activeHoursText,
+                ]}
+              >
                 {t(`hours.${hours}`)}
               </Text>
             </TouchableOpacity>
@@ -177,30 +176,87 @@ const FilterSheet = () => {
 };
 
 const styles = StyleSheet.create({
+  activeFilter: {
+    backgroundColor: COLORS.primary,
+  },
+  activeFilterText: {
+    color: COLORS.background,
+  },
+  activeHours: {
+    backgroundColor: COLORS.primary,
+  },
+  activeHoursText: {
+    color: COLORS.background,
+  },
+  activeRating: {
+    backgroundColor: COLORS.primary,
+  },
+  activeRatingText: {
+    color: COLORS.background,
+  },
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: COLORS.background,
-    padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    bottom: 0,
+    left: 0,
     maxHeight: '80%',
+    padding: 20,
+    position: 'absolute',
+    right: 0,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+  filterButton: {
+    borderColor: COLORS.primary,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  filterText: {
+    color: COLORS.primary,
+  },
+  hoursButton: {
+    borderColor: COLORS.primary,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  hoursContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  hoursText: {
+    color: COLORS.primary,
+  },
+  ratingButton: {
+    borderColor: COLORS.primary,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  ratingText: {
+    color: COLORS.primary,
   },
   searchContainer: {
     marginBottom: 15,
   },
   searchInput: {
     backgroundColor: '#f5f5f5',
-    padding: 10,
     borderRadius: 10,
     fontSize: 16,
+    padding: 10,
   },
   section: {
     marginBottom: 15,
@@ -210,68 +266,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  filterContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  filterButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    marginRight: 10,
-  },
-  activeFilter: {
-    backgroundColor: COLORS.primary,
-  },
-  filterText: {
-    color: COLORS.primary,
-  },
-  activeFilterText: {
-    color: COLORS.background,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  ratingButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  activeRating: {
-    backgroundColor: COLORS.primary,
-  },
-  ratingText: {
-    color: COLORS.primary,
-  },
-  activeRatingText: {
-    color: COLORS.background,
-  },
-  hoursContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  hoursButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  activeHours: {
-    backgroundColor: COLORS.primary,
-  },
-  hoursText: {
-    color: COLORS.primary,
-  },
-  activeHoursText: {
-    color: COLORS.background,
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
 });
 
-export default FilterSheet; 
+export default FilterSheet;

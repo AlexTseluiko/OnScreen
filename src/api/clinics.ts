@@ -1,51 +1,39 @@
 import { apiClient } from './apiClient';
-import { MedicalFacility } from '../types/medical';
-
-export interface Clinic {
-  id: string;
-  name: string;
-  address: string;
-  description: string;
-  rating: number;
-  reviews: number;
-  type: MedicalFacility['type'];
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  services: string[];
-  workingHours: {
-    [key: string]: {
-      open: string;
-      close: string;
-    };
-  };
-  images: string[];
-}
+import { ApiResponse } from '../types/api';
+import { Clinic } from '../types/clinic';
 
 export interface ClinicSearchParams {
   search?: string;
-  type?: MedicalFacility['type'];
+  type?: string;
   rating?: number;
   page?: number;
   limit?: number;
+  specialties?: string[];
+}
+
+export interface GetClinicsResponse {
+  clinics: Clinic[];
+  total: number;
 }
 
 export const clinicsApi = {
   async getAll(params: ClinicSearchParams = {}): Promise<Clinic[]> {
     const queryParams = new URLSearchParams();
-    
+
     if (params.search) queryParams.append('search', params.search);
     if (params.type) queryParams.append('type', params.type);
     if (params.rating) queryParams.append('rating', params.rating.toString());
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
-    
+    if (params.specialties) {
+      params.specialties.forEach(specialty => queryParams.append('specialties', specialty));
+    }
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/clinics?${queryString}` : '/clinics';
-    
+
     try {
-      const response = await apiClient.get<{ clinics: Clinic[], total: number }>(endpoint);
+      const response = await apiClient.get<ApiResponse<GetClinicsResponse>>(endpoint);
       return response.data.clinics || [];
     } catch (error) {
       console.error('Error fetching clinics:', error);
@@ -54,17 +42,20 @@ export const clinicsApi = {
   },
 
   async getById(id: string): Promise<Clinic> {
-    const response = await apiClient.get<Clinic>(`/clinics/${id}`);
-    return response.data;
+    const response = await apiClient.get<ApiResponse<{ clinic: Clinic }>>(`/clinics/${id}`);
+    return response.data.clinic;
   },
 
-  async createReview(clinicId: string, data: {
-    rating: number;
-    text: string;
-  }): Promise<void> {
+  async createReview(
+    clinicId: string,
+    data: {
+      rating: number;
+      text: string;
+    }
+  ): Promise<void> {
     await apiClient.post(`/reviews`, {
       clinic: clinicId,
-      ...data
+      ...data,
     });
   },
 
@@ -74,12 +65,12 @@ export const clinicsApi = {
       uri: imageUri,
       type: 'image/jpeg',
       name: 'image.jpg',
-    } as any);
+    } as unknown as Blob);
 
     await apiClient.post(`/clinics/${clinicId}/images`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-  }
-}; 
+  },
+};

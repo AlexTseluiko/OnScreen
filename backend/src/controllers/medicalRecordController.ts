@@ -1,208 +1,199 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { MedicalRecord } from '../models/MedicalRecord';
-import { User, UserRole } from '../models/User';
-import { createNotification, NotificationType } from '../utils/notificationUtils';
+import { UserRole } from '../types/user';
+import { createNotification, NotificationType } from '../utils/notifications';
+import { AuthRequest } from '../middleware/auth';
 
-// Создание медицинской карты
-export const createMedicalRecord = async (req: Request, res: Response) => {
+// Получение списка медицинских записей
+export const getMedicalRecords = async (req: AuthRequest, res: Response) => {
   try {
-    const {
-      patientId,
-      clinicId,
-      diagnosis,
-      treatment,
-      medications,
-      notes,
-      attachments,
-      isPrivate,
-    } = req.body;
+    const { page = 1, limit = 10, patientId, doctorId, clinicId } = req.query;
+    const query: Record<string, unknown> = {};
 
-    const doctorId = req.user.id;
-
-    // Проверяем права доступа
-    if (req.user.role !== UserRole.DOCTOR && req.user.role !== UserRole.ADMIN) {
-      return res.status(403).json({ error: 'Нет прав для создания медицинской карты' });
+    if (patientId) {
+      query.patient = patientId;
     }
 
-    // Создаем медицинскую карту
-    const medicalRecord = await MedicalRecord.create({
-      patient: patientId,
-      doctor: doctorId,
-      clinic: clinicId,
-      date: new Date(),
-      diagnosis,
-      treatment,
-      medications,
-      notes,
-      attachments,
-      isPrivate,
-    });
-
-    // Отправляем уведомление пациенту
-    await createNotification(
-      medicalRecord.patient.toString(),
-      NotificationType.MEDICAL_RECORD,
-      'Новая медицинская запись',
-      `Добавлена новая медицинская запись от ${req.user.firstName} ${req.user.lastName}`,
-      { recordId: medicalRecord._id }
-    );
-
-    res.status(201).json(medicalRecord);
-  } catch (error) {
-    console.error('Create medical record error:', error);
-    res.status(500).json({ error: 'Ошибка при создании медицинской карты' });
-  }
-};
-
-// Получение медицинских карт пациента
-export const getPatientMedicalRecords = async (req: Request, res: Response) => {
-  try {
-    const { patientId } = req.params;
-    const userId = req.user.id;
-
-    // Проверяем права доступа
-    if (
-      userId !== patientId &&
-      req.user.role !== UserRole.DOCTOR &&
-      req.user.role !== UserRole.ADMIN
-    ) {
-      return res.status(403).json({ error: 'Нет прав для просмотра медицинских карт' });
+    if (doctorId) {
+      query.doctor = doctorId;
     }
 
-    const query: any = { patient: patientId };
-
-    // Если пользователь не врач и не админ, показываем только публичные записи
-    if (req.user.role === UserRole.PATIENT) {
-      query.isPrivate = false;
+    if (clinicId) {
+      query.clinic = clinicId;
     }
 
-    const medicalRecords = await MedicalRecord.find(query)
+    // Если пользователь не администратор, показываем только его записи
+    if (req.user?.role !== UserRole.ADMIN) {
+      query.patient = req.user?.id;
+    }
+
+    const records = await MedicalRecord.find(query)
       .sort({ date: -1 })
-      .populate('doctor', 'firstName lastName')
-      .populate('clinic', 'name');
-
-    res.json(medicalRecords);
-  } catch (error) {
-    console.error('Get patient medical records error:', error);
-    res.status(500).json({ error: 'Ошибка при получении медицинских карт' });
-  }
-};
-
-// Получение медицинской карты по ID
-export const getMedicalRecordById = async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    const userId = req.user.id;
-
-    const medicalRecord = await MedicalRecord.findById(recordId)
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit))
       .populate('patient', 'firstName lastName')
       .populate('doctor', 'firstName lastName')
       .populate('clinic', 'name');
 
-    if (!medicalRecord) {
-      return res.status(404).json({ error: 'Медицинская карта не найдена' });
+    const total = await MedicalRecord.countDocuments(query);
+
+    res.json({
+      records,
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)),
+    });
+  } catch (error) {
+    console.error('Error getting medical records:', error);
+    res.status(500).json({ message: 'Ошибка при получении медицинских записей' });
+  }
+};
+
+// Получение медицинской записи по ID
+export const getMedicalRecordById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const record = await MedicalRecord.findById(id)
+      .populate('patient', 'firstName lastName')
+      .populate('doctor', 'firstName lastName')
+      .populate('clinic', 'name');
+
+    if (!record) {
+      return res.status(404).json({ message: 'Медицинская запись не найдена' });
     }
 
     // Проверяем права доступа
     if (
-      userId !== medicalRecord.patient.toString() &&
-      req.user.role !== UserRole.DOCTOR &&
-      req.user.role !== UserRole.ADMIN
+      req.user?.role !== UserRole.ADMIN &&
+      record.patient.toString() !== req.user?.id &&
+      record.doctor.toString() !== req.user?.id
     ) {
-      return res.status(403).json({ error: 'Нет прав для просмотра медицинской карты' });
+      return res.status(403).json({ message: 'У вас нет прав на просмотр этой записи' });
     }
 
-    // Если запись приватная и пользователь не врач/админ, запрещаем доступ
-    if (
-      medicalRecord.isPrivate &&
-      req.user.role === UserRole.PATIENT &&
-      userId !== medicalRecord.patient.toString()
-    ) {
-      return res.status(403).json({ error: 'Нет прав для просмотра этой записи' });
-    }
-
-    res.json(medicalRecord);
+    res.json(record);
   } catch (error) {
-    console.error('Get medical record by ID error:', error);
-    res.status(500).json({ error: 'Ошибка при получении медицинской карты' });
+    console.error('Error getting medical record:', error);
+    res.status(500).json({ message: 'Ошибка при получении медицинской записи' });
   }
 };
 
-// Обновление медицинской карты
-export const updateMedicalRecord = async (req: Request, res: Response) => {
+// Создание новой медицинской записи
+export const createMedicalRecord = async (req: AuthRequest, res: Response) => {
   try {
-    const { recordId } = req.params;
     const {
+      patientId,
+      doctorId,
+      clinicId,
+      date,
       diagnosis,
       treatment,
       medications,
       notes,
-      attachments,
       isPrivate,
     } = req.body;
 
-    const medicalRecord = await MedicalRecord.findById(recordId);
-    if (!medicalRecord) {
-      return res.status(404).json({ error: 'Медицинская карта не найдена' });
-    }
-
     // Проверяем права доступа
-    if (
-      req.user.id !== medicalRecord.doctor.toString() &&
-      req.user.role !== UserRole.ADMIN
-    ) {
-      return res.status(403).json({ error: 'Нет прав для редактирования медицинской карты' });
+    if (req.user?.role !== UserRole.ADMIN && req.user?.role !== UserRole.DOCTOR) {
+      return res.status(403).json({ message: 'У вас нет прав на создание медицинских записей' });
     }
 
-    Object.assign(medicalRecord, {
+    const record = new MedicalRecord({
+      patient: patientId,
+      doctor: doctorId,
+      clinic: clinicId,
+      date,
       diagnosis,
       treatment,
       medications,
       notes,
-      attachments,
       isPrivate,
     });
 
-    await medicalRecord.save();
+    await record.save();
 
     // Отправляем уведомление пациенту
     await createNotification(
-      medicalRecord.patient.toString(),
-      NotificationType.MEDICAL_RECORD,
-      'Обновление медицинской записи',
-      'В вашей медицинской карте обновлена запись'
+      patientId,
+      NotificationType.APPOINTMENT,
+      'Новая медицинская запись',
+      'У вас появилась новая медицинская запись'
     );
 
-    res.json(medicalRecord);
+    res.status(201).json(record);
   } catch (error) {
-    console.error('Update medical record error:', error);
-    res.status(500).json({ error: 'Ошибка при обновлении медицинской карты' });
+    console.error('Error creating medical record:', error);
+    res.status(500).json({ message: 'Ошибка при создании медицинской записи' });
   }
 };
 
-// Удаление медицинской карты
-export const deleteMedicalRecord = async (req: Request, res: Response) => {
+// Обновление медицинской записи
+export const updateMedicalRecord = async (req: AuthRequest, res: Response) => {
   try {
-    const { recordId } = req.params;
+    const { id } = req.params;
+    const { diagnosis, treatment, medications, notes, isPrivate } = req.body;
 
-    const medicalRecord = await MedicalRecord.findById(recordId);
-    if (!medicalRecord) {
-      return res.status(404).json({ error: 'Медицинская карта не найдена' });
+    const record = await MedicalRecord.findById(id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Медицинская запись не найдена' });
     }
 
     // Проверяем права доступа
-    if (
-      req.user.id !== medicalRecord.doctor.toString() &&
-      req.user.role !== UserRole.ADMIN
-    ) {
-      return res.status(403).json({ error: 'Нет прав для удаления медицинской карты' });
+    if (req.user?.role !== UserRole.ADMIN && record.doctor.toString() !== req.user?.id) {
+      return res.status(403).json({ message: 'У вас нет прав на редактирование этой записи' });
     }
 
-    await MedicalRecord.deleteOne({ _id: recordId });
+    const updatedRecord = await MedicalRecord.findByIdAndUpdate(
+      id,
+      {
+        diagnosis,
+        treatment,
+        medications,
+        notes,
+        isPrivate,
+      },
+      { new: true }
+    )
+      .populate('patient', 'firstName lastName')
+      .populate('doctor', 'firstName lastName')
+      .populate('clinic', 'name');
 
-    res.json({ message: 'Медицинская карта успешно удалена' });
+    // Отправляем уведомление пациенту
+    await createNotification(
+      record.patient.toString(),
+      NotificationType.APPOINTMENT,
+      'Обновлена медицинская запись',
+      'Ваша медицинская запись была обновлена'
+    );
+
+    res.json(updatedRecord);
   } catch (error) {
-    console.error('Delete medical record error:', error);
-    res.status(500).json({ error: 'Ошибка при удалении медицинской карты' });
+    console.error('Error updating medical record:', error);
+    res.status(500).json({ message: 'Ошибка при обновлении медицинской записи' });
   }
-}; 
+};
+
+// Удаление медицинской записи
+export const deleteMedicalRecord = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const record = await MedicalRecord.findById(id);
+
+    if (!record) {
+      return res.status(404).json({ message: 'Медицинская запись не найдена' });
+    }
+
+    // Проверяем права доступа
+    if (req.user?.role !== UserRole.ADMIN && record.doctor.toString() !== req.user?.id) {
+      return res.status(403).json({ message: 'У вас нет прав на удаление этой записи' });
+    }
+
+    await MedicalRecord.findByIdAndDelete(id);
+
+    res.json({ message: 'Медицинская запись успешно удалена' });
+  } catch (error) {
+    console.error('Error deleting medical record:', error);
+    res.status(500).json({ message: 'Ошибка при удалении медицинской записи' });
+  }
+};

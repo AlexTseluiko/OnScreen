@@ -55,15 +55,15 @@ interface DoctorProfileFormProps {
   isEditable?: boolean;
 }
 
-export const DoctorProfileForm = ({ 
-  initialData = {}, 
-  onSave, 
+export const DoctorProfileForm = ({
+  initialData = {},
+  onSave,
   onCancel,
-  isEditable = true 
+  isEditable = true,
 }: DoctorProfileFormProps) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  
+
   // Проверяем наличие темного режима
   const isDarkMode = theme.colors.background === '#121212';
 
@@ -188,19 +188,22 @@ export const DoctorProfileForm = ({
 
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+
       if (!permissionResult.granted) {
-        Alert.alert(t('common.error'), t('profile.permissions.photos', 'Необходимо разрешение на доступ к фото'));
+        Alert.alert(
+          t('common.error'),
+          t('profile.permissions.photos', 'Необходимо разрешение на доступ к фото')
+        );
         return;
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
       });
-      
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setFormData(prev => ({
           ...prev,
@@ -210,7 +213,7 @@ export const DoctorProfileForm = ({
     } catch (error) {
       console.error('Ошибка при выборе изображения:', error);
       Alert.alert(
-        t('common.error', 'Ошибка'), 
+        t('common.error', 'Ошибка'),
         t('profile.error.imageSelection', 'Не удалось выбрать изображение')
       );
     }
@@ -222,20 +225,20 @@ export const DoctorProfileForm = ({
 
     try {
       setSavingProfile(true);
-      
+
       // Здесь должен быть вызов API для сохранения данных
       if (onSave) {
         onSave(formData);
       }
-      
+
       Alert.alert(
-        t('common.success', 'Успех'), 
+        t('common.success', 'Успех'),
         t('profile.doctor.saveSuccess', 'Профиль успешно сохранен')
       );
     } catch (error) {
       console.error('Ошибка при сохранении профиля:', error);
       Alert.alert(
-        t('common.error', 'Ошибка'), 
+        t('common.error', 'Ошибка'),
         t('profile.doctor.saveError', 'Не удалось сохранить профиль')
       );
     } finally {
@@ -270,14 +273,14 @@ export const DoctorProfileForm = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
-      <ScrollView 
+      <ScrollView
         style={[styles.container, { backgroundColor: theme.colors.background }]}
         contentContainerStyle={styles.contentContainer}
       >
         {/* Фото профиля */}
         <View style={styles.photoSection}>
-          <TouchableOpacity 
-            style={[styles.photoContainer, { borderColor: theme.colors.border }]} 
+          <TouchableOpacity
+            style={[styles.photoContainer, { borderColor: theme.colors.border }]}
             onPress={pickImage}
             disabled={!isEditable}
           >
@@ -294,7 +297,7 @@ export const DoctorProfileForm = ({
               </View>
             )}
           </TouchableOpacity>
-          
+
           <View style={styles.photoTextContainer}>
             <Text style={[styles.photoTitle, { color: theme.colors.text }]}>
               {t('profile.doctor.profilePhoto', 'Фото профиля')}
@@ -310,67 +313,70 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.basicInfo', 'Основная информация')}
           </Text>
-          
+
           <View style={styles.formRow}>
             <Text style={[styles.label, { color: theme.colors.text }]}>
               {t('profile.doctor.specialization', 'Специализация')}
             </Text>
             <TextInput
               style={[
-                styles.input, 
-                { 
+                styles.input,
+                {
                   backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                   color: theme.colors.text,
-                  borderColor: theme.colors.border
-                }
+                  borderColor: theme.colors.border,
+                },
               ]}
               value={formData.specialization}
-              onChangeText={(value) => handleChange('specialization', value)}
+              onChangeText={value => handleChange('specialization', value)}
               placeholder={t('profile.doctor.specializationPlaceholder', 'Например: Кардиолог')}
               placeholderTextColor={theme.colors.text + '80'}
               editable={isEditable}
             />
           </View>
-          
+
           <View style={styles.formRow}>
             <Text style={[styles.label, { color: theme.colors.text }]}>
               {t('profile.doctor.bio', 'О себе')}
             </Text>
             <TextInput
               style={[
-                styles.input, 
+                styles.input,
                 styles.textArea,
-                { 
+                {
                   backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                   color: theme.colors.text,
-                  borderColor: theme.colors.border
-                }
+                  borderColor: theme.colors.border,
+                },
               ]}
               multiline
               numberOfLines={5}
               value={formData.bio}
-              onChangeText={(value) => handleChange('bio', value)}
-              placeholder={t('profile.doctor.bioPlaceholder', 'Краткая информация о себе и своем опыте...')}
+              onChangeText={value => handleChange('bio', value)}
+              placeholder={t(
+                'profile.doctor.bioPlaceholder',
+                'Краткая информация о себе и своем опыте...'
+              )}
               placeholderTextColor={theme.colors.text + '80'}
               editable={isEditable}
             />
           </View>
-          
+
           <View style={styles.formRow}>
             <Text style={[styles.label, { color: theme.colors.text }]}>
               {t('profile.doctor.education', 'Образование')}
             </Text>
             <TextInput
               style={[
-                styles.input, 
-                { 
+                styles.input,
+                {
                   backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                   color: theme.colors.text,
-                  borderColor: theme.colors.border
-                }
+                  borderColor: theme.colors.border,
+                },
               ]}
               value={formData.education}
-              onChangeText={(value) => handleChange('education', value)}
+              onChangeText={value => handleChange('education', value)}
               placeholder={t('profile.doctor.educationPlaceholder', 'Ваше образование')}
               placeholderTextColor={theme.colors.text + '80'}
               editable={isEditable}
@@ -383,15 +389,15 @@ export const DoctorProfileForm = ({
             </Text>
             <TextInput
               style={[
-                styles.input, 
-                { 
+                styles.input,
+                {
                   backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                   color: theme.colors.text,
-                  borderColor: theme.colors.border
-                }
+                  borderColor: theme.colors.border,
+                },
               ]}
               value={formData.experience}
-              onChangeText={(value) => handleChange('experience', value)}
+              onChangeText={value => handleChange('experience', value)}
               placeholder={t('profile.doctor.experiencePlaceholder', 'Например: 10')}
               placeholderTextColor={theme.colors.text + '80'}
               keyboardType="number-pad"
@@ -405,15 +411,15 @@ export const DoctorProfileForm = ({
             </Text>
             <TextInput
               style={[
-                styles.input, 
-                { 
+                styles.input,
+                {
                   backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                   color: theme.colors.text,
-                  borderColor: theme.colors.border
-                }
+                  borderColor: theme.colors.border,
+                },
               ]}
               value={formData.consultationFee}
-              onChangeText={(value) => handleChange('consultationFee', value)}
+              onChangeText={value => handleChange('consultationFee', value)}
               placeholder={t('profile.doctor.consultationFeePlaceholder', 'Например: 2000')}
               placeholderTextColor={theme.colors.text + '80'}
               keyboardType="number-pad"
@@ -427,28 +433,28 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.languages', 'Языки')}
           </Text>
-          
+
           {formData.languages.map((language, index) => (
             <View key={`lang-${index}`} style={styles.dynamicInputRow}>
               <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   styles.dynamicInput,
-                  { 
+                  {
                     backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                     color: theme.colors.text,
-                    borderColor: theme.colors.border
-                  }
+                    borderColor: theme.colors.border,
+                  },
                 ]}
                 value={language}
-                onChangeText={(value) => handleLanguageChange(index, value)}
+                onChangeText={value => handleLanguageChange(index, value)}
                 placeholder={t('profile.doctor.languagePlaceholder', 'Язык')}
                 placeholderTextColor={theme.colors.text + '80'}
                 editable={isEditable}
               />
               {isEditable && (
-                <TouchableOpacity 
-                  style={[styles.actionButton, { backgroundColor: theme.colors.error }]} 
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
                   onPress={() => removeLanguage(index)}
                   disabled={formData.languages.length <= 1}
                 >
@@ -457,10 +463,10 @@ export const DoctorProfileForm = ({
               )}
             </View>
           ))}
-          
+
           {isEditable && (
-            <TouchableOpacity 
-              style={[styles.addButton, { borderColor: theme.colors.primary }]} 
+            <TouchableOpacity
+              style={[styles.addButton, { borderColor: theme.colors.primary }]}
               onPress={addLanguage}
             >
               <Ionicons name="add" size={20} color={theme.colors.primary} />
@@ -476,28 +482,28 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.certifications', 'Сертификаты')}
           </Text>
-          
+
           {formData.certifications.map((certification, index) => (
             <View key={`cert-${index}`} style={styles.dynamicInputRow}>
               <TextInput
                 style={[
-                  styles.input, 
+                  styles.input,
                   styles.dynamicInput,
-                  { 
+                  {
                     backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                     color: theme.colors.text,
-                    borderColor: theme.colors.border
-                  }
+                    borderColor: theme.colors.border,
+                  },
                 ]}
                 value={certification}
-                onChangeText={(value) => handleCertificationChange(index, value)}
+                onChangeText={value => handleCertificationChange(index, value)}
                 placeholder={t('profile.doctor.certificationPlaceholder', 'Название сертификата')}
                 placeholderTextColor={theme.colors.text + '80'}
                 editable={isEditable}
               />
               {isEditable && (
-                <TouchableOpacity 
-                  style={[styles.actionButton, { backgroundColor: theme.colors.error }]} 
+                <TouchableOpacity
+                  style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
                   onPress={() => removeCertification(index)}
                   disabled={formData.certifications.length <= 1}
                 >
@@ -506,10 +512,10 @@ export const DoctorProfileForm = ({
               )}
             </View>
           ))}
-          
+
           {isEditable && (
-            <TouchableOpacity 
-              style={[styles.addButton, { borderColor: theme.colors.primary }]} 
+            <TouchableOpacity
+              style={[styles.addButton, { borderColor: theme.colors.primary }]}
               onPress={addCertification}
             >
               <Ionicons name="add" size={20} color={theme.colors.primary} />
@@ -525,37 +531,54 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.workingHours', 'Часы работы')}
           </Text>
-          
-          {days.map((day) => (
+
+          {days.map(day => (
             <View key={day.key} style={styles.workingHoursRow}>
               <View style={styles.dayToggleContainer}>
                 <Text style={[styles.dayName, { color: theme.colors.text }]}>{day.label}</Text>
                 <TouchableOpacity
                   style={[
-                    styles.toggleButton, 
-                    { 
-                      backgroundColor: formData.workingHours[day.key as keyof typeof formData.workingHours].isWorking 
-                        ? theme.colors.primary 
-                        : isDarkMode ? '#555' : '#e0e0e0' 
-                    }
+                    styles.toggleButton,
+                    {
+                      backgroundColor: formData.workingHours[
+                        day.key as keyof typeof formData.workingHours
+                      ].isWorking
+                        ? theme.colors.primary
+                        : isDarkMode
+                          ? '#555'
+                          : '#e0e0e0',
+                    },
                   ]}
-                  onPress={() => handleWorkingHourChange(
-                    day.key as string, 
-                    'isWorking', 
-                    !formData.workingHours[day.key as keyof typeof formData.workingHours].isWorking
-                  )}
+                  onPress={() =>
+                    handleWorkingHourChange(
+                      day.key as string,
+                      'isWorking',
+                      !formData.workingHours[day.key as keyof typeof formData.workingHours]
+                        .isWorking
+                    )
+                  }
                   disabled={!isEditable}
                 >
-                  <View style={[
-                    styles.toggleKnob, 
-                    { 
-                      transform: [{ translateX: formData.workingHours[day.key as keyof typeof formData.workingHours].isWorking ? 18 : 0 }],
-                      backgroundColor: 'white'
-                    }
-                  ]} />
+                  <View
+                    style={[
+                      styles.toggleKnob,
+                      {
+                        transform: [
+                          {
+                            translateX: formData.workingHours[
+                              day.key as keyof typeof formData.workingHours
+                            ].isWorking
+                              ? 18
+                              : 0,
+                          },
+                        ],
+                        backgroundColor: 'white',
+                      },
+                    ]}
+                  />
                 </TouchableOpacity>
               </View>
-              
+
               {formData.workingHours[day.key as keyof typeof formData.workingHours].isWorking && (
                 <View style={styles.hoursContainer}>
                   <View style={styles.timeInputContainer}>
@@ -564,38 +587,42 @@ export const DoctorProfileForm = ({
                     </Text>
                     <TextInput
                       style={[
-                        styles.timeInput, 
-                        { 
+                        styles.timeInput,
+                        {
                           backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                           color: theme.colors.text,
-                          borderColor: theme.colors.border
-                        }
+                          borderColor: theme.colors.border,
+                        },
                       ]}
-                      value={formData.workingHours[day.key as keyof typeof formData.workingHours].start}
-                      onChangeText={(value) => handleWorkingHourChange(day.key, 'start', value)}
+                      value={
+                        formData.workingHours[day.key as keyof typeof formData.workingHours].start
+                      }
+                      onChangeText={value => handleWorkingHourChange(day.key, 'start', value)}
                       placeholder="09:00"
                       placeholderTextColor={theme.colors.text + '80'}
                       editable={isEditable}
                     />
                   </View>
-                  
+
                   <Text style={[styles.timeSeparator, { color: theme.colors.text }]}>—</Text>
-                  
+
                   <View style={styles.timeInputContainer}>
                     <Text style={[styles.timeLabel, { color: theme.colors.text }]}>
                       {t('profile.doctor.end', 'Конец')}
                     </Text>
                     <TextInput
                       style={[
-                        styles.timeInput, 
-                        { 
+                        styles.timeInput,
+                        {
                           backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                           color: theme.colors.text,
-                          borderColor: theme.colors.border
-                        }
+                          borderColor: theme.colors.border,
+                        },
                       ]}
-                      value={formData.workingHours[day.key as keyof typeof formData.workingHours].end}
-                      onChangeText={(value) => handleWorkingHourChange(day.key, 'end', value)}
+                      value={
+                        formData.workingHours[day.key as keyof typeof formData.workingHours].end
+                      }
+                      onChangeText={value => handleWorkingHourChange(day.key, 'end', value)}
                       placeholder="18:00"
                       placeholderTextColor={theme.colors.text + '80'}
                       editable={isEditable}
@@ -612,66 +639,80 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.additionalOptions', 'Дополнительные опции')}
           </Text>
-          
+
           <View style={styles.optionRow}>
             <View style={styles.optionTextContainer}>
               <Text style={[styles.optionLabel, { color: theme.colors.text }]}>
                 {t('profile.doctor.acceptingNewPatients', 'Принимаю новых пациентов')}
               </Text>
               <Text style={[styles.optionDescription, { color: theme.colors.text }]}>
-                {t('profile.doctor.acceptingNewPatientsDesc', 'Доступны ли записи для новых пациентов')}
+                {t(
+                  'profile.doctor.acceptingNewPatientsDesc',
+                  'Доступны ли записи для новых пациентов'
+                )}
               </Text>
             </View>
             <TouchableOpacity
               style={[
-                styles.toggleButton, 
-                { 
-                  backgroundColor: formData.acceptingNewPatients 
-                    ? theme.colors.primary 
-                    : isDarkMode ? '#555' : '#e0e0e0' 
-                }
+                styles.toggleButton,
+                {
+                  backgroundColor: formData.acceptingNewPatients
+                    ? theme.colors.primary
+                    : isDarkMode
+                      ? '#555'
+                      : '#e0e0e0',
+                },
               ]}
               onPress={() => handleChange('acceptingNewPatients', !formData.acceptingNewPatients)}
               disabled={!isEditable}
             >
-              <View style={[
-                styles.toggleKnob, 
-                { 
-                  transform: [{ translateX: formData.acceptingNewPatients ? 18 : 0 }],
-                  backgroundColor: 'white'
-                }
-              ]} />
+              <View
+                style={[
+                  styles.toggleKnob,
+                  {
+                    transform: [{ translateX: formData.acceptingNewPatients ? 18 : 0 }],
+                    backgroundColor: 'white',
+                  },
+                ]}
+              />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.optionRow}>
             <View style={styles.optionTextContainer}>
               <Text style={[styles.optionLabel, { color: theme.colors.text }]}>
                 {t('profile.doctor.telemedicineAvailable', 'Доступны онлайн-консультации')}
               </Text>
               <Text style={[styles.optionDescription, { color: theme.colors.text }]}>
-                {t('profile.doctor.telemedicineAvailableDesc', 'Возможность проведения консультаций онлайн')}
+                {t(
+                  'profile.doctor.telemedicineAvailableDesc',
+                  'Возможность проведения консультаций онлайн'
+                )}
               </Text>
             </View>
             <TouchableOpacity
               style={[
-                styles.toggleButton, 
-                { 
-                  backgroundColor: formData.telemedicineAvailable 
-                    ? theme.colors.primary 
-                    : isDarkMode ? '#555' : '#e0e0e0' 
-                }
+                styles.toggleButton,
+                {
+                  backgroundColor: formData.telemedicineAvailable
+                    ? theme.colors.primary
+                    : isDarkMode
+                      ? '#555'
+                      : '#e0e0e0',
+                },
               ]}
               onPress={() => handleChange('telemedicineAvailable', !formData.telemedicineAvailable)}
               disabled={!isEditable}
             >
-              <View style={[
-                styles.toggleKnob, 
-                { 
-                  transform: [{ translateX: formData.telemedicineAvailable ? 18 : 0 }],
-                  backgroundColor: 'white'
-                }
-              ]} />
+              <View
+                style={[
+                  styles.toggleKnob,
+                  {
+                    transform: [{ translateX: formData.telemedicineAvailable ? 18 : 0 }],
+                    backgroundColor: 'white',
+                  },
+                ]}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -681,21 +722,21 @@ export const DoctorProfileForm = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('profile.doctor.clinicAddress', 'Адрес клиники')}
           </Text>
-          
+
           <TextInput
             style={[
-              styles.input, 
+              styles.input,
               styles.textArea,
-              { 
+              {
                 backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
                 color: theme.colors.text,
-                borderColor: theme.colors.border
-              }
+                borderColor: theme.colors.border,
+              },
             ]}
             multiline
             numberOfLines={3}
             value={formData.clinicAddress}
-            onChangeText={(value) => handleChange('clinicAddress', value)}
+            onChangeText={value => handleChange('clinicAddress', value)}
             placeholder={t('profile.doctor.clinicAddressPlaceholder', 'Полный адрес клиники')}
             placeholderTextColor={theme.colors.text + '80'}
             editable={isEditable}
@@ -706,8 +747,8 @@ export const DoctorProfileForm = ({
         {isEditable && (
           <View style={styles.actionButtons}>
             {onCancel && (
-              <TouchableOpacity 
-                style={[styles.button, styles.cancelButton, { borderColor: theme.colors.border }]} 
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton, { borderColor: theme.colors.border }]}
                 onPress={onCancel}
                 disabled={savingProfile}
               >
@@ -716,14 +757,14 @@ export const DoctorProfileForm = ({
                 </Text>
               </TouchableOpacity>
             )}
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[
-                styles.button, 
-                styles.saveButton, 
+                styles.button,
+                styles.saveButton,
                 { backgroundColor: theme.colors.primary },
-                savingProfile && { opacity: 0.7 }
-              ]} 
+                savingProfile && { opacity: 0.7 },
+              ]}
               onPress={handleSubmit}
               disabled={savingProfile}
             >
@@ -741,6 +782,48 @@ export const DoctorProfileForm = ({
 };
 
 const styles = StyleSheet.create({
+  actionButton: {
+    alignItems: 'center',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 24,
+  },
+  addButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  button: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flex: 1,
+    height: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  cancelButton: {
+    borderWidth: 1,
+    marginRight: 12,
+  },
   container: {
     flex: 1,
   },
@@ -748,14 +831,125 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
+  dayName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  dayToggleContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  dynamicInput: {
+    flex: 1,
+    marginRight: 8,
+  },
+  dynamicInputRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  editPhotoButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 15,
+    bottom: 0,
+    height: 30,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 0,
+    width: 30,
+  },
+  formRow: {
+    marginBottom: 16,
+  },
+  hoursContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  input: {
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    height: 48,
+    paddingHorizontal: 12,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
   loadingContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
     fontSize: 16,
+    marginTop: 16,
+  },
+  optionDescription: {
+    fontSize: 14,
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  optionRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  optionTextContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  photoContainer: {
+    alignItems: 'center',
+    borderRadius: 50,
+    borderWidth: 2,
+    height: 100,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    width: 100,
+  },
+  photoPlaceholder: {
+    alignItems: 'center',
+    height: '100%',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  photoSection: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 24,
+  },
+  photoSubtitle: {
+    fontSize: 14,
+  },
+  photoTextContainer: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  photoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  profilePhoto: {
+    height: '100%',
+    width: '100%',
+  },
+  saveButton: {
+    flex: 2,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
   },
   section: {
     marginBottom: 24,
@@ -765,131 +959,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
-  photoSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  photoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  profilePhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  photoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editPhotoButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoTextContainer: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  photoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  photoSubtitle: {
-    fontSize: 14,
-  },
-  formRow: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
   textArea: {
     height: 120,
-    textAlignVertical: 'top',
     paddingTop: 12,
+    textAlignVertical: 'top',
   },
-  dynamicInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dynamicInput: {
-    flex: 1,
-    marginRight: 8,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
+  timeInput: {
     borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  addButtonText: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  workingHoursRow: {
-    marginBottom: 16,
-  },
-  dayToggleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dayName: {
+    borderWidth: 1,
     fontSize: 16,
-    fontWeight: '500',
-  },
-  toggleButton: {
-    width: 50,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  toggleKnob: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-  },
-  hoursContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    height: 40,
+    paddingHorizontal: 12,
   },
   timeInputContainer: {
     flex: 1,
@@ -898,62 +978,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 4,
   },
-  timeInput: {
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
   timeSeparator: {
-    marginHorizontal: 8,
     fontSize: 20,
+    marginHorizontal: 8,
   },
-  optionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  optionTextContainer: {
-    flex: 1,
-    marginRight: 16,
-  },
-  optionLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  optionDescription: {
-    fontSize: 14,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
-  button: {
-    height: 48,
-    borderRadius: 8,
+  toggleButton: {
+    borderRadius: 15,
+    height: 30,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    flex: 1,
+    paddingHorizontal: 4,
+    width: 50,
   },
-  cancelButton: {
-    borderWidth: 1,
-    marginRight: 12,
+  toggleKnob: {
+    borderRadius: 11,
+    height: 22,
+    width: 22,
   },
-  saveButton: {
-    flex: 2,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'white',
+  workingHoursRow: {
+    marginBottom: 16,
   },
 });

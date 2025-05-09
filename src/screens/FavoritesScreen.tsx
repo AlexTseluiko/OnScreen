@@ -39,18 +39,17 @@ export const FavoritesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  list: {
-    padding: 20,
+  address: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 10,
   },
   card: {
     backgroundColor: COLORS.background,
-    padding: 15,
     borderRadius: 10,
+    elevation: 5,
     marginBottom: 15,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -58,38 +57,39 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+  },
+  container: {
+    backgroundColor: COLORS.background,
+    flex: 1,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 16,
+  },
+  list: {
+    padding: 20,
   },
   name: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  address: {
+  rating: {
+    color: COLORS.primary,
     fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
   },
   ratingContainer: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rating: {
-    fontSize: 14,
-    color: COLORS.primary,
   },
   type: {
+    color: '#666',
     fontSize: 14,
-    color: '#666',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-  },
-}); 
+});

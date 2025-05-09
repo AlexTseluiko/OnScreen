@@ -20,7 +20,7 @@ export const createFeedback = async (req: Request, res: Response) => {
       email: email || null,
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
-      date: new Date()
+      date: new Date(),
     });
 
     // Сохранение в базе данных
@@ -30,7 +30,7 @@ export const createFeedback = async (req: Request, res: Response) => {
     if (req.app.get('io')) {
       req.app.get('io').emit('newFeedback', {
         _id: newFeedback._id,
-        feedbackType: newFeedback.feedbackType
+        feedbackType: newFeedback.feedbackType,
       });
     }
 
@@ -38,7 +38,7 @@ export const createFeedback = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       message: 'Обратная связь успешно отправлена',
-      feedbackId: newFeedback._id
+      feedbackId: newFeedback._id,
     });
   } catch (error) {
     console.error('Ошибка при создании обратной связи:', error);
@@ -80,7 +80,7 @@ export const getAllFeedback = async (req: Request, res: Response) => {
       page,
       limit,
       totalPages: Math.ceil(totalCount / limit),
-      feedback
+      feedback,
     });
   } catch (error) {
     console.error('Ошибка при получении списка обратной связи:', error);
@@ -94,16 +94,16 @@ export const getAllFeedback = async (req: Request, res: Response) => {
 export const getFeedbackById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+
     const feedback = await Feedback.findById(id);
-    
+
     if (!feedback) {
       return res.status(404).json({ error: 'Запись обратной связи не найдена' });
     }
-    
+
     res.status(200).json({
       success: true,
-      feedback
+      feedback,
     });
   } catch (error) {
     console.error('Ошибка при получении обратной связи:', error);
@@ -117,24 +117,25 @@ export const getFeedbackById = async (req: Request, res: Response) => {
 export const markFeedbackAsRead = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+
     const feedback = await Feedback.findByIdAndUpdate(
-      id, 
-      { isRead: true, 
+      id,
+      {
+        isRead: true,
         // Добавляем таймштамп когда была прочитана обратная связь
-        $set: { readAt: new Date() } 
+        $set: { readAt: new Date() },
       },
       { new: true }
     );
-    
+
     if (!feedback) {
       return res.status(404).json({ error: 'Запись обратной связи не найдена' });
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Обратная связь отмечена как прочитанная',
-      feedback
+      feedback,
     });
   } catch (error) {
     console.error('Ошибка при обновлении статуса обратной связи:', error);
@@ -149,28 +150,24 @@ export const addAdminNotes = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { adminNotes } = req.body;
-    
+
     if (!adminNotes || adminNotes.trim() === '') {
       return res.status(400).json({ error: 'Текст заметки не может быть пустым' });
     }
-    
-    const feedback = await Feedback.findByIdAndUpdate(
-      id,
-      { adminNotes },
-      { new: true }
-    );
-    
+
+    const feedback = await Feedback.findByIdAndUpdate(id, { adminNotes }, { new: true });
+
     if (!feedback) {
       return res.status(404).json({ error: 'Запись обратной связи не найдена' });
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Заметка администратора добавлена',
-      feedback
+      feedback,
     });
   } catch (error) {
     console.error('Ошибка при добавлении заметки администратора:', error);
     res.status(500).json({ error: 'Ошибка сервера при добавлении заметки администратора' });
   }
-}; 
+};

@@ -13,12 +13,12 @@ const getDevServerHost = () => {
     try {
       const currentHost = window.location.hostname;
       console.log('Web host detected:', currentHost);
-      
+
       // Если это не localhost, используем его напрямую
       if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
         return currentHost;
       }
-      
+
       // Иначе для локальной разработки используем заданный IP
       return DEV_SERVER_IP;
     } catch (e) {
@@ -26,7 +26,7 @@ const getDevServerHost = () => {
       return DEV_SERVER_IP;
     }
   }
-  
+
   // Для Expo можно получить IP через Constants.expoConfig
   if (Constants.expoConfig?.hostUri) {
     const hostUri = Constants.expoConfig.hostUri;
@@ -36,7 +36,7 @@ const getDevServerHost = () => {
       return host;
     }
   }
-  
+
   // Если IP не получен через Expo, используем явно указанный IP
   return DEV_SERVER_IP;
 };
@@ -51,14 +51,52 @@ const getBaseUrl = () => {
   return 'https://api.onscreen.com/api';
 };
 
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 export const API_CONFIG = {
-  BASE_URL: getBaseUrl(),
-  TIMEOUT: 10000, // 10 секунд
-  HEADERS: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    // Заголовки для CORS
-    'X-Requested-With': 'XMLHttpRequest',
+  TIMEOUT: 10000,
+  RETRY_ATTEMPTS: 3,
+  RETRY_DELAY: 1000,
+  CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+  MAX_CACHE_SIZE: 50 * 1024 * 1024, // 50MB
+};
+
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    REFRESH: '/auth/refresh',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
-  CREDENTIALS: 'include' as RequestCredentials,
-}; 
+  USER: {
+    PROFILE: '/user/profile',
+    UPDATE_PROFILE: '/user/profile',
+    CHANGE_PASSWORD: '/user/change-password',
+    FAVORITES: '/user/favorites',
+  },
+  CLINICS: {
+    LIST: '/clinics',
+    DETAILS: (id: string) => `/clinics/${id}`,
+    REVIEWS: (id: string) => `/clinics/${id}/reviews`,
+    SERVICES: (id: string) => `/clinics/${id}/services`,
+  },
+  ARTICLES: {
+    LIST: '/articles',
+    DETAILS: (id: string) => `/articles/${id}`,
+  },
+  SCREENING: {
+    PROGRAMS: '/screening/programs',
+    SCHEDULE: '/screening/schedule',
+    RESULTS: '/screening/results',
+  },
+  CHAT: {
+    MESSAGES: '/chat/messages',
+    SEND: '/chat/send',
+  },
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    MARK_READ: (id: string) => `/notifications/${id}/read`,
+  },
+};

@@ -99,14 +99,8 @@ export const getDoctorById = async (req: Request, res: Response) => {
 export const updateDoctor = async (req: Request, res: Response) => {
   try {
     const { doctorId } = req.params;
-    const {
-      specialization,
-      experience,
-      education,
-      certifications,
-      workingHours,
-      isAvailable,
-    } = req.body;
+    const { specialization, experience, education, certifications, workingHours, isAvailable } =
+      req.body;
 
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
@@ -165,4 +159,4 @@ export const deleteDoctor = async (req: Request, res: Response) => {
     console.error('Delete doctor error:', error);
     res.status(500).json({ error: 'Ошибка при удалении врача' });
   }
-}; 
+};

@@ -54,7 +54,7 @@ const facilitiesSlice = createSlice({
         facility.isFavorite = !facility.isFavorite;
       }
     },
-    resetFilters: (state) => {
+    resetFilters: state => {
       state.filters = initialState.filters;
     },
   },
@@ -70,4 +70,4 @@ export const {
   resetFilters,
 } = facilitiesSlice.actions;
 
-export default facilitiesSlice.reducer; 
+export default facilitiesSlice.reducer;

@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
 import { Notification } from '../models/Notification';
 import { User } from '../models/User';
-import { createNotification, NotificationType, markNotificationAsRead, markAllNotificationsAsRead } from '../utils/notificationUtils';
+import { AuthRequest } from '../middleware/auth';
+import {
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  sendBulkNotifications,
+  NotificationType,
+} from '../utils/notificationUtils';
 
 interface NotificationRequest {
   title: string;
@@ -14,48 +21,51 @@ interface TargetedNotificationRequest extends NotificationRequest {
 }
 
 // Получение уведомлений пользователя
-export const getUserNotifications = async (req: Request, res: Response) => {
+export const getUserNotifications = async (req: AuthRequest, res: Response) => {
   try {
+    const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
-    const userId = req.user.id;
 
-    const notifications = await Notification.find({ user: userId })
+    const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
 
-    const total = await Notification.countDocuments({ user: userId });
+    const total = await Notification.countDocuments({ userId });
 
     res.json({
       notifications,
-      total,
-      pages: Math.ceil(total / Number(limit)),
-      currentPage: Number(page),
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
     });
   } catch (error) {
-    console.error('Get notifications error:', error);
-    res.status(500).json({ error: 'Ошибка при получении уведомлений' });
+    console.error('Error getting notifications:', error);
+    res.status(500).json({ error: 'Error getting notifications' });
   }
 };
 
 // Отправка уведомления всем пользователям
-export const sendBroadcastNotification = async (req: Request<{}, {}, NotificationRequest>, res: Response) => {
+export const sendBroadcastNotification = async (
+  req: Request<Record<string, never>, unknown, NotificationRequest>,
+  res: Response
+) => {
   try {
     const { title, message, type = NotificationType.SYSTEM } = req.body;
 
     // Получаем всех пользователей
     const users = await User.find();
-    
-    // Отправляем уведомление каждому пользователю
-    const notifications = await Promise.all(
-      users.map(user => 
-        createNotification(user._id.toString(), type, title, message)
-      )
-    );
+    const userIds = users.map(user => user._id.toString());
 
-    res.json({ 
+    // Отправляем уведомление каждому пользователю
+    const notifications = await sendBulkNotifications(userIds, type, title, message);
+
+    res.json({
       message: 'Уведомления успешно отправлены',
-      count: notifications.length 
+      count: notifications.length,
     });
   } catch (error) {
     console.error('Send broadcast notification error:', error);
@@ -64,20 +74,19 @@ export const sendBroadcastNotification = async (req: Request<{}, {}, Notificatio
 };
 
 // Отправка уведомления конкретным пользователям
-export const sendTargetedNotification = async (req: Request<{}, {}, TargetedNotificationRequest>, res: Response) => {
+export const sendTargetedNotification = async (
+  req: Request<Record<string, never>, unknown, TargetedNotificationRequest>,
+  res: Response
+) => {
   try {
     const { userIds, title, message, type = NotificationType.SYSTEM } = req.body;
 
     // Отправляем уведомление каждому указанному пользователю
-    const notifications = await Promise.all(
-      userIds.map((userId: string) => 
-        createNotification(userId, type, title, message)
-      )
-    );
+    const notifications = await sendBulkNotifications(userIds, type, title, message);
 
-    res.json({ 
+    res.json({
       message: 'Уведомления успешно отправлены',
-      count: notifications.length 
+      count: notifications.length,
     });
   } catch (error) {
     console.error('Send targeted notification error:', error);
@@ -86,12 +95,16 @@ export const sendTargetedNotification = async (req: Request<{}, {}, TargetedNoti
 };
 
 // Отметка уведомления как прочитанного
-export const markNotificationAsReadController = async (req: Request, res: Response) => {
+export const markNotificationAsReadController = async (req: AuthRequest, res: Response) => {
   try {
     const { notificationId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
-    const notification = await markNotificationAsRead(notificationId, userId.toString());
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const notification = await markNotificationAsRead(notificationId, userId);
     res.json({ message: 'Уведомление отмечено как прочитанное', notification });
   } catch (error) {
     console.error('Mark notification as read error:', error);
@@ -100,10 +113,15 @@ export const markNotificationAsReadController = async (req: Request, res: Respon
 };
 
 // Отметка всех уведомлений как прочитанных
-export const markAllNotificationsAsReadController = async (req: Request, res: Response) => {
+export const markAllNotificationsAsReadController = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user.id;
-    await markAllNotificationsAsRead(userId.toString());
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    await markAllNotificationsAsRead(userId);
     res.json({ message: 'Все уведомления отмечены как прочитанные' });
   } catch (error) {
     console.error('Mark all notifications as read error:', error);
@@ -112,34 +130,41 @@ export const markAllNotificationsAsReadController = async (req: Request, res: Re
 };
 
 // Удаление уведомления
-export const deleteNotification = async (req: Request, res: Response) => {
+export const deleteNotification = async (req: AuthRequest, res: Response) => {
   try {
     const { notificationId } = req.params;
-    const userId = req.user._id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
     const notification = await Notification.findOneAndDelete({
       _id: notificationId,
-      user: userId,
+      userId,
     });
 
     if (!notification) {
-      return res.status(404).json({ error: 'Уведомление не найдено' });
+      return res.status(404).json({ error: 'Notification not found' });
     }
 
-    res.json({ message: 'Уведомление успешно удалено' });
+    res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    console.error('Delete notification error:', error);
-    res.status(500).json({ error: 'Ошибка при удалении уведомления' });
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ error: 'Error deleting notification' });
   }
 };
 
 // Удаление всех уведомлений
-export const deleteAllNotifications = async (req: Request, res: Response) => {
+export const deleteAllNotifications = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?.id;
 
-    await Notification.deleteMany({ user: userId });
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
 
+    await Notification.deleteMany({ userId });
     res.json({ message: 'Все уведомления успешно удалены' });
   } catch (error) {
     console.error('Delete all notifications error:', error);
@@ -147,12 +172,33 @@ export const deleteAllNotifications = async (req: Request, res: Response) => {
   }
 };
 
-export const getNotifications = async (req: Request, res: Response) => {
+// Создание нового уведомления
+export const createNotificationController = async (req: Request, res: Response) => {
   try {
-    const userId = req.user._id;
-    const notifications = await Notification.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const { userId, type, title, message, data } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const notification = await createNotification(userId, type, title, message, data);
+    res.status(201).json(notification);
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ error: 'Error creating notification' });
+  }
+};
+
+// Получение всех уведомлений пользователя
+export const getNotifications = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 }).limit(50);
 
     res.json(notifications);
   } catch (error) {
@@ -160,27 +206,3 @@ export const getNotifications = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Ошибка при получении уведомлений' });
   }
 };
-
-export const markAsRead = async (req: Request, res: Response) => {
-  try {
-    const { notificationId } = req.params;
-    const userId = req.user._id;
-
-    const notification = await markNotificationAsRead(notificationId, userId);
-    res.json(notification);
-  } catch (error) {
-    console.error('Error marking notification as read:', error);
-    res.status(500).json({ message: 'Ошибка при отметке уведомления как прочитанного' });
-  }
-};
-
-export const markAllAsRead = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user._id;
-    await markAllNotificationsAsRead(userId);
-    res.json({ message: 'Все уведомления отмечены как прочитанные' });
-  } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-    res.status(500).json({ message: 'Ошибка при отметке всех уведомлений как прочитанных' });
-  }
-}; 

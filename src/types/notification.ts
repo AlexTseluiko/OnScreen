@@ -4,7 +4,7 @@ export enum NotificationType {
   SYSTEM = 'SYSTEM',
   REMINDER = 'REMINDER',
   REVIEW_ADDED = 'REVIEW_ADDED',
-  REVIEW_LIKED = 'REVIEW_LIKED'
+  REVIEW_LIKED = 'REVIEW_LIKED',
 }
 
 export interface Notification {
@@ -17,4 +17,4 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
-} 
+}

@@ -7,136 +7,98 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackNavigationProp } from '../navigation/types';
+import { COLORS } from '../theme/colors';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+
+const menuItems = [
+  { id: '1', title: 'Медицинские учреждения', screen: 'Facilities' },
+  { id: '2', title: 'Карта', screen: 'FacilitiesMap' },
+  { id: '3', title: 'Статьи', screen: 'Articles' },
+  { id: '4', title: 'Чат', screen: 'Chat' },
+  { id: '5', title: 'Скрининг', screen: 'ScreeningPrograms' },
+  { id: '6', title: 'Профиль', screen: 'Profile' },
+] as const;
 
 const HomeScreen: React.FC = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const navigation = useNavigation<HomeScreenNavigationProp>();
-
-  const menuItems = [
-    { title: t('menu.articles'), icon: 'newspaper-outline', screen: 'Articles' },
-    { title: t('menu.chat'), icon: 'chatbubbles-outline', screen: 'Chat' },
-    { title: t('menu.screening'), icon: 'medkit-outline', screen: 'ScreeningPrograms' },
-    { title: t('menu.facilities'), icon: 'business-outline', screen: 'Facilities' },
-    { title: t('menu.favorites'), icon: 'heart-outline', screen: 'Favorites' },
-    { title: t('menu.notifications'), icon: 'notifications-outline', screen: 'Notifications' },
-  ];
+  const navigation = useNavigation<RootStackNavigationProp>();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.colors.card }]}>
-        <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {t('home.welcome', { name: user?.name || t('common.user') })}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            {t('home.whatWouldYouLikeToDo')}
-          </Text>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: theme.colors.background }]}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Ionicons name="person-outline" size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: theme.colors.background }]}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Ionicons name="settings-outline" size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
-        </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Добро пожаловать</Text>
+        <Text style={styles.subtitle}>Выберите нужный раздел</Text>
       </View>
 
-      <ScrollView style={styles.content}>
-        {menuItems.map((item, index) => (
+      <View style={styles.menuGrid}>
+        {menuItems.map((item) => (
           <TouchableOpacity
-            key={index}
-            style={[styles.menuItem, { backgroundColor: theme.colors.card }]}
-            onPress={() => navigation.navigate(item.screen as keyof RootStackParamList)}
+            key={item.id}
+            style={styles.menuItem}
+            onPress={() => navigation.navigate(item.screen)}
           >
-            <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '20' }]}>
-              <Ionicons name={item.icon as any} size={24} color={theme.colors.primary} />
-            </View>
-            <Text style={[styles.menuItemText, { color: theme.colors.text }]}>
-              {item.title}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={theme.colors.textSecondary}
-              style={styles.chevron}
-            />
+            <Text style={styles.menuItemText}>{item.title}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: 48,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  titleContainer: {
-    flex: 1,
+    padding: 24,
+    backgroundColor: COLORS.primary,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 4,
+    color: COLORS.white,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
+    color: COLORS.white,
+    opacity: 0.8,
   },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  headerButton: {
-    padding: 8,
-    borderRadius: 12,
-  },
-  content: {
-    flex: 1,
+  menuGrid: {
     padding: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
+    width: '48%',
+    aspectRatio: 1,
+    backgroundColor: COLORS.white,
     borderRadius: 12,
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    padding: 16,
+    marginBottom: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    shadowColor: COLORS.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   menuItemText: {
-    flex: 1,
     fontSize: 16,
-    fontWeight: '500',
-  },
-  chevron: {
-    marginLeft: 8,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    textAlign: 'center',
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;

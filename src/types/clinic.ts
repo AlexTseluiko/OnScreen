@@ -13,10 +13,12 @@ export interface Address {
 }
 
 export interface WorkingHours {
-  [key: string]: {
-    open: string;
-    close: string;
-  } | string;
+  [key: string]:
+    | {
+        open: string;
+        close: string;
+      }
+    | string;
 }
 
 export interface Review {
@@ -43,4 +45,4 @@ export interface Clinic {
   workingHours: WorkingHours;
   createdAt: string;
   updatedAt: string;
-} 
+}

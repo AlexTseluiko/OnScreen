@@ -27,7 +27,7 @@ async function createAdmin() {
       password: adminPassword, // Пароль будет автоматически захеширован в pre-save хуке
       role: UserRole.ADMIN,
       isVerified: true,
-      verificationToken: undefined
+      verificationToken: undefined,
     });
 
     await admin.save();
@@ -35,7 +35,6 @@ async function createAdmin() {
     console.log('Email:', adminEmail);
     console.log('Пароль:', adminPassword);
     console.log('Пожалуйста, измените пароль после первого входа!');
-
   } catch (error) {
     console.error('Ошибка при создании администратора:', error);
   } finally {
@@ -43,4 +42,4 @@ async function createAdmin() {
   }
 }
 
-createAdmin(); 
+createAdmin();

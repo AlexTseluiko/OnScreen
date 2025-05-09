@@ -22,7 +22,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       setProfileLoading(true);
       setProfileError(null);
-      
+
       const response = await profileApi.getProfile();
       setProfile(response.profile);
     } catch (error) {
@@ -37,7 +37,7 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       setProfileLoading(true);
       setProfileError(null);
-      
+
       const response = await profileApi.updateProfile(data);
       setProfile(response.profile);
     } catch (error) {
@@ -55,14 +55,16 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <ProfileContext.Provider value={{
-      profile,
-      profileLoading,
-      profileError,
-      loadProfile,
-      updateProfile,
-      clearProfile,
-    }}>
+    <ProfileContext.Provider
+      value={{
+        profile,
+        profileLoading,
+        profileError,
+        loadProfile,
+        updateProfile,
+        clearProfile,
+      }}
+    >
       {children}
     </ProfileContext.Provider>
   );
@@ -74,4 +76,4 @@ export const useProfile = () => {
     throw new Error('useProfile must be used within a ProfileProvider');
   }
   return context;
-}; 
+};

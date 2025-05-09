@@ -1,60 +1,57 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User } from '../types/auth';
+import { User } from '../types/user';
 
-export interface UserData {
-  user: User;
-  token: string;
-  refreshToken: string;
-}
-
-const STORAGE_KEYS = {
-  USER_DATA: '@user_data',
-  AUTH_TOKEN: '@auth_token',
-  REFRESH_TOKEN: '@refresh_token',
-};
+const USER_KEY = '@user';
+const TOKEN_KEY = '@token';
+const REFRESH_TOKEN_KEY = '@refreshToken';
 
 export const userStorage = {
-  async saveUserData(userData: UserData): Promise<void> {
+  async saveUserData(user: User, token: string, refreshToken: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
-      await this.saveToken(userData.token);
-      await this.saveRefreshToken(userData.refreshToken);
+      await AsyncStorage.multiSet([
+        [USER_KEY, JSON.stringify(user)],
+        [TOKEN_KEY, token],
+        [REFRESH_TOKEN_KEY, refreshToken],
+      ]);
     } catch (error) {
-      console.error('Error saving user data:', error);
+      console.error('Ошибка при сохранении данных пользователя:', error);
       throw error;
     }
   },
 
-  async updateUserData(userData: Partial<UserData>): Promise<void> {
+  async getUserData(): Promise<User | null> {
     try {
-      const currentData = await this.getUserData();
-      const updatedData = { ...currentData, ...userData };
-      await this.saveUserData(updatedData);
+      const userData = await AsyncStorage.getItem(USER_KEY);
+      return userData ? JSON.parse(userData) : null;
     } catch (error) {
-      console.error('Error updating user data:', error);
-      throw error;
-    }
-  },
-
-  async getUserData(): Promise<UserData | null> {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
-      return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting user data:', error);
+      console.error('Ошибка при получении данных пользователя:', error);
       return null;
     }
   },
 
-  async removeUserData(): Promise<void> {
+  async getToken(): Promise<string | null> {
     try {
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.USER_DATA,
-        STORAGE_KEYS.AUTH_TOKEN,
-        STORAGE_KEYS.REFRESH_TOKEN,
-      ]);
+      return await AsyncStorage.getItem(TOKEN_KEY);
     } catch (error) {
-      console.error('Error removing user data:', error);
+      console.error('Ошибка при получении токена:', error);
+      return null;
+    }
+  },
+
+  async getRefreshToken(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+    } catch (error) {
+      console.error('Ошибка при получении refresh токена:', error);
+      return null;
+    }
+  },
+
+  async clearUserData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([USER_KEY, TOKEN_KEY, REFRESH_TOKEN_KEY]);
+    } catch (error) {
+      console.error('Ошибка при очистке данных пользователя:', error);
       throw error;
     }
   },
@@ -64,56 +61,8 @@ export const userStorage = {
       const token = await this.getToken();
       return !!token;
     } catch (error) {
-      console.error('Error checking login status:', error);
+      console.error('Ошибка при проверке авторизации:', error);
       return false;
     }
   },
-
-  async getToken(): Promise<string | null> {
-    try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    } catch (error) {
-      console.error('Error getting auth token:', error);
-      return null;
-    }
-  },
-
-  async saveToken(token: string): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-    } catch (error) {
-      console.error('Error saving auth token:', error);
-      throw error;
-    }
-  },
-
-  async getRefreshToken(): Promise<string | null> {
-    try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-    } catch (error) {
-      console.error('Error getting refresh token:', error);
-      return null;
-    }
-  },
-
-  async saveRefreshToken(token: string): Promise<void> {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
-    } catch (error) {
-      console.error('Error saving refresh token:', error);
-      throw error;
-    }
-  },
-
-  async clearTokens(): Promise<void> {
-    try {
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.AUTH_TOKEN,
-        STORAGE_KEYS.REFRESH_TOKEN,
-      ]);
-    } catch (error) {
-      console.error('Error clearing tokens:', error);
-      throw error;
-    }
-  },
-}; 
+};

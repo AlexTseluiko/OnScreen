@@ -40,4 +40,4 @@ export const APP_CONFIG = {
   REFRESH_INTERVAL: 30000, // 30 секунд
   MAX_REVIEWS_PER_PAGE: 10,
   MAX_FACILITIES_PER_PAGE: 20,
-}; 
+};

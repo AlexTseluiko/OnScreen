@@ -103,48 +103,45 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: 16,
+    elevation: 3,
     marginBottom: 16,
+    padding: 16,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+  },
+  input: {
+    borderColor: COLORS.gray,
+    borderRadius: 8,
+    borderWidth: 1,
+    color: COLORS.text,
+    fontSize: 14,
+    minHeight: 100,
+    padding: 12,
+    textAlignVertical: 'top',
+  },
+  label: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
   },
   ratingContainer: {
     marginBottom: 16,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
+  starButton: {
+    padding: 4,
   },
   starsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  starButton: {
-    padding: 4,
-  },
-  textContainer: {
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: COLORS.text,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
   submitButton: {
+    alignItems: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: 8,
     padding: 16,
-    alignItems: 'center',
   },
   submitButtonDisabled: {
     opacity: 0.7,
@@ -154,4 +151,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+  textContainer: {
+    marginBottom: 16,
+  },
+});

@@ -22,7 +22,7 @@ export interface IProfile extends Document {
   };
   medications: string[];
   chronicConditions: string[];
-  lastCheckup: string;
+  lastCheckup: Date;
   preferredLanguage: string;
   height: string;
   weight: string;
@@ -46,7 +46,8 @@ const InsuranceSchema = new Schema({
 const ProfileSchema = new Schema(
   {
     userId: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
       unique: true,
     },
@@ -99,8 +100,8 @@ const ProfileSchema = new Schema(
       default: [],
     },
     lastCheckup: {
-      type: String,
-      default: '',
+      type: Date,
+      default: null,
     },
     preferredLanguage: {
       type: String,
@@ -124,4 +125,4 @@ const ProfileSchema = new Schema(
   }
 );
 
-export const Profile = mongoose.model<IProfile>('Profile', ProfileSchema); 
+export const Profile = mongoose.model<IProfile>('Profile', ProfileSchema);

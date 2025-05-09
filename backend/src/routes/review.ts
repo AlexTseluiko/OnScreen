@@ -1,36 +1,48 @@
-import { Router } from 'express';
+import express, { Response } from 'express';
 import {
   createReview,
-  getClinicReviews,
+  getReviews,
+  getReviewById,
   updateReview,
   deleteReview,
   likeReview,
 } from '../controllers/reviewController';
-import { upload } from '../utils/fileUpload';
+import { auth, AuthRequest } from '../middleware/auth';
+import { FileRequest } from '../types/request';
 
-const router = Router();
+const router = express.Router();
 
-// Получение отзывов клиники
-router.get('/clinic/:clinicId', getClinicReviews);
+// Получение всех отзывов
+router.get('/', (req: AuthRequest, res: Response) => getReviews(req, res));
 
-// Создание отзыва
-router.post(
-  '/',
-  upload.array('photos', 5),
-  createReview
+// Получение отзыва по ID
+router.get('/:id', (req: AuthRequest & { params: { id: string } }, res: Response) =>
+  getReviewById(req, res)
 );
+
+// Создание нового отзыва
+router.post('/', auth, (req: AuthRequest & FileRequest, res: Response) => createReview(req, res));
 
 // Обновление отзыва
 router.put(
   '/:reviewId',
-  upload.array('photos', 5),
-  updateReview
+  auth,
+  (req: AuthRequest & FileRequest & { params: { reviewId: string } }, res: Response) =>
+    updateReview(req, res)
 );
 
 // Удаление отзыва
-router.delete('/:reviewId', deleteReview);
+router.delete(
+  '/:reviewId',
+  auth,
+  (req: AuthRequest & { params: { reviewId: string } }, res: Response) => deleteReview(req, res)
+);
 
 // Лайк отзыва
-router.post('/:reviewId/like', likeReview);
+router.post(
+  '/:reviewId/like',
+  auth,
+  (req: AuthRequest & { params: { reviewId: string } }, res: Response) => likeReview(req, res)
+);
 
-export default router; 
+export default router;

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
   ActivityIndicator,
-  ScrollView 
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -25,7 +25,7 @@ type ChangePasswordScreenNavigationProp = StackNavigationProp<RootStackParamList
 export const ChangePasswordScreen: React.FC = () => {
   const navigation = useNavigation<ChangePasswordScreenNavigationProp>();
   const { theme } = useTheme();
-  
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -33,49 +33,49 @@ export const ChangePasswordScreen: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   // Валидация полей
   const validateInputs = () => {
     if (!currentPassword) {
       Alert.alert('Ошибка', 'Пожалуйста, введите текущий пароль');
       return false;
     }
-    
+
     if (!newPassword) {
       Alert.alert('Ошибка', 'Пожалуйста, введите новый пароль');
       return false;
     }
-    
+
     if (newPassword.length < 6) {
       Alert.alert('Ошибка', 'Новый пароль должен содержать минимум 6 символов');
       return false;
     }
-    
+
     if (newPassword !== confirmPassword) {
       Alert.alert('Ошибка', 'Пароли не совпадают');
       return false;
     }
-    
+
     if (currentPassword === newPassword) {
       Alert.alert('Ошибка', 'Новый пароль должен отличаться от текущего');
       return false;
     }
-    
+
     return true;
   };
-  
+
   // Отправка запроса на смену пароля
   const handleChangePassword = async () => {
     if (!validateInputs()) return;
-    
+
     setLoading(true);
-    
+
     try {
       // Проверим все токены в AsyncStorage
       console.log('Проверка всех токенов в хранилище:');
       const allKeys = await AsyncStorage.getAllKeys();
       console.log('Все ключи в AsyncStorage:', allKeys);
-      
+
       // Выведем значения всех токенов
       for (const key of allKeys) {
         if (key.toLowerCase().includes('token')) {
@@ -83,69 +83,75 @@ export const ChangePasswordScreen: React.FC = () => {
           console.log(`Ключ ${key}:`, value ? `${value.substring(0, 10)}...` : 'отсутствует');
         }
       }
-      
+
       // Синхронизируем токены перед запросом
       await syncTokens();
       const token = await getToken();
-      
-      console.log('Токен для запроса смены пароля:', token ? `${token.substring(0, 10)}...` : 'отсутствует');
-      
+
+      console.log(
+        'Токен для запроса смены пароля:',
+        token ? `${token.substring(0, 10)}...` : 'отсутствует'
+      );
+
       if (!token) {
         Alert.alert('Ошибка авторизации', 'Пожалуйста, войдите в систему заново');
         navigation.navigate('Login');
         return;
       }
-      
+
       // Сначала проверим валидность токена
       console.log('Проверяем валидность токена...');
       try {
         const verifyResponse = await fetch(`${API_BASE_URL}/auth/verify`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
-        
+
         console.log('Статус проверки токена:', verifyResponse.status);
-        
+
         if (verifyResponse.status === 401) {
           console.error('Токен невалидный, нужно заново авторизоваться');
-          Alert.alert('Ошибка авторизации', 'Ваша сессия истекла. Пожалуйста, войдите в систему заново.');
+          Alert.alert(
+            'Ошибка авторизации',
+            'Ваша сессия истекла. Пожалуйста, войдите в систему заново.'
+          );
           navigation.navigate('Login');
           return;
         }
       } catch (verifyError) {
         console.error('Ошибка при проверке токена:', verifyError);
       }
-      
+
       // Проверим, какие маршруты доступны на сервере
       console.log('Проверяем доступные маршруты...');
-      
+
       // Массив потенциальных маршрутов для смены пароля
       const possibleRoutes = [
         '/auth/change-password',
         '/users/change-password',
         '/profile/change-password',
-        '/change-password'
+        '/change-password',
       ];
-      
+
       // Используем первый рабочий маршрут
       let workingRoute = null;
       let responseData = null;
-      
+
       for (const route of possibleRoutes) {
         try {
           console.log(`Пробуем маршрут: ${route}`);
           const response = await fetch(`${API_BASE_URL}${route}`, {
             method: 'OPTIONS',
             headers: {
-              'Authorization': `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           });
-          
+
           console.log(`Маршрут ${route} статус:`, response.status);
-          
+
           if (response.status !== 404) {
             workingRoute = route;
             console.log(`Найден рабочий маршрут: ${route}`);
@@ -155,43 +161,43 @@ export const ChangePasswordScreen: React.FC = () => {
           console.error(`Ошибка при проверке маршрута ${route}:`, routeError);
         }
       }
-      
+
       if (!workingRoute) {
         console.warn('Не удалось найти рабочий маршрут для смены пароля');
         workingRoute = '/auth/change-password'; // Используем маршрут по умолчанию
       }
-      
+
       console.log(`Отправляем запрос на ${workingRoute}`);
-      
+
       try {
         const response = await fetch(`${API_BASE_URL}${workingRoute}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            Accept: 'application/json',
           },
           body: JSON.stringify({
             currentPassword,
-            newPassword
-          })
+            newPassword,
+          }),
         });
-        
+
         console.log('Ответ fetch API:', response.status);
-        
+
         const responseText = await response.text();
         console.log('Текст ответа:', responseText);
-        
+
         try {
           responseData = JSON.parse(responseText);
           console.log('Данные ответа:', responseData);
         } catch (parseError) {
           console.error('Ошибка парсинга ответа:', parseError);
         }
-        
+
         if (response.ok) {
           Alert.alert('Успех', 'Пароль успешно изменен', [
-            { text: 'OK', onPress: () => navigation.goBack() }
+            { text: 'OK', onPress: () => navigation.goBack() },
           ]);
           return;
         } else {
@@ -214,29 +220,27 @@ export const ChangePasswordScreen: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.contentContainer}
     >
       <View style={styles.formContainer}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Изменение пароля
-        </Text>
-        
+        <Text style={[styles.title, { color: theme.colors.text }]}>Изменение пароля</Text>
+
         <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
           Для смены пароля введите текущий пароль и новый пароль
         </Text>
-        
+
         <View style={styles.inputContainer}>
-          <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
-            Текущий пароль
-          </Text>
-          <View style={[
-            styles.inputWrapper, 
-            { backgroundColor: theme.colors.card, borderColor: theme.colors.border }
-          ]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Текущий пароль</Text>
+          <View
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
             <TextInput
               style={[styles.input, { color: theme.colors.text }]}
               value={currentPassword}
@@ -257,15 +261,15 @@ export const ChangePasswordScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-        
+
         <View style={styles.inputContainer}>
-          <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
-            Новый пароль
-          </Text>
-          <View style={[
-            styles.inputWrapper, 
-            { backgroundColor: theme.colors.card, borderColor: theme.colors.border }
-          ]}>
+          <Text style={[styles.inputLabel, { color: theme.colors.text }]}>Новый пароль</Text>
+          <View
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
             <TextInput
               style={[styles.input, { color: theme.colors.text }]}
               value={newPassword}
@@ -289,15 +293,17 @@ export const ChangePasswordScreen: React.FC = () => {
             Пароль должен содержать минимум 6 символов
           </Text>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Text style={[styles.inputLabel, { color: theme.colors.text }]}>
             Подтвердите новый пароль
           </Text>
-          <View style={[
-            styles.inputWrapper, 
-            { backgroundColor: theme.colors.card, borderColor: theme.colors.border }
-          ]}>
+          <View
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
             <TextInput
               style={[styles.input, { color: theme.colors.text }]}
               value={confirmPassword}
@@ -318,12 +324,9 @@ export const ChangePasswordScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-        
+
         <TouchableOpacity
-          style={[
-            styles.changeButton,
-            { opacity: loading ? 0.7 : 1 }
-          ]}
+          style={[styles.changeButton, { opacity: loading ? 0.7 : 1 }]}
           onPress={handleChangePassword}
           disabled={loading}
         >
@@ -333,7 +336,7 @@ export const ChangePasswordScreen: React.FC = () => {
             <Text style={styles.changeButtonText}>Изменить пароль</Text>
           )}
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.cancelButton}
           onPress={() => navigation.goBack()}
@@ -341,22 +344,23 @@ export const ChangePasswordScreen: React.FC = () => {
         >
           <Text style={styles.cancelButtonText}>Отмена</Text>
         </TouchableOpacity>
-        
+
         {/* Отладочные кнопки - видны только в режиме разработки */}
         {__DEV__ && (
           <View style={styles.debugContainer}>
             <Text style={styles.debugTitle}>Отладка (только для разработки)</Text>
-            
+
             <TouchableOpacity
               style={styles.debugButton}
               onPress={async () => {
                 try {
                   // Обновляем этот токен на актуальный при каждом отключении приложения
-                  const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGUzNGNhMjA1NTZmMWE1YmVkZGM4OSIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MDk0MDcwNzUsImV4cCI6MTcxMDAxMTg3NX0.NQnFD1zEzX1m8vwuNPBsCxwfKGQjdDZ-2BW1-JLLZMA';
-                  
+                  const testToken =
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGUzNGNhMjA1NTZmMWE1YmVkZGM4OSIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MDk0MDcwNzUsImV4cCI6MTcxMDAxMTg3NX0.NQnFD1zEzX1m8vwuNPBsCxwfKGQjdDZ-2BW1-JLLZMA';
+
                   await AsyncStorage.setItem('token', testToken);
                   await AsyncStorage.setItem('auth_token', testToken);
-                  
+
                   console.log('Тестовый токен сохранен');
                   Alert.alert('Токен восстановлен', 'Тестовый токен авторизации восстановлен');
                 } catch (error) {
@@ -367,7 +371,7 @@ export const ChangePasswordScreen: React.FC = () => {
             >
               <Text style={styles.debugButtonText}>Восстановить тестовый токен</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.debugButton}
               onPress={async () => {
@@ -377,22 +381,25 @@ export const ChangePasswordScreen: React.FC = () => {
                     Alert.alert('Ошибка', 'Токен отсутствует');
                     return;
                   }
-                  
+
                   console.log('Проверяем токен...');
                   const response = await fetch(`${API_BASE_URL}/auth/verify`, {
                     method: 'GET',
                     headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json'
-                    }
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
                   });
-                  
+
                   console.log('Статус проверки токена:', response.status);
-                  
+
                   if (response.ok) {
                     const data = await response.json();
                     console.log('Данные пользователя:', data);
-                    Alert.alert('Токен валиден', `Пользователь: ${data.user?.email || 'нет данных'}`);
+                    Alert.alert(
+                      'Токен валиден',
+                      `Пользователь: ${data.user?.email || 'нет данных'}`
+                    );
                   } else {
                     Alert.alert('Токен невалиден', `Статус: ${response.status}`);
                   }
@@ -404,7 +411,7 @@ export const ChangePasswordScreen: React.FC = () => {
             >
               <Text style={styles.debugButtonText}>Проверить токен</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.debugButton}
               onPress={async () => {
@@ -415,23 +422,23 @@ export const ChangePasswordScreen: React.FC = () => {
                     '/auth/change-password',
                     '/users/change-password',
                     '/profile/change-password',
-                    '/change-password'
+                    '/change-password',
                   ];
-                  
+
                   const results = [];
-                  
+
                   for (const route of routes) {
                     try {
                       const response = await fetch(`${API_BASE_URL}${route}`, {
-                        method: 'OPTIONS'
+                        method: 'OPTIONS',
                       });
-                      
+
                       results.push(`${route}: ${response.status}`);
                     } catch (error) {
                       results.push(`${route}: ошибка`);
                     }
                   }
-                  
+
                   console.log('Результаты проверки маршрутов:', results);
                   Alert.alert('Маршруты API', results.join('\n'));
                 } catch (error) {
@@ -442,44 +449,44 @@ export const ChangePasswordScreen: React.FC = () => {
             >
               <Text style={styles.debugButtonText}>Проверить маршруты API</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[styles.debugButton, {backgroundColor: '#4CAF50'}]}
+              style={[styles.debugButton, { backgroundColor: '#4CAF50' }]}
               onPress={async () => {
                 try {
                   // Пароль для тестирования
                   const testPassword = 'testpassword123';
-                  
+
                   const token = await getToken();
                   if (!token) {
                     Alert.alert('Ошибка', 'Токен отсутствует');
                     return;
                   }
-                  
+
                   // Пробуем напрямую с пользовательским API
                   console.log('Пробуем сменить пароль через пользовательский API...');
-                  
+
                   const response = await fetch(`${API_BASE_URL}/users/password`, {
                     method: 'PUT',
                     headers: {
-                      'Authorization': `Bearer ${token}`,
-                      'Content-Type': 'application/json'
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                       oldPassword: currentPassword || testPassword,
-                      newPassword: newPassword || 'NewPass123!'
-                    })
+                      newPassword: newPassword || 'NewPass123!',
+                    }),
                   });
-                  
+
                   console.log('Статус ответа:', response.status);
-                  
+
                   const responseText = await response.text();
                   console.log('Текст ответа:', responseText);
-                  
+
                   try {
                     const responseData = JSON.parse(responseText);
                     console.log('Данные ответа:', responseData);
-                    
+
                     if (response.ok) {
                       Alert.alert('Успех', 'Пароль успешно изменен');
                     } else {
@@ -487,7 +494,7 @@ export const ChangePasswordScreen: React.FC = () => {
                     }
                   } catch (parseError) {
                     console.error('Ошибка парсинга ответа:', parseError);
-                    
+
                     if (response.ok) {
                       Alert.alert('Успех', 'Пароль успешно изменен');
                     } else {
@@ -510,29 +517,70 @@ export const ChangePasswordScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  cancelButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    marginTop: 10,
+    paddingVertical: 15,
+  },
+  cancelButtonText: {
+    color: COLORS.primary,
+    fontSize: 16,
+  },
+  changeButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    marginTop: 10,
+    paddingVertical: 15,
+  },
+  changeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
   },
   contentContainer: {
     flexGrow: 1,
-    padding: 20,
     justifyContent: 'center',
+    padding: 20,
   },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
+  debugButton: {
+    alignItems: 'center',
+    backgroundColor: '#FF5722',
+    borderRadius: 8,
+    paddingVertical: 15,
   },
-  title: {
-    fontSize: 24,
+  debugButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  debugContainer: {
+    borderColor: '#FF5722',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 20,
+    padding: 20,
+  },
+  debugTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
-  subtitle: {
+  formContainer: {
+    alignSelf: 'center',
+    maxWidth: 400,
+    width: '100%',
+  },
+  input: {
+    flex: 1,
     fontSize: 16,
-    marginBottom: 30,
-    textAlign: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
   },
   inputContainer: {
     marginBottom: 20,
@@ -542,71 +590,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
     overflow: 'hidden',
-  },
-  input: {
-    flex: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  visibilityButton: {
-    padding: 10,
   },
   passwordHint: {
     fontSize: 12,
     marginTop: 5,
   },
-  changeButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  changeButtonText: {
-    color: '#FFFFFF',
+  subtitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
   },
-  cancelButton: {
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    color: COLORS.primary,
-    fontSize: 16,
-  },
-  debugContainer: {
-    marginTop: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#FF5722',
-    borderRadius: 8,
-  },
-  debugTitle: {
-    fontSize: 18,
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
-  debugButton: {
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#FF5722',
-  },
-  debugButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  visibilityButton: {
+    padding: 10,
   },
 });
 
-export default ChangePasswordScreen; 
+export default ChangePasswordScreen;

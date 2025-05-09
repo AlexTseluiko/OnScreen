@@ -1,17 +1,17 @@
-import { Router } from 'express';
+import express from 'express';
 import {
   register,
   login,
   verifyEmail,
   forgotPassword,
   resetPassword,
-  logout,
   changePassword,
-  refreshToken
+  refreshToken,
 } from '../controllers/authController';
 import { auth } from '../middleware/auth';
+import { AuthRequest } from '../middleware/auth';
 
-const router = Router();
+const router = express.Router();
 
 // Регистрация
 router.post('/register', register);
@@ -35,8 +35,8 @@ router.post('/change-password', auth, changePassword);
 router.post('/refresh-token', refreshToken);
 
 // Маршрут для проверки валидности токена
-router.get('/verify', auth, (req, res) => {
+router.get('/verify', auth, (req: AuthRequest, res) => {
   res.status(200).json({ message: 'Token is valid', user: req.user });
 });
 
-export default router; 
+export default router;

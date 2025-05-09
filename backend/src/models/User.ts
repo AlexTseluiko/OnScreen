@@ -1,21 +1,35 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { IUser, UserRole } from '../types/user';
+import { UserRole } from '../types/user';
 
-export interface IUserDocument extends IUser, Document {
-  comparePassword(candidatePassword: string): Promise<boolean>;
+export interface IUserDocument extends Document {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  phone?: string;
+  avatar?: string;
+  isVerified: boolean;
+  isBlocked: boolean;
+  verificationToken?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
 }
 
 const userSchema = new Schema<IUserDocument>(
   {
     firstName: {
       type: String,
-      required: false,
+      required: true,
       trim: true,
     },
     lastName: {
       type: String,
-      required: false,
+      required: true,
       trim: true,
     },
     email: {
@@ -59,6 +73,10 @@ const userSchema = new Schema<IUserDocument>(
     resetPasswordExpires: {
       type: Date,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -67,26 +85,23 @@ const userSchema = new Schema<IUserDocument>(
 
 // Хук pre-save для хеширования пароля
 userSchema.pre('save', async function (next) {
-  const user = this;
-  if (user.isModified('password')) {
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(user.password, salt);
+  if (!this.isModified('password')) {
+    return next();
   }
-  next();
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
 });
 
-// Метод для сравнения паролей
+// Метод для проверки пароля
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Создаем и экспортируем модель с обоими вариантами (именованный и по умолчанию) для совместимости
-const UserModel = mongoose.model<IUserDocument>('User', userSchema);
-
-// Именованный экспорт для использования с import { User } from ...
-export const User = UserModel;
-
-// Экспорт по умолчанию для использования с import User from ...
-export default UserModel;
-
-export { UserRole }; 
+// Создаем и экспортируем модель
+export const User = mongoose.model<IUserDocument>('User', userSchema);

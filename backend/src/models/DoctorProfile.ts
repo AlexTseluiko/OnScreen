@@ -125,4 +125,4 @@ const DoctorProfileSchema = new Schema(
   }
 );
 
-export const DoctorProfile = mongoose.model<IDoctorProfile>('DoctorProfile', DoctorProfileSchema); 
+export const DoctorProfile = mongoose.model<IDoctorProfile>('DoctorProfile', DoctorProfileSchema);

@@ -7,46 +7,57 @@ export interface IReview extends Document {
   text: string;
   photos: string[];
   likes: mongoose.Types.ObjectId[];
+  isApproved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ReviewSchema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const ReviewSchema = new Schema(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    clinic: {
+      type: Schema.Types.ObjectId,
+      ref: 'Clinic',
+      required: true,
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    photos: [
+      {
+        type: String,
+      },
+    ],
+    likes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
   },
-  clinic: {
-    type: Schema.Types.ObjectId,
-    ref: 'Clinic',
-    required: true
-  },
-  rating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5
-  },
-  text: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  photos: [{
-    type: String
-  }],
-  likes: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User'
-  }]
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Индексы для поиска
 ReviewSchema.index({ clinic: 1, createdAt: -1 });
-ReviewSchema.index({ user: 1, createdAt: -1 });
 
 // Middleware для обновления рейтинга клиники
 ReviewSchema.post('save', async function () {
@@ -72,11 +83,5 @@ ReviewSchema.post('save', async function () {
   }
 });
 
-// Создаем и экспортируем модель с обоими вариантами (именованный и по умолчанию) для совместимости
-const ReviewModel = mongoose.model<IReview>('Review', ReviewSchema);
-
-// Именованный экспорт для использования с import { Review } from ...
-export const Review = ReviewModel;
-
-// Экспорт по умолчанию для использования с import Review from ...
-export default ReviewModel; 
+// Создаем и экспортируем модель
+export const Review = mongoose.model<IReview>('Review', ReviewSchema);

@@ -1,93 +1,109 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, UserRole } from '../types/auth';
-import { userStorage } from '../utils/userStorage';
 import { authApi } from '../api/authApi';
+import { useUserStorage } from './UserStorageContext';
+import { User } from '../types/user';
 
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
-  authLoading: boolean;
+  loading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, role: UserRole) => Promise<void>;
+  register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { saveUserData, getUserData, clearUserData } = useUserStorage();
 
   useEffect(() => {
-    const loadAuthData = async () => {
+    const loadUser = async () => {
       try {
-        const userData = await userStorage.getUserData();
+        const userData = await getUserData();
         if (userData) {
-          setUser(userData.user);
+          setUser(userData);
         }
-      } catch (error) {
-        console.error('Error loading auth data:', error);
+      } catch (err) {
+        console.error('Ошибка при загрузке пользователя:', err);
       } finally {
-        setAuthLoading(false);
+        setLoading(false);
       }
     };
 
-    loadAuthData();
-  }, []);
+    loadUser();
+  }, [getUserData]);
 
   const login = async (email: string, password: string) => {
     try {
-      const { user: newUser, token, refreshToken } = await authApi.login(email, password);
-      await userStorage.saveUserData({ user: newUser, token, refreshToken });
-      setUser(newUser);
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      setLoading(true);
+      setError(null);
+      const response = await authApi.login(email, password);
+      if (response.success && response.data) {
+        const { user, token, refreshToken } = response.data;
+        await saveUserData({ user, token, refreshToken });
+        setUser(user);
+      } else {
+        setError(response.message || 'Ошибка при входе');
+      }
+    } catch (err) {
+      setError('Ошибка при входе');
+      console.error('Ошибка при входе:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const register = async (email: string, password: string, role: UserRole) => {
+  const register = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
-      const { user: newUser, token, refreshToken } = await authApi.register(email, password, role);
-      await userStorage.saveUserData({ user: newUser, token, refreshToken });
-      setUser(newUser);
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
+      setLoading(true);
+      setError(null);
+      const response = await authApi.register(email, password, firstName, lastName);
+      if (response.success && response.data) {
+        const { user, token, refreshToken } = response.data;
+        await saveUserData({ user, token, refreshToken });
+        setUser(user);
+      } else {
+        setError(response.message || 'Ошибка при регистрации');
+      }
+    } catch (err) {
+      setError('Ошибка при регистрации');
+      console.error('Ошибка при регистрации:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      await authApi.logout();
-      await userStorage.removeUserData();
+      setLoading(true);
+      await clearUserData();
       setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
+    } catch (err) {
+      console.error('Ошибка при выходе:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const refreshToken = async () => {
-    try {
-      const { user: newUser, token, refreshToken } = await authApi.refreshToken();
-      await userStorage.saveUserData({ user: newUser, token, refreshToken });
-      setUser(newUser);
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      throw error;
-    }
-  };
+  const clearError = () => setError(null);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      authLoading,
-      login,
-      register,
-      logout,
-      refreshToken,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        clearError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -95,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

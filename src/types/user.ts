@@ -1,24 +1,30 @@
-export type UserRole = 'user' | 'admin' | 'doctor' | 'clinic';
+import { User as BaseUser } from './models';
 
-export interface User {
+export interface User extends BaseUser {
   _id: string;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
-  phone?: string;
+  role: 'user' | 'admin' | 'doctor';
   avatar?: string;
-  isBlocked: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  phone?: string;
+  isVerified?: boolean;
+  isBlocked?: boolean;
 }
 
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
+export interface UserProfile extends User {
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  medicalHistory?: string[];
+  allergies?: string[];
+  medications?: string[];
+  emergencyContacts?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  }[];
 }
 
 export interface LoginCredentials {
@@ -26,18 +32,30 @@ export interface LoginCredentials {
   password: string;
 }
 
-export interface RegisterData extends LoginCredentials {
-  firstName: string;
-  lastName: string;
+export interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  role: string;
   phone?: string;
-  role?: UserRole;
 }
 
-export interface ProfileUpdateData {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  avatar?: string;
-  currentPassword?: string;
-  newPassword?: string;
-} 
+export interface UserData {
+  user: User;
+  token: string;
+  refreshToken: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface ProfileState {
+  profile: UserProfile | null;
+  isLoading: boolean;
+  error: string | null;
+}

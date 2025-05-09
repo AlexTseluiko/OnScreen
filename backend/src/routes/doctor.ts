@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import {
   createDoctor,
   getDoctors,
@@ -6,24 +6,39 @@ import {
   updateDoctor,
   deleteDoctor,
 } from '../controllers/doctorController';
-import { auth, checkRole } from '../middleware/auth';
-import { UserRole } from '../models/User';
+import { auth, checkRole, AuthRequest } from '../middleware/auth';
+import { UserRole } from '../types/user';
 
 const router = Router();
 
 // Создание врача (только для администраторов)
-router.post('/', auth, checkRole([UserRole.ADMIN]), createDoctor);
+router.post('/', auth, checkRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) =>
+  createDoctor(req, res)
+);
 
 // Получение списка врачей
-router.get('/', auth, getDoctors);
+router.get('/', auth, (req: AuthRequest, res: Response) => getDoctors(req, res));
 
 // Получение врача по ID
-router.get('/:doctorId', auth, getDoctorById);
+router.get(
+  '/:doctorId',
+  auth,
+  (req: AuthRequest & { params: { doctorId: string } }, res: Response) => getDoctorById(req, res)
+);
 
 // Обновление информации о враче
-router.put('/:doctorId', auth, updateDoctor);
+router.put(
+  '/:doctorId',
+  auth,
+  (req: AuthRequest & { params: { doctorId: string } }, res: Response) => updateDoctor(req, res)
+);
 
 // Удаление врача (только для администраторов)
-router.delete('/:doctorId', auth, checkRole([UserRole.ADMIN]), deleteDoctor);
+router.delete(
+  '/:doctorId',
+  auth,
+  checkRole([UserRole.ADMIN]),
+  (req: AuthRequest & { params: { doctorId: string } }, res: Response) => deleteDoctor(req, res)
+);
 
-export default router; 
+export default router;

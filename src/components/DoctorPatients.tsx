@@ -28,10 +28,7 @@ interface DoctorPatientsProps {
   onSelectPatient?: (patient: Patient) => void;
 }
 
-export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
-  doctorId,
-  onSelectPatient,
-}) => {
+export const DoctorPatients: React.FC<DoctorPatientsProps> = ({ doctorId, onSelectPatient }) => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -42,7 +39,7 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await doctorsApi.getDoctorPatients(doctorId);
       setPatients(response.data.patients);
     } catch (err) {
@@ -64,17 +61,12 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
     >
       <View style={styles.patientCard}>
         {item.photoUrl ? (
-          <Image
-            source={{ uri: item.photoUrl }}
-            style={styles.patientPhoto}
-          />
+          <Image source={{ uri: item.photoUrl }} style={styles.patientPhoto} />
         ) : (
           <DefaultAvatar size={50} />
         )}
         <View style={styles.patientInfo}>
-          <Text style={[styles.patientName, { color: theme.colors.text }]}>
-            {item.name}
-          </Text>
+          <Text style={[styles.patientName, { color: theme.colors.text }]}>{item.name}</Text>
           {item.lastVisit && (
             <Text style={[styles.visitInfo, { color: theme.colors.textSecondary }]}>
               {t('lastVisit')}: {new Date(item.lastVisit).toLocaleDateString()}
@@ -85,20 +77,21 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
               {t('nextAppointment')}: {new Date(item.nextAppointment).toLocaleDateString()}
             </Text>
           )}
-          <View style={[
-            styles.statusBadge,
-            { backgroundColor: item.status === 'active' ? theme.colors.success : theme.colors.error }
-          ]}>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor:
+                  item.status === 'active' ? theme.colors.success : theme.colors.error,
+              },
+            ]}
+          >
             <Text style={styles.statusText}>
               {item.status === 'active' ? t('active') : t('inactive')}
             </Text>
           </View>
         </View>
-        <Ionicons
-          name="chevron-forward"
-          size={24}
-          color={theme.colors.textSecondary}
-        />
+        <Ionicons name="chevron-forward" size={24} color={theme.colors.textSecondary} />
       </View>
     </TouchableOpacity>
   );
@@ -114,9 +107,7 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
   if (error) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={[styles.errorText, { color: theme.colors.error }]}>
-          {error}
-        </Text>
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
           onPress={loadPatients}
@@ -144,31 +135,34 @@ export const DoctorPatients: React.FC<DoctorPatientsProps> = ({
 };
 
 const styles = StyleSheet.create({
+  centerContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
   },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  emptyText: {
+    margin: 20,
+    textAlign: 'center',
+  },
+  errorText: {
+    margin: 10,
+    textAlign: 'center',
   },
   patientCard: {
-    flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    marginHorizontal: 10,
-    marginVertical: 5,
     borderRadius: 8,
     elevation: 2,
+    flexDirection: 'row',
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  patientPhoto: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
   },
   patientInfo: {
     flex: 1,
@@ -179,38 +173,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  visitInfo: {
-    fontSize: 14,
-    marginBottom: 2,
+  patientPhoto: {
+    borderRadius: 30,
+    height: 60,
+    width: 60,
+  },
+  retryButton: {
+    borderRadius: 8,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
   statusBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 12,
     marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   statusText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  errorText: {
-    textAlign: 'center',
-    margin: 10,
+  visitInfo: {
+    fontSize: 14,
+    marginBottom: 2,
   },
-  retryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  emptyText: {
-    textAlign: 'center',
-    margin: 20,
-  },
-}); 
+});

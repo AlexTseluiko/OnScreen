@@ -7,7 +7,7 @@ export interface IArticle extends Document {
   category: string;
   tags: string[];
   imageUrl?: string;
-  published: boolean;
+  isPublished: boolean;
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -41,7 +41,7 @@ const ArticleSchema = new Schema(
     imageUrl: {
       type: String,
     },
-    published: {
+    isPublished: {
       type: Boolean,
       default: false,
     },
@@ -54,4 +54,4 @@ const ArticleSchema = new Schema(
   }
 );
 
-export const Article = mongoose.model<IArticle>('Article', ArticleSchema); 
+export const Article = mongoose.model<IArticle>('Article', ArticleSchema);

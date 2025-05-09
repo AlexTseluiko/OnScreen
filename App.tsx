@@ -1,19 +1,20 @@
 import React from 'react';
 import { Provider } from 'react-redux';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store';
 import { ThemeProvider } from './src/theme/ThemeContext';
-import { AuthProvider } from './src/contexts/AuthContext';
-import './src/i18n';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
-export default function App() {
+const App = () => {
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <AuthProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
           <AppNavigator />
-        </AuthProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </Provider>
   );
-} 
+};
+
+export default App;

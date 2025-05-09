@@ -11,23 +11,21 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.title, { color: theme.colors.text }]}>
-        {t('settings.title')}
-      </Text>
+      <Text style={[styles.title, { color: theme.colors.text }]}>{t('settings.title')}</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
   },
-}); 
+});

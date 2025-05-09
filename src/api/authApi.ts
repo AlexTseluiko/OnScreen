@@ -1,29 +1,59 @@
-import { apiClient } from './apiClient';
-import { User, UserRole } from '../types/auth';
+import { AuthResponse } from '../types/auth';
 
-interface AuthResponse {
-  user: User;
-  token: string;
-  refreshToken: string;
-}
+const API_URL = 'http://localhost:3000/api';
 
 export const authApi = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
-    return response.data;
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Ошибка при входе:', error);
+      return {
+        success: false,
+        message: 'Ошибка при входе',
+      };
+    }
   },
 
-  async register(email: string, password: string, role: UserRole): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/register', { email, password, role });
-    return response.data;
+  async register(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ): Promise<AuthResponse> {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, firstName, lastName }),
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Ошибка при регистрации:', error);
+      return {
+        success: false,
+        message: 'Ошибка при регистрации',
+      };
+    }
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/auth/logout');
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Ошибка при выходе:', error);
+      throw error;
+    }
   },
-
-  async refreshToken(): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/refresh');
-    return response.data;
-  }
-}; 
+};

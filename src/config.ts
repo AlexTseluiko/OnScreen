@@ -36,7 +36,7 @@ export const STORAGE_KEYS = {
 export const APP_CONFIG = {
   // Настройки для загрузки изображений
   defaultImage: 'https://picsum.photos/200/300',
-  
+
   // Настройки пагинации
   defaultPageSize: 10,
-}; 
+};

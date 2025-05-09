@@ -61,10 +61,12 @@ const facilitySchema = new Schema<IFacility>(
         required: true,
       },
     },
-    services: [{
-      type: String,
-      trim: true,
-    }],
+    services: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     workingHours: {
       type: Map,
       of: {
@@ -73,9 +75,11 @@ const facilitySchema = new Schema<IFacility>(
       },
       default: {},
     },
-    images: [{
-      type: String,
-    }],
+    images: [
+      {
+        type: String,
+      },
+    ],
     type: {
       type: String,
       enum: ['hospital', 'clinic', 'pharmacy', 'laboratory'],
@@ -110,4 +114,4 @@ const facilitySchema = new Schema<IFacility>(
 facilitySchema.index({ name: 'text', address: 'text', description: 'text' });
 facilitySchema.index({ coordinates: '2dsphere' });
 
-export const Facility = mongoose.model<IFacility>('Facility', facilitySchema); 
+export const Facility = mongoose.model<IFacility>('Facility', facilitySchema);

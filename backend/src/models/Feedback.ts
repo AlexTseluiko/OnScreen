@@ -17,51 +17,54 @@ export interface IFeedback extends Document {
 }
 
 // Схема для обратной связи
-const FeedbackSchema: Schema = new Schema({
-  feedbackText: {
-    type: String,
-    required: [true, 'Текст обратной связи обязателен'],
-    trim: true,
+const FeedbackSchema: Schema = new Schema(
+  {
+    feedbackText: {
+      type: String,
+      required: [true, 'Текст обратной связи обязателен'],
+      trim: true,
+    },
+    feedbackType: {
+      type: String,
+      enum: ['suggestion', 'bug', 'other'],
+      default: 'other',
+    },
+    email: {
+      type: String,
+      required: false,
+      trim: true,
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        'Пожалуйста, укажите корректный email адрес',
+      ],
+    },
+    ipAddress: {
+      type: String,
+      required: false,
+    },
+    userAgent: {
+      type: String,
+      required: false,
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: {
+      type: Date,
+      required: false,
+    },
+    adminNotes: {
+      type: String,
+      required: false,
+    },
   },
-  feedbackType: {
-    type: String,
-    enum: ['suggestion', 'bug', 'other'],
-    default: 'other',
-  },
-  email: {
-    type: String,
-    required: false,
-    trim: true,
-    match: [
-      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-      'Пожалуйста, укажите корректный email адрес',
-    ],
-  },
-  ipAddress: {
-    type: String,
-    required: false,
-  },
-  userAgent: {
-    type: String,
-    required: false,
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-  isRead: {
-    type: Boolean,
-    default: false,
-  },
-  readAt: {
-    type: Date,
-    required: false,
-  },
-  adminNotes: {
-    type: String,
-    required: false,
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 // Создаем и экспортируем модель
-export const Feedback = mongoose.model<IFeedback>('Feedback', FeedbackSchema); 
+export const Feedback = mongoose.model<IFeedback>('Feedback', FeedbackSchema);

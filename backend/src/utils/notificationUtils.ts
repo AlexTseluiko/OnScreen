@@ -1,14 +1,11 @@
 import { Notification } from '../models/Notification';
-import { getSocketService } from './socket';
 
 export enum NotificationType {
-  APPOINTMENT = 'APPOINTMENT',
-  MESSAGE = 'MESSAGE',
-  SYSTEM = 'SYSTEM',
-  REMINDER = 'REMINDER',
-  REVIEW_ADDED = 'REVIEW_ADDED',
-  REVIEW_LIKED = 'REVIEW_LIKED',
-  MEDICAL_RECORD = 'MEDICAL_RECORD'
+  SYSTEM = 'system',
+  APPOINTMENT = 'appointment',
+  REVIEW = 'review',
+  CLINIC = 'clinic',
+  DOCTOR = 'doctor',
 }
 
 export const createNotification = async (
@@ -16,27 +13,37 @@ export const createNotification = async (
   type: NotificationType,
   title: string,
   message: string,
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) => {
   const notification = new Notification({
-    user: userId,
+    userId,
     type,
     title,
     message,
-    data
+    data,
+    isRead: false,
   });
-  
-  const savedNotification = await notification.save();
-  
-  // Отправляем уведомление через WebSocket
-  try {
-    const socketService = getSocketService();
-    socketService.sendNotification(userId, savedNotification);
-  } catch (error) {
-    console.error('Error sending notification via WebSocket:', error);
+
+  await notification.save();
+  return notification;
+};
+
+export const markNotificationAsRead = async (notificationId: string, userId: string) => {
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, userId },
+    { isRead: true },
+    { new: true }
+  );
+
+  if (!notification) {
+    throw new Error('Notification not found');
   }
-  
-  return savedNotification;
+
+  return notification;
+};
+
+export const markAllNotificationsAsRead = async (userId: string) => {
+  await Notification.updateMany({ userId, isRead: false }, { isRead: true });
 };
 
 export const sendBulkNotifications = async (
@@ -44,32 +51,11 @@ export const sendBulkNotifications = async (
   type: NotificationType,
   title: string,
   message: string,
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) => {
-  const notifications = await Promise.all(
-    userIds.map(userId => createNotification(userId, type, title, message, data))
+  const notifications = userIds.map(userId =>
+    createNotification(userId, type, title, message, data)
   );
-  
-  return notifications;
+
+  return Promise.all(notifications);
 };
-
-export const markNotificationAsRead = async (notificationId: string, userId: string) => {
-  const notification = await Notification.findOne({
-    _id: notificationId,
-    user: userId
-  });
-
-  if (!notification) {
-    throw new Error('Уведомление не найдено');
-  }
-
-  notification.isRead = true;
-  return await notification.save();
-};
-
-export const markAllNotificationsAsRead = async (userId: string) => {
-  return await Notification.updateMany(
-    { user: userId, isRead: false },
-    { isRead: true }
-  );
-}; 

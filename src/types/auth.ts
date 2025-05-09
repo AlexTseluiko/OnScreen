@@ -1,3 +1,5 @@
+import { User } from './user';
+
 export enum UserRole {
   PATIENT = 'patient',
   DOCTOR = 'doctor',
@@ -34,4 +36,26 @@ export interface RegisterData {
   password: string;
   phone?: string;
   role?: UserRole;
-} 
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    user: User;
+    token: string;
+    refreshToken: string;
+  };
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}

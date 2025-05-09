@@ -1,5 +1,60 @@
 import { createNotification, NotificationType } from './notifications';
-import { ScheduledNotification } from '../models/ScheduledNotification';
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface IScheduledNotification extends Document {
+  user: mongoose.Types.ObjectId;
+  type: NotificationType;
+  title: string;
+  message: string;
+  scheduledTime: Date;
+  status: 'PENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+  error?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const scheduledNotificationSchema = new Schema<IScheduledNotification>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: Object.values(NotificationType),
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    scheduledTime: {
+      type: Date,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['PENDING', 'SENT', 'FAILED', 'CANCELLED'],
+      default: 'PENDING',
+    },
+    error: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export const ScheduledNotification = mongoose.model<IScheduledNotification>(
+  'ScheduledNotification',
+  scheduledNotificationSchema
+);
 
 // Планирование уведомления
 export const scheduleNotification = async (
@@ -17,7 +72,7 @@ export const scheduleNotification = async (
       title,
       message,
       scheduledTime,
-      status: 'PENDING'
+      status: 'PENDING',
     });
 
     // Планируем отправку уведомления
@@ -25,14 +80,14 @@ export const scheduleNotification = async (
       try {
         // Отправляем уведомление
         await createNotification(userId, type, title, message);
-        
+
         // Обновляем статус запланированного уведомления
         scheduledNotification.status = 'SENT';
         await scheduledNotification.save();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error sending scheduled notification:', error);
         scheduledNotification.status = 'FAILED';
-        scheduledNotification.error = error?.message || 'Unknown error';
+        scheduledNotification.error = error instanceof Error ? error.message : 'Unknown error';
         await scheduledNotification.save();
       }
     }, scheduledTime.getTime() - Date.now());
@@ -49,7 +104,7 @@ export const getScheduledNotifications = async (userId: string) => {
   try {
     return await ScheduledNotification.find({
       user: userId,
-      status: 'PENDING'
+      status: 'PENDING',
     }).sort({ scheduledTime: 1 });
   } catch (error) {
     console.error('Error getting scheduled notifications:', error);
@@ -73,4 +128,4 @@ export const cancelScheduledNotification = async (notificationId: string) => {
     console.error('Error cancelling scheduled notification:', error);
     throw error;
   }
-}; 
+};

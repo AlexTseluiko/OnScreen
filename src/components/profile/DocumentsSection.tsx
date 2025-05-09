@@ -56,7 +56,7 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
       <Text style={styles.sectionTitle}>Документы</Text>
 
       <ScrollView style={styles.documentsList}>
-        {documents.map((doc) => (
+        {documents.map(doc => (
           <View key={doc.id} style={styles.documentItem}>
             <View style={styles.documentInfo}>
               <Text style={styles.documentName}>{doc.name}</Text>
@@ -64,20 +64,14 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
                 {doc.type} • {formatFileSize(doc.size)}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => onRemoveDocument(doc.id)}
-            >
+            <TouchableOpacity style={styles.removeButton} onPress={() => onRemoveDocument(doc.id)}>
               <Text style={styles.removeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={handlePickDocument}
-      >
+      <TouchableOpacity style={styles.addButton} onPress={handlePickDocument}>
         <Text style={styles.addButtonText}>+ Добавить документ</Text>
       </TouchableOpacity>
     </View>
@@ -85,11 +79,24 @@ export const DocumentsSection: React.FC<DocumentsSectionProps> = ({
 };
 
 const styles = StyleSheet.create({
+  addButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    marginTop: 16,
+    padding: 12,
+  },
+  addButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: 16,
+    elevation: 3,
     marginBottom: 16,
+    padding: 16,
     shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
@@ -97,36 +104,29 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: COLORS.text,
-  },
-  documentsList: {
-    maxHeight: 200,
-  },
-  documentItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray,
+  documentDetails: {
+    color: COLORS.gray,
+    fontSize: 12,
   },
   documentInfo: {
     flex: 1,
   },
+  documentItem: {
+    alignItems: 'center',
+    borderBottomColor: COLORS.gray,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+  },
   documentName: {
-    fontSize: 16,
     color: COLORS.text,
+    fontSize: 16,
     marginBottom: 4,
   },
-  documentDetails: {
-    fontSize: 12,
-    color: COLORS.gray,
+  documentsList: {
+    maxHeight: 200,
   },
   removeButton: {
     padding: 8,
@@ -135,16 +135,10 @@ const styles = StyleSheet.create({
     color: COLORS.emergency,
     fontSize: 18,
   },
-  addButton: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
+  sectionTitle: {
+    color: COLORS.text,
+    fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 16,
   },
-}); 
+});

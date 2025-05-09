@@ -12,7 +12,7 @@ export const FacilitiesScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#F5F5F5',
+    flex: 1,
   },
-}); 
+});

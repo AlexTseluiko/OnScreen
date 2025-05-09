@@ -32,31 +32,31 @@ export interface IPatientProfile extends Document {
 const EmergencyContactSchema = new Schema({
   name: {
     type: String,
-    default: ''
+    default: '',
   },
   phone: {
     type: String,
-    default: ''
+    default: '',
   },
   relationship: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 });
 
 const InsuranceSchema = new Schema({
   provider: {
     type: String,
-    default: ''
+    default: '',
   },
   policyNumber: {
     type: String,
-    default: ''
+    default: '',
   },
   expiryDate: {
     type: String,
-    default: ''
-  }
+    default: '',
+  },
 });
 
 const PatientProfileSchema = new Schema(
@@ -65,75 +65,78 @@ const PatientProfileSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true
+      unique: true,
     },
     birthDate: {
       type: String,
-      default: ''
+      default: '',
     },
     gender: {
       type: String,
       enum: ['male', 'female', 'other', ''],
-      default: ''
+      default: '',
     },
     height: {
       type: Number,
-      default: 0
+      default: 0,
     },
     weight: {
       type: Number,
-      default: 0
+      default: 0,
     },
     bloodType: {
       type: String,
       enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''],
-      default: ''
+      default: '',
     },
     allergies: {
       type: [String],
-      default: []
+      default: [],
     },
     chronicConditions: {
       type: [String],
-      default: []
+      default: [],
     },
     medications: {
       type: [String],
-      default: []
+      default: [],
     },
     medicalHistory: {
       type: String,
-      default: ''
+      default: '',
     },
     emergencyContact: {
       type: EmergencyContactSchema,
-      default: () => ({})
+      default: () => ({}),
     },
     insurance: {
       type: InsuranceSchema,
-      default: () => ({})
+      default: () => ({}),
     },
     preferredLanguage: {
       type: String,
-      default: 'ru'
+      default: 'ru',
     },
     lastCheckup: {
       type: Date,
-      default: null
+      default: null,
     },
     familyDoctor: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      default: null
+      default: null,
     },
     avatarUrl: {
       type: String,
-      default: ''
-    }
+      default: '',
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-export const PatientProfile = mongoose.model<IPatientProfile>('PatientProfile', PatientProfileSchema); 
+export const PatientProfile = mongoose.model<IPatientProfile>(
+  'PatientProfile',
+  PatientProfileSchema
+);

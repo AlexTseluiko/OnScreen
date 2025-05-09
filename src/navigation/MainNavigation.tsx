@@ -1,44 +1,51 @@
 import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { useTranslation } from 'react-i18next';
-import AdminDashboardScreen from '../screens/AdminDashboardScreen';
-import AdminUsersScreen from '../screens/AdminUsersScreen';
+import { useAuth } from '../contexts/AuthContext';
+import { RootStackParamList } from './types';
+import HomeScreen from '../screens/HomeScreen';
+import { FacilitiesScreen } from '../screens/FacilitiesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { FacilitiesMapScreen } from '../screens/FacilitiesMapScreen';
+import { ArticlesScreen } from '../screens/ArticlesScreen';
+import { ChatScreen } from '../screens/ChatScreen';
+import { ScreeningProgramsScreen } from '../screens/ScreeningProgramsScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { AdminDashboard } from '../components/AdminDashboard';
+import { AdminUsersScreen } from '../screens/AdminUsersScreen';
 
-const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
-const MainNavigation = () => {
-  const { t } = useTranslation();
+const MainTabs = () => {
+  const { user } = useAuth();
 
   return (
-    <Stack.Navigator>
-      {/* ... existing code ... */}
-
-      {/* В блоке, где определены маршруты для админа (AdminStack) */}
+    <Tab.Navigator>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Facilities" component={FacilitiesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
       {user?.role === 'admin' && (
         <>
-          <Stack.Screen
-            name="AdminDashboard"
-            component={AdminDashboardScreen}
-            options={{
-              title: t('adminDashboard'),
-              headerShown: true,
-            }}
-          />
-          <Stack.Screen
-            name="AdminUsers"
-            component={AdminUsersScreen}
-            options={{
-              title: t('adminUsers'),
-              headerShown: true,
-            }}
-          />
-          {/* Другие экраны админа */}
+          <Tab.Screen name="AdminDashboard" component={AdminDashboard} />
+          <Tab.Screen name="AdminUsers" component={AdminUsersScreen} />
         </>
       )}
-
-      {/* ... existing code ... */}
-    </Stack.Navigator>
+    </Tab.Navigator>
   );
 };
 
-export default MainNavigation; 
+export const MainNavigation = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="Home" component={MainTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="FacilitiesMap" component={FacilitiesMapScreen} />
+      <Stack.Screen name="Articles" component={ArticlesScreen} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="ScreeningPrograms" component={ScreeningProgramsScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
+    </Stack.Navigator>
+  );
+};

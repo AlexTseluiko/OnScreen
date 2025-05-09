@@ -2,7 +2,7 @@ const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv);
-  
+
   // Добавляем полифилы для веб-версии
   config.resolve.alias = {
     ...config.resolve.alias,
@@ -20,4 +20,4 @@ module.exports = async function (env, argv) {
   };
 
   return config;
-}; 
+};

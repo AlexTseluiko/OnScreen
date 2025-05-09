@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export enum MessageType {
   TEXT = 'TEXT',
   IMAGE = 'IMAGE',
-  FILE = 'FILE'
+  FILE = 'FILE',
 }
 
 export interface IMessage extends Document {
@@ -34,9 +34,11 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       required: true,
     },
-    attachments: [{
-      type: String,
-    }],
+    attachments: [
+      {
+        type: String,
+      },
+    ],
     readAt: {
       type: Date,
     },
@@ -60,4 +62,4 @@ messageSchema.index({ sender: 1, recipient: 1, createdAt: -1 });
 messageSchema.index({ recipient: 1, readAt: 1 });
 messageSchema.index({ appointment: 1 });
 
-export const Message = mongoose.model<IMessage>('Message', messageSchema); 
+export const Message = mongoose.model<IMessage>('Message', messageSchema);

@@ -29,6 +29,7 @@ export interface IClinic extends Document {
   reviewsCount: number;
   isVerified: boolean;
   owner: mongoose.Types.ObjectId;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,17 +95,23 @@ const clinicSchema = new Schema<IClinic>(
       },
       default: {},
     },
-    services: [{
-      type: String,
-      trim: true,
-    }],
-    doctors: [{
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-    }],
-    photos: [{
-      type: String,
-    }],
+    services: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    doctors: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    photos: [
+      {
+        type: String,
+      },
+    ],
     rating: {
       type: Number,
       default: 0,
@@ -124,6 +131,10 @@ const clinicSchema = new Schema<IClinic>(
       ref: 'User',
       required: true,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -141,4 +152,4 @@ const ClinicModel = mongoose.model<IClinic>('Clinic', clinicSchema);
 export const Clinic = ClinicModel;
 
 // Экспорт по умолчанию для использования с import Clinic from ...
-export default ClinicModel; 
+export default ClinicModel;

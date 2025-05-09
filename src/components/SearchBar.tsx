@@ -19,16 +19,16 @@ const SearchBar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 50,
     left: 20,
+    position: 'absolute',
     right: 20,
+    top: 50,
     zIndex: 1,
   },
   input: {
     backgroundColor: COLORS.background,
-    padding: 15,
     borderRadius: 10,
+    padding: 15,
     ...Platform.select({
       ios: {
         boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
@@ -43,4 +43,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SearchBar; 
+export default SearchBar;

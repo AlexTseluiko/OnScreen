@@ -1,45 +1,44 @@
-import express from 'express';
-import { 
-  getArticles, 
-  getArticleById, 
-  createArticle, 
-  updateArticle, 
-  deleteArticle 
+import { Router, Request, Response } from 'express';
+import {
+  getArticles,
+  getArticleById,
+  createArticle,
+  updateArticle,
+  deleteArticle,
 } from '../controllers/articleController';
-import { authenticate } from '../middleware/auth';
-import { checkRole } from '../middleware/checkRole';
+import { auth, checkRole, AuthRequest } from '../middleware/auth';
 import { UserRole } from '../types/user';
 
-const router = express.Router();
+const router = Router();
 
 // GET /api/articles - получение списка статей
-router.get('/', getArticles);
+router.get('/', (req: Request, res: Response) => getArticles(req, res));
 
 // GET /api/articles/:id - получение статьи по ID
-router.get('/:id', getArticleById);
+router.get('/:id', (req: Request<{ id: string }>, res: Response) => getArticleById(req, res));
 
 // POST /api/articles - создание статьи (только для админа/доктора)
 router.post(
   '/',
-  authenticate,
+  auth,
   checkRole([UserRole.ADMIN, UserRole.DOCTOR]),
-  createArticle
+  (req: AuthRequest, res: Response) => createArticle(req, res)
 );
 
 // PUT /api/articles/:id - обновление статьи
 router.put(
   '/:id',
-  authenticate,
+  auth,
   checkRole([UserRole.ADMIN, UserRole.DOCTOR]),
-  updateArticle
+  (req: AuthRequest & { params: { id: string } }, res: Response) => updateArticle(req, res)
 );
 
 // DELETE /api/articles/:id - удаление статьи
 router.delete(
   '/:id',
-  authenticate,
+  auth,
   checkRole([UserRole.ADMIN, UserRole.DOCTOR]),
-  deleteArticle
+  (req: AuthRequest & { params: { id: string } }, res: Response) => deleteArticle(req, res)
 );
 
-export default router; 
+export default router;

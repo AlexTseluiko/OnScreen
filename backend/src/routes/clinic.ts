@@ -9,20 +9,21 @@ import {
   removeDoctor,
 } from '../controllers/clinicController';
 import { checkRole } from '../middleware/auth';
-import { UserRole } from '../models/User';
+import { UserRole } from '../types/user';
 import { upload } from '../utils/fileUpload';
 import { Clinic } from '../models/Clinic';
+import { FileRequest } from '../types/request';
 
 const router = Router();
 
 // Получение списка клиник (доступно всем авторизованным пользователям)
-router.get('/', getClinics);
+router.get('/', (req: FileRequest, res) => getClinics(req, res));
 
 // Получение клиники по ID (доступно всем авторизованным пользователям)
-router.get('/:clinicId', getClinicById);
+router.get('/:id', (req: FileRequest, res) => getClinicById(req, res));
 
 // Временный маршрут для отладки данных
-router.post('/debug', (req, res) => {
+router.post('/debug', (req: FileRequest, res) => {
   console.log('DEBUG: Получены данные для создания клиники');
   console.log('DEBUG: req.body', JSON.stringify(req.body, null, 2));
   console.log('DEBUG: req.files', req.files);
@@ -30,93 +31,56 @@ router.post('/debug', (req, res) => {
 });
 
 // Создание клиники (только для администраторов)
-router.post(
-  '/',
-  // Временно убираем проверку роли для отладки
-  // checkRole([UserRole.ADMIN]),
-  (req, res, next) => {
-    // Промежуточный обработчик для логирования запроса
-    console.log('Получен запрос на создание клиники');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    // Проверяем наличие пользователя
-    console.log('User в запросе:', req.user ? 'Присутствует' : 'Отсутствует');
-    if (req.user) {
-      console.log('User ID:', req.user._id);
-      console.log('User role:', req.user.role);
-    }
-    next();
-  },
-  upload.array('photos', 5),
-  createClinic
+router.post('/', checkRole([UserRole.ADMIN]), upload.array('photos', 10), (req: FileRequest, res) =>
+  createClinic(req, res)
 );
 
 // Обновление клиники (для администраторов и врачей клиники)
 router.put(
-  '/:clinicId',
-  // Временно убираем проверку роли для отладки
-  // checkRole([UserRole.ADMIN, UserRole.DOCTOR]),
-  upload.array('photos', 5),
-  updateClinic
+  '/:id',
+  checkRole([UserRole.ADMIN]),
+  upload.array('photos', 10),
+  (req: FileRequest, res) => updateClinic(req, res)
 );
 
 // Удаление клиники (только для администраторов)
-router.delete(
-  '/:clinicId',
-  // Временно убираем проверку роли для отладки
-  // checkRole([UserRole.ADMIN]),
-  deleteClinic
+router.delete('/:id', checkRole([UserRole.ADMIN]), (req: FileRequest, res) =>
+  deleteClinic(req, res)
 );
 
 // Добавление врача в клинику (только для администраторов)
-router.post(
-  '/:clinicId/doctors',
-  checkRole([UserRole.ADMIN]),
-  addDoctor
+router.post('/:id/doctors', checkRole([UserRole.ADMIN]), (req: FileRequest, res) =>
+  addDoctor(req, res)
 );
 
 // Удаление врача из клиники (только для администраторов)
-router.delete(
-  '/:clinicId/doctors',
-  checkRole([UserRole.ADMIN]),
-  removeDoctor
+router.delete('/:id/doctors/:doctorId', checkRole([UserRole.ADMIN]), (req: FileRequest, res) =>
+  removeDoctor(req, res)
 );
 
 // Удаление фотографии клиники (только для администраторов)
 router.delete(
-  '/:clinicId/photos/:filename',
-  // Временно убираем проверку роли для отладки
-  // checkRole([UserRole.ADMIN]),
-  async (req, res) => {
+  '/:id/photos/:filename',
+  checkRole([UserRole.ADMIN]),
+  async (req: FileRequest, res) => {
     try {
-      const { clinicId, filename } = req.params;
-      
-      // Находим клинику
-      const clinic = await Clinic.findById(clinicId);
-      
+      const { id, filename } = req.params;
+      const clinic = await Clinic.findById(id);
+
       if (!clinic) {
-        return res.status(404).json({ error: 'Клиника не найдена' });
+        return res.status(404).json({ message: 'Клиника не найдена' });
       }
-      
-      // Проверяем наличие фотографии
-      if (!clinic.photos.includes(filename)) {
-        return res.status(404).json({ error: 'Фотография не найдена' });
-      }
-      
-      // Удаляем фотографию из массива
+
+      // Удаляем фото из массива photos
       clinic.photos = clinic.photos.filter(photo => photo !== filename);
-      
-      // Сохраняем изменения
       await clinic.save();
-      
-      // TODO: В продакшене здесь также нужно удалить файл с диска
-      
+
       res.status(200).json({ message: 'Фотография успешно удалена' });
     } catch (error) {
-      console.error('Ошибка при удалении фотографии:', error);
-      res.status(500).json({ error: 'Ошибка при удалении фотографии' });
+      console.error('Error deleting photo:', error);
+      res.status(500).json({ message: 'Ошибка при удалении фотографии' });
     }
   }
 );
 
-export default router; 
+export default router;

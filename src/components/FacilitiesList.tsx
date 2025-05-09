@@ -47,11 +47,7 @@ export const FacilitiesList: React.FC = () => {
       onPress={() => navigation.navigate('FacilityDetails', { facilityId: item.id })}
     >
       {item.images[0] && (
-        <Image
-          source={{ uri: item.images[0] }}
-          style={styles.facilityImage}
-          resizeMode="cover"
-        />
+        <Image source={{ uri: item.images[0] }} style={styles.facilityImage} resizeMode="cover" />
       )}
       <View style={styles.facilityInfo}>
         <Text style={styles.facilityName}>{item.name}</Text>
@@ -94,7 +90,7 @@ export const FacilitiesList: React.FC = () => {
     <FlatList
       data={facilities}
       renderItem={renderFacility}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       contentContainerStyle={styles.listContainer}
       onRefresh={loadFacilities}
       refreshing={loading}
@@ -103,12 +99,26 @@ export const FacilitiesList: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  listContainer: {
+  centerContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
     padding: 16,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  facilityAddress: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 8,
   },
   facilityCard: {
     backgroundColor: 'white',
     borderRadius: 12,
+    elevation: 3,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -117,13 +127,12 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
   },
   facilityImage: {
-    width: '100%',
-    height: 200,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
+    height: 200,
+    width: '100%',
   },
   facilityInfo: {
     padding: 16,
@@ -133,59 +142,46 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  facilityAddress: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  rating: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFA500',
-    marginRight: 4,
-  },
-  reviews: {
-    fontSize: 14,
-    color: '#666',
-  },
-  servicesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  serviceTag: {
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 4,
-    fontSize: 12,
-    color: '#2E7D32',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  listContainer: {
     padding: 16,
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
+  rating: {
+    color: '#FFA500',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  ratingContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 8,
   },
   retryButton: {
     backgroundColor: '#007AFF',
+    borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
   },
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
   },
-}); 
+  reviews: {
+    color: '#666',
+    fontSize: 14,
+  },
+  serviceTag: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    color: '#2E7D32',
+    fontSize: 12,
+    marginBottom: 4,
+    marginRight: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  servicesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+});

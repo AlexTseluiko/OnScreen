@@ -1,7 +1,7 @@
 export enum UserRole {
   PATIENT = 'patient',
   DOCTOR = 'doctor',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
 }
 
 export interface IUser {
@@ -17,4 +17,4 @@ export interface IUser {
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-} 
+}

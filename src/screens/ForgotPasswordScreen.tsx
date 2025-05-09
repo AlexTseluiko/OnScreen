@@ -42,11 +42,7 @@ export const ForgotPasswordScreen: React.FC = () => {
 
   const handleSendResetLink = async () => {
     if (!email) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.fillAllFields'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('auth.fillAllFields'), [{ text: t('common.ok') }]);
       return;
     }
 
@@ -60,25 +56,17 @@ export const ForgotPasswordScreen: React.FC = () => {
     try {
       const response = await authApi.forgotPassword(email);
       setIsSubmitted(true);
-      Alert.alert(
-        t('common.success'),
-        t('auth.resetLinkSent'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.success'), t('auth.resetLinkSent'), [{ text: t('common.ok') }]);
     } catch (error: any) {
       console.error('Ошибка восстановления пароля:', error);
-      
+
       let errorMessage = 'Не удалось отправить инструкции для сброса пароля';
-      
+
       if (error.message) {
         errorMessage = error.message;
       }
-      
-      Alert.alert(
-        t('common.error'),
-        errorMessage,
-        [{ text: t('common.ok') }]
-      );
+
+      Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
     } finally {
       setIsLoading(false);
     }
@@ -94,15 +82,9 @@ export const ForgotPasswordScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={handleBackToLogin}
-            style={styles.backButton}
-          >
+          <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -116,9 +98,7 @@ export const ForgotPasswordScreen: React.FC = () => {
         {!isSubmitted ? (
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: theme.colors.text }]}>
-                {t('auth.email')}
-              </Text>
+              <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.email')}</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -140,9 +120,7 @@ export const ForgotPasswordScreen: React.FC = () => {
                 />
               </View>
               {!isEmailValid && email && (
-                <Text style={styles.errorText}>
-                  {t('auth.invalidEmail')}
-                </Text>
+                <Text style={styles.errorText}>{t('auth.invalidEmail')}</Text>
               )}
             </View>
 
@@ -160,20 +138,14 @@ export const ForgotPasswordScreen: React.FC = () => {
               {isLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={styles.sendButtonText}>
-                  {t('auth.sendResetLink')}
-                </Text>
+                <Text style={styles.sendButtonText}>{t('auth.sendResetLink')}</Text>
               )}
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.successContainer}>
             <View style={styles.iconContainer}>
-              <Ionicons
-                name="checkmark-circle"
-                size={80}
-                color={theme.colors.success}
-              />
+              <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
             </View>
             <Text style={[styles.successTitle, { color: theme.colors.text }]}>
               {t('common.success')}
@@ -185,9 +157,7 @@ export const ForgotPasswordScreen: React.FC = () => {
               style={[styles.backToLoginButton, { backgroundColor: theme.colors.primary }]}
               onPress={handleBackToLogin}
             >
-              <Text style={styles.backToLoginText}>
-                {t('auth.goBackToLogin')}
-              </Text>
+              <Text style={styles.backToLoginText}>{t('auth.goBackToLogin')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -197,44 +167,50 @@ export const ForgotPasswordScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    marginBottom: 30,
-  },
   backButton: {
     marginBottom: 16,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
+  backToLoginButton: {
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
-  subtitle: {
+  backToLoginText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    marginBottom: 24,
+    fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
   },
   form: {
     marginBottom: 24,
   },
+  header: {
+    marginBottom: 30,
+  },
+  iconContainer: {
+    marginBottom: 24,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+  },
   inputContainer: {
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
   inputWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
-    height: 54,
     borderRadius: 12,
+    elevation: 3,
+    flexDirection: 'row',
+    height: 54,
     paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -243,26 +219,25 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
   },
   inputWrapperError: {
-    borderWidth: 1,
     borderColor: '#FF3B30',
+    borderWidth: 1,
   },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
   },
   sendButton: {
-    height: 54,
-    borderRadius: 12,
     alignItems: 'center',
+    borderRadius: 12,
+    elevation: 3,
+    height: 54,
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -271,20 +246,25 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
   },
   sendButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
   },
   successContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
   },
-  iconContainer: {
-    marginBottom: 24,
+  successText: {
+    fontSize: 16,
+    marginBottom: 32,
+    textAlign: 'center',
   },
   successTitle: {
     fontSize: 24,
@@ -292,21 +272,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
-  successText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  backToLoginButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  backToLoginText: {
-    fontSize: 16,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    marginBottom: 8,
   },
 });
 
-export default ForgotPasswordScreen; 
+export default ForgotPasswordScreen;

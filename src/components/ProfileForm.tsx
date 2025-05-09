@@ -43,8 +43,14 @@ export const ProfileForm: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { profile, loading: profileLoading, error: profileError, updateProfile, loadProfile } = useProfile();
-  
+  const {
+    profile,
+    loading: profileLoading,
+    error: profileError,
+    updateProfile,
+    loadProfile,
+  } = useProfile();
+
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<PatientProfileData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,7 +62,7 @@ export const ProfileForm: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state) => state.settings);
+  const settings = useAppSelector(state => state.settings);
 
   // Добавляем логирование для отладки
   useEffect(() => {
@@ -65,7 +71,7 @@ export const ProfileForm: React.FC = () => {
       profile,
       profileLoading,
       profileError,
-      formData: !!formData
+      formData: !!formData,
     });
   }, [user, profile, profileLoading, profileError, formData]);
 
@@ -73,9 +79,24 @@ export const ProfileForm: React.FC = () => {
   useEffect(() => {
     if (profile) {
       console.log('Setting form data from profile');
-      setFormData(profile);
-      if (profile.avatarUrl) {
-        setAvatar(profile.avatarUrl);
+      setFormData({
+        ...profile,
+        birthDate: profile.birthDate || '',
+        gender: profile.gender || '',
+        height: profile.height || 0,
+        weight: profile.weight || 0,
+        bloodType: profile.bloodType || '',
+        allergies: profile.allergies || [],
+        chronicDiseases: profile.chronicDiseases || [],
+        medications: profile.medications || [],
+        emergencyContact: profile.emergencyContact || {
+          name: '',
+          phone: '',
+          relationship: '',
+        },
+      });
+      if (profile.avatar) {
+        setAvatar(profile.avatar);
       }
     } else {
       console.log('No profile data available');
@@ -93,42 +114,33 @@ export const ProfileForm: React.FC = () => {
   const handleSave = async () => {
     setLoading(true);
     setError(null);
-    
+
     if (!formData || !user) {
       setError(t('profile.missingData'));
       setLoading(false);
       return;
     }
-    
+
     try {
       // Используем функцию из контекста профиля
-      const success = await updateProfile({
-        ...formData,
-        userId: user.id
-      });
-      
+      const success = await updateProfile(formData);
+
       if (success) {
         setEditMode(false);
-        Alert.alert(
-          t('common.success'),
-          t('profile.updateSuccess')
-        );
+        Alert.alert(t('common.success'), t('profile.updateSuccess'));
       } else {
         throw new Error(t('profile.updateFailed'));
       }
     } catch (err: any) {
       console.error('Error updating profile:', err);
       let errorMessage = t('profile.updateFailed');
-      
+
       if (err instanceof ApiError) {
         errorMessage = err.message || errorMessage;
       }
-      
+
       setError(errorMessage);
-      Alert.alert(
-        t('common.error'),
-        errorMessage
-      );
+      Alert.alert(t('common.error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -162,7 +174,7 @@ export const ProfileForm: React.FC = () => {
                 </View>
               )}
             </View>
-            
+
             <Text style={[styles.name, { color: theme.colors.text }]}>
               {user?.name || t('profile.noName')}
             </Text>
@@ -170,7 +182,7 @@ export const ProfileForm: React.FC = () => {
               {user?.email || ''}
             </Text>
           </View>
-          
+
           <View style={styles.infoCard}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               {t('profile.personalInfo')}
@@ -181,7 +193,9 @@ export const ProfileForm: React.FC = () => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.birthDate')}:</Text>
-              <Text style={styles.infoValue}>{formData.birthDate || t('profile.notSpecified')}</Text>
+              <Text style={styles.infoValue}>
+                {formData.birthDate || t('profile.notSpecified')}
+              </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.height')}:</Text>
@@ -197,10 +211,12 @@ export const ProfileForm: React.FC = () => {
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.bloodType')}:</Text>
-              <Text style={styles.infoValue}>{formData.bloodType || t('profile.notSpecified')}</Text>
+              <Text style={styles.infoValue}>
+                {formData.bloodType || t('profile.notSpecified')}
+              </Text>
             </View>
           </View>
-          
+
           <View style={styles.infoCard}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               {t('profile.medicalInfo')}
@@ -208,24 +224,24 @@ export const ProfileForm: React.FC = () => {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.allergies')}:</Text>
               <Text style={styles.infoValue}>
-                {formData.allergies && formData.allergies.length > 0 
-                  ? formData.allergies.join(', ') 
+                {formData.allergies && formData.allergies.length > 0
+                  ? formData.allergies.join(', ')
                   : t('profile.notSpecified')}
               </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.chronicConditions')}:</Text>
               <Text style={styles.infoValue}>
-                {formData.chronicConditions && formData.chronicConditions.length > 0 
-                  ? formData.chronicConditions.join(', ') 
+                {formData.chronicConditions && formData.chronicConditions.length > 0
+                  ? formData.chronicConditions.join(', ')
                   : t('profile.notSpecified')}
               </Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('profile.medications')}:</Text>
               <Text style={styles.infoValue}>
-                {formData.medications && formData.medications.length > 0 
-                  ? formData.medications.join(', ') 
+                {formData.medications && formData.medications.length > 0
+                  ? formData.medications.join(', ')
                   : t('profile.notSpecified')}
               </Text>
             </View>
@@ -236,7 +252,7 @@ export const ProfileForm: React.FC = () => {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.infoCard}>
             <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
               {t('profile.emergencyContact')}
@@ -260,7 +276,7 @@ export const ProfileForm: React.FC = () => {
               </Text>
             </View>
           </View>
-          
+
           <TouchableOpacity
             style={[styles.editButton, { backgroundColor: theme.colors.primary }]}
             onPress={handleEditToggle}
@@ -336,19 +352,19 @@ export const ProfileForm: React.FC = () => {
     // Существующий код для редактирования
     <ScrollView style={styles.container}>
       {/* ... существующий код ... */}
-      
+
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.cancelButton, { borderColor: theme.colors.primary }]} 
+        <TouchableOpacity
+          style={[styles.cancelButton, { borderColor: theme.colors.primary }]}
           onPress={handleEditToggle}
         >
           <Text style={[styles.cancelButtonText, { color: theme.colors.primary }]}>
             {t('common.cancel')}
           </Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.saveButton, { backgroundColor: theme.colors.primary }]} 
+
+        <TouchableOpacity
+          style={[styles.saveButton, { backgroundColor: theme.colors.primary }]}
           onPress={handleSave}
           disabled={loading}
         >
@@ -366,134 +382,134 @@ export const ProfileForm: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
-    padding: 20,
-  },
-  retryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 16,
-    alignSelf: 'center',
-  },
-  retryButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
+  avatar: {
+    borderRadius: 50,
+    height: 100,
+    width: 100,
   },
   avatarContainer: {
     marginBottom: 16,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  cancelButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    marginRight: 8,
+    paddingVertical: 12,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
   },
   defaultAvatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 50,
+    height: 100,
+    justifyContent: 'center',
+    width: 100,
   },
   defaultAvatarText: {
+    color: '#ffffff',
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  infoCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  infoLabel: {
-    flex: 1,
-    fontSize: 16,
-    color: '#666',
-  },
-  infoValue: {
-    flex: 2,
-    fontSize: 16,
-    color: '#333',
   },
   editButton: {
-    marginTop: 12,
-    marginBottom: 32,
-    borderRadius: 8,
-    paddingVertical: 12,
     alignItems: 'center',
+    borderRadius: 8,
+    marginBottom: 32,
+    marginTop: 12,
+    paddingVertical: 12,
   },
   editButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  email: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    padding: 20,
+    textAlign: 'center',
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 24,
     marginBottom: 32,
+    marginTop: 24,
   },
-  cancelButton: {
-    flex: 1,
-    marginRight: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingVertical: 12,
+  header: {
     alignItems: 'center',
+    marginBottom: 24,
   },
-  cancelButtonText: {
+  infoCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    elevation: 3,
+    marginBottom: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  infoLabel: {
+    color: '#666',
+    flex: 1,
     fontSize: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  infoValue: {
+    color: '#333',
+    flex: 2,
+    fontSize: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  retryButton: {
+    alignSelf: 'center',
+    borderRadius: 8,
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  retryButtonText: {
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   saveButton: {
+    alignItems: 'center',
+    borderRadius: 8,
     flex: 1,
     marginLeft: 8,
-    borderRadius: 8,
     paddingVertical: 12,
-    alignItems: 'center',
   },
   saveButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-}); 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+});

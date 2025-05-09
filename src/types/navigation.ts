@@ -9,4 +9,4 @@ export type RootTabParamList = {
   Map: undefined;
   Favorites: undefined;
   Settings: undefined;
-}; 
+};

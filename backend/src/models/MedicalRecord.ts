@@ -44,15 +44,19 @@ const medicalRecordSchema = new Schema<IMedicalRecord>(
       type: String,
       required: true,
     },
-    medications: [{
-      type: String,
-    }],
+    medications: [
+      {
+        type: String,
+      },
+    ],
     notes: {
       type: String,
     },
-    attachments: [{
-      type: String,
-    }],
+    attachments: [
+      {
+        type: String,
+      },
+    ],
     isPrivate: {
       type: Boolean,
       default: false,
@@ -69,11 +73,5 @@ medicalRecordSchema.index({ doctor: 1, date: -1 });
 medicalRecordSchema.index({ clinic: 1, date: -1 });
 medicalRecordSchema.index({ isPrivate: 1 });
 
-// Создаем и экспортируем модель с обоими вариантами (именованный и по умолчанию) для совместимости
-const MedicalRecordModel = mongoose.model<IMedicalRecord>('MedicalRecord', medicalRecordSchema);
-
-// Именованный экспорт для использования с import { MedicalRecord } from ...
-export const MedicalRecord = MedicalRecordModel;
-
-// Экспорт по умолчанию для использования с import MedicalRecord from ...
-export default MedicalRecordModel; 
+// Создаем и экспортируем модель
+export const MedicalRecord = mongoose.model<IMedicalRecord>('MedicalRecord', medicalRecordSchema);

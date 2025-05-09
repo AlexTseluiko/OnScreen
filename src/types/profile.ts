@@ -17,4 +17,4 @@ export interface Profile {
   certifications?: string[];
   createdAt: string;
   updatedAt: string;
-} 
+}

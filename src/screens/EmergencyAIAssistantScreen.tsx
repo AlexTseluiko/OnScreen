@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Linking,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeContext';
 
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY =
+  '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';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -14,7 +25,7 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: t('emergencyAI.greeting') }
+    { role: 'assistant', content: t('emergencyAI.greeting') },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,7 +41,7 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model: 'gpt-3.5-turbo',
@@ -42,14 +53,20 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
       if (response.status === 429) {
         setMessages([
           ...newMessages,
-          { role: 'assistant' as const, content: t('emergencyAI.error429') }
+          { role: 'assistant' as const, content: t('emergencyAI.error429') },
         ]);
         return;
       }
       if (!response.ok) {
         setMessages([
           ...newMessages,
-          { role: 'assistant' as const, content: t('emergencyAI.errorOpenAI', { status: response.status, statusText: response.statusText }) }
+          {
+            role: 'assistant' as const,
+            content: t('emergencyAI.errorOpenAI', {
+              status: response.status,
+              statusText: response.statusText,
+            }),
+          },
         ]);
         return;
       }
@@ -57,7 +74,10 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
       const aiMessage = data.choices?.[0]?.message?.content || t('emergencyAI.errorNetwork');
       setMessages([...newMessages, { role: 'assistant' as const, content: aiMessage }]);
     } catch (e) {
-      setMessages([...newMessages, { role: 'assistant' as const, content: t('emergencyAI.errorNetwork') }]);
+      setMessages([
+        ...newMessages,
+        { role: 'assistant' as const, content: t('emergencyAI.errorNetwork') },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -78,15 +98,24 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <FlatList
           data={messages}
           keyExtractor={(_, idx) => idx.toString()}
           renderItem={({ item }) => (
-            <View style={[styles.message, item.role === 'user' ? styles.userMessage : styles.aiMessage, {
-              backgroundColor: item.role === 'user' ? theme.colors.primary + '20' : theme.colors.card
-            }]}
+            <View
+              style={[
+                styles.message,
+                item.role === 'user' ? styles.userMessage : styles.aiMessage,
+                {
+                  backgroundColor:
+                    item.role === 'user' ? theme.colors.primary + '20' : theme.colors.card,
+                },
+              ]}
             >
               <Text style={[styles.messageText, { color: theme.colors.text }]}>{item.content}</Text>
             </View>
@@ -95,18 +124,31 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
         />
         <View style={styles.quickActions}>
           <TouchableOpacity style={styles.actionButton} onPress={handleCall}>
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>{t('emergencyAI.call103')}</Text>
+            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
+              {t('emergencyAI.call103')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleShowHospitals}>
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>{t('emergencyAI.showHospitals')}</Text>
+            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
+              {t('emergencyAI.showHospitals')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={handleSendLocation}>
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>{t('emergencyAI.sendLocation')}</Text>
+            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
+              {t('emergencyAI.sendLocation')}
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
           <TextInput
-            style={[styles.input, { color: theme.colors.text, backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}
+            style={[
+              styles.input,
+              {
+                color: theme.colors.text,
+                backgroundColor: theme.colors.card,
+                borderColor: theme.colors.border,
+              },
+            ]}
             value={input}
             onChangeText={setInput}
             placeholder={t('emergencyAI.inputPlaceholder')}
@@ -115,7 +157,11 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
             onSubmitEditing={sendMessage}
             returnKeyType="send"
           />
-          <TouchableOpacity style={[styles.sendButton, { backgroundColor: theme.colors.primary }]} onPress={sendMessage} disabled={loading}>
+          <TouchableOpacity
+            style={[styles.sendButton, { backgroundColor: theme.colors.primary }]}
+            onPress={sendMessage}
+            disabled={loading}
+          >
             <Text style={styles.sendButtonText}>{loading ? '...' : t('common.submit')}</Text>
           </TouchableOpacity>
         </View>
@@ -125,64 +171,64 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  actionButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    marginHorizontal: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  message: {
-    marginBottom: 12,
-    padding: 12,
-    borderRadius: 10,
-    maxWidth: '85%',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
+  actionButtonText: {
+    fontWeight: 'bold',
   },
   aiMessage: {
     alignSelf: 'flex-start',
   },
-  messageText: {
-    fontSize: 16,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 8,
-    borderTopWidth: 1,
-    backgroundColor: 'transparent',
+  container: {
+    flex: 1,
   },
   input: {
-    flex: 1,
-    fontSize: 16,
-    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
+    flex: 1,
+    fontSize: 16,
     marginRight: 8,
+    padding: 10,
   },
-  sendButton: {
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+  inputContainer: {
+    backgroundColor: 'transparent',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    padding: 8,
   },
-  sendButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  message: {
+    borderRadius: 10,
+    marginBottom: 12,
+    maxWidth: '85%',
+    padding: 12,
+  },
+  messageText: {
     fontSize: 16,
   },
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
     marginBottom: 4,
+    paddingHorizontal: 8,
   },
-  actionButton: {
+  sendButton: {
+    alignItems: 'center',
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginHorizontal: 4,
-    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
-  actionButtonText: {
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
-}); 
+  userMessage: {
+    alignSelf: 'flex-end',
+  },
+});

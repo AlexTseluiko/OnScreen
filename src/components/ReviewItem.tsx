@@ -1,5 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, Animated, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Animated,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { COLORS } from '../constants';
@@ -36,10 +45,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
       .map((_, index) => (
         <Text
           key={index}
-          style={[
-            styles.star,
-            { color: index < rating ? COLORS.primary : COLORS.gray },
-          ]}
+          style={[styles.star, { color: index < rating ? COLORS.primary : COLORS.gray }]}
         >
           ★
         </Text>
@@ -58,9 +64,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
       <View style={styles.header}>
         <View style={styles.authorInfo}>
           <Text style={styles.author}>{review.author}</Text>
-          <Text style={styles.date}>
-            {formatDate(review.date)}
-          </Text>
+          <Text style={styles.date}>{formatDate(review.date)}</Text>
         </View>
         <View style={styles.rating}>{renderStars(review.rating)}</View>
       </View>
@@ -70,11 +74,7 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
       {review.photos && review.photos.length > 0 && (
         <View style={styles.photosContainer}>
           {review.photos.map((photo, index) => (
-            <Image
-              key={index}
-              source={{ uri: photo }}
-              style={styles.photo}
-            />
+            <Image key={index} source={{ uri: photo }} style={styles.photo} />
           ))}
         </View>
       )}
@@ -83,44 +83,56 @@ export const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
 };
 
 const styles = StyleSheet.create({
+  author: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  authorInfo: {
+    flex: 1,
+  },
   container: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
+    padding: 16,
     ...Platform.select({
       web: {
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       },
       android: {
-        elevation: 3
+        elevation: 3,
       },
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4
-      }
-    })
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  authorInfo: {
-    flex: 1,
-  },
-  author: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 4,
+        shadowRadius: 4,
+      },
+    }),
   },
   date: {
-    fontSize: 12,
     color: COLORS.gray,
+    fontSize: 12,
+  },
+  header: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  photo: {
+    borderRadius: 8,
+    height: PHOTO_SIZE,
+    marginBottom: 8,
+    marginRight: 8,
+    width: PHOTO_SIZE,
+  },
+  photosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
   },
   rating: {
     flexDirection: 'row',
@@ -131,21 +143,9 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   text: {
-    fontSize: 14,
     color: COLORS.text,
+    fontSize: 14,
     lineHeight: 20,
     marginBottom: 12,
   },
-  photosContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  photo: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-}); 
+});

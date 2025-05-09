@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ChipInputProps {
@@ -26,7 +19,7 @@ export const ChipInput: React.FC<ChipInputProps> = ({
 
   const handleAddValue = () => {
     if (inputValue.trim() === '') return;
-    
+
     onChangeValues([...values, inputValue.trim()]);
     setInputValue('');
   };
@@ -39,41 +32,36 @@ export const ChipInput: React.FC<ChipInputProps> = ({
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipsContainer}
       >
         {values.map((value, index) => (
-          <View 
-            key={index} 
+          <View
+            key={index}
             style={[
-              styles.chip, 
-              { backgroundColor: theme.colors.card, borderColor: theme.colors.primary }
+              styles.chip,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.primary },
             ]}
           >
-            <Text style={[styles.chipText, { color: theme.colors.text }]}>
-              {value}
-            </Text>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => handleRemoveValue(index)}
-            >
+            <Text style={[styles.chipText, { color: theme.colors.text }]}>{value}</Text>
+            <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveValue(index)}>
               <Ionicons name="close-circle" size={18} color={theme.colors.primary} />
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
-      
+
       <View style={styles.inputContainer}>
         <TextInput
           style={[
             styles.input,
-            { 
-              color: theme.colors.text, 
+            {
+              color: theme.colors.text,
               borderColor: theme.colors.primary,
               backgroundColor: theme.colors.background,
-            }
+            },
           ]}
           value={inputValue}
           onChangeText={setInputValue}
@@ -94,47 +82,47 @@ export const ChipInput: React.FC<ChipInputProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
+  addButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 46,
+    justifyContent: 'center',
+    marginLeft: 8,
+    width: 46,
+  },
+  chip: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  chipText: {
+    fontSize: 14,
+    marginRight: 4,
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
     paddingVertical: 10,
   },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
+  container: {
+    width: '100%',
   },
-  chipText: {
-    fontSize: 14,
-    marginRight: 4,
+  input: {
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    height: 46,
+    paddingHorizontal: 12,
+  },
+  inputContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   removeButton: {
     paddingLeft: 2,
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    height: 46,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-  },
-  addButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 8,
-    marginLeft: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-}); 
+});

@@ -47,10 +47,12 @@ const serviceSchema = new Schema<IService>(
       type: Boolean,
       default: true,
     },
-    doctors: [{
-      type: Schema.Types.ObjectId,
-      ref: 'Doctor',
-    }],
+    doctors: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,
@@ -63,4 +65,4 @@ serviceSchema.index({ name: 'text', description: 'text' });
 serviceSchema.index({ isAvailable: 1 });
 serviceSchema.index({ price: 1 });
 
-export const Service = mongoose.model<IService>('Service', serviceSchema); 
+export const Service = mongoose.model<IService>('Service', serviceSchema);

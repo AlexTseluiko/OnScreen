@@ -71,32 +71,31 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
         </TouchableOpacity>
       </View>
 
-      {reviews.map((review) => (
+      {reviews.map(review => (
         <View key={review._id} style={[styles.reviewItem, { backgroundColor: theme.colors.card }]}>
           <View style={styles.reviewHeader}>
-            <Text style={[styles.reviewAuthor, { color: theme.colors.text }]}>
-              {review.userId}
-            </Text>
+            <Text style={[styles.reviewAuthor, { color: theme.colors.text }]}>{review.userId}</Text>
             <Text style={[styles.reviewDate, { color: theme.colors.textSecondary }]}>
               {new Date(review.date).toLocaleDateString()}
             </Text>
           </View>
           <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
+            {[1, 2, 3, 4, 5].map(star => (
               <Text
                 key={star}
                 style={[
                   styles.star,
-                  { color: star <= review.rating ? theme.colors.primary : theme.colors.textSecondary },
+                  {
+                    color:
+                      star <= review.rating ? theme.colors.primary : theme.colors.textSecondary,
+                  },
                 ]}
               >
                 ★
               </Text>
             ))}
           </View>
-          <Text style={[styles.reviewComment, { color: theme.colors.text }]}>
-            {review.comment}
-          </Text>
+          <Text style={[styles.reviewComment, { color: theme.colors.text }]}>{review.comment}</Text>
         </View>
       ))}
 
@@ -108,16 +107,11 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
       >
         <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              {t('addReview')}
-            </Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>{t('addReview')}</Text>
 
             <View style={styles.ratingContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => setRating(star)}
-                >
+              {[1, 2, 3, 4, 5].map(star => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
                   <Text
                     style={[
                       styles.star,
@@ -173,66 +167,56 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   addButton: {
+    borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
   },
   addButtonText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  reviewItem: {
-    padding: 16,
+  commentInput: {
     borderRadius: 8,
-    marginBottom: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    marginTop: 16,
+    padding: 12,
+    textAlignVertical: 'top',
   },
-  reviewHeader: {
+  container: {
+    marginTop: 16,
+  },
+  header: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  reviewAuthor: {
+  modalButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flex: 1,
+    marginHorizontal: 8,
+    padding: 12,
+  },
+  modalButtonText: {
     fontSize: 16,
     fontWeight: '500',
   },
-  reviewDate: {
-    fontSize: 14,
-  },
-  ratingContainer: {
+  modalButtons: {
     flexDirection: 'row',
-    marginBottom: 8,
-  },
-  star: {
-    fontSize: 20,
-    marginRight: 4,
-  },
-  reviewComment: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   modalContent: {
-    width: '90%',
-    padding: 20,
     borderRadius: 12,
+    padding: 20,
+    width: '90%',
+  },
+  modalOverlay: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   modalTitle: {
     fontSize: 20,
@@ -240,29 +224,39 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  commentInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 16,
-    marginBottom: 16,
-    textAlignVertical: 'top',
-  },
-  modalButtons: {
+  ratingContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 8,
-    alignItems: 'center',
-  },
-  modalButtonText: {
+  reviewAuthor: {
     fontSize: 16,
     fontWeight: '500',
   },
+  reviewComment: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  reviewDate: {
+    fontSize: 14,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  reviewItem: {
+    borderRadius: 8,
+    marginBottom: 12,
+    padding: 16,
+  },
+  star: {
+    fontSize: 20,
+    marginRight: 4,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
 
-export default ReviewsSection; 
+export default ReviewsSection;

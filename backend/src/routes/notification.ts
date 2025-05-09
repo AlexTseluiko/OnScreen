@@ -1,30 +1,40 @@
-import express from 'express';
-import { 
-  getUserNotifications, 
-  markNotificationAsReadController, 
+import { Router, Response } from 'express';
+import {
+  getUserNotifications,
+  markNotificationAsReadController,
   markAllNotificationsAsReadController,
   deleteNotification,
-  deleteAllNotifications
+  deleteAllNotifications,
 } from '../controllers/notificationController';
-import { authenticate } from '../middleware/authMiddleware';
+import { auth, AuthRequest } from '../middleware/auth';
 
-const router = express.Router();
+const router = Router();
 
 // Получение уведомлений пользователя
-router.get('/', authenticate, getUserNotifications);
+router.get('/', auth, (req: AuthRequest, res: Response) => getUserNotifications(req, res));
 
 // Отметка уведомления как прочитанного
-router.patch('/:notificationId/read', authenticate, markNotificationAsReadController);
+router.patch(
+  '/:notificationId/read',
+  auth,
+  (req: AuthRequest & { params: { notificationId: string } }, res: Response) =>
+    markNotificationAsReadController(req, res)
+);
 
 // Отметка всех уведомлений как прочитанных
-router.patch('/read-all', authenticate, markAllNotificationsAsReadController);
+router.patch('/read-all', auth, (req: AuthRequest, res: Response) =>
+  markAllNotificationsAsReadController(req, res)
+);
 
 // Удаление уведомления
-router.delete('/:notificationId', authenticate, deleteNotification);
+router.delete(
+  '/:notificationId',
+  auth,
+  (req: AuthRequest & { params: { notificationId: string } }, res: Response) =>
+    deleteNotification(req, res)
+);
 
 // Удаление всех уведомлений
-router.delete('/', authenticate, deleteAllNotifications);
+router.delete('/', auth, (req: AuthRequest, res: Response) => deleteAllNotifications(req, res));
 
 export default router;
-
- 

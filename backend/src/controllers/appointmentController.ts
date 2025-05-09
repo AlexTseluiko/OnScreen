@@ -7,15 +7,7 @@ import { Clinic } from '../models/Clinic';
 // Создание записи
 export const createAppointment = async (req: Request, res: Response) => {
   try {
-    const {
-      doctorId,
-      clinicId,
-      date,
-      time,
-      type,
-      notes,
-      symptoms,
-    } = req.body;
+    const { doctorId, clinicId, date, time, type, notes, symptoms } = req.body;
 
     const patientId = req.user.id;
 
@@ -165,7 +157,7 @@ export const cancelAppointment = async (req: Request, res: Response) => {
 
     const appointment = await Appointment.findOne({
       _id: appointmentId,
-      user: userId
+      user: userId,
     });
 
     if (!appointment) {
@@ -214,4 +206,4 @@ export const getClinicAppointments = async (req: Request, res: Response) => {
     console.error('Get clinic appointments error:', error);
     res.status(500).json({ error: 'Ошибка при получении записей' });
   }
-}; 
+};

@@ -42,62 +42,66 @@ export const ArticlesScreen: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   // Функция для загрузки статей
-  const fetchArticles = useCallback(async (page = 1, refresh = false) => {
-    if (refresh) {
-      setRefreshing(true);
-    } else if (!refresh && page === 1) {
-      setLoading(true);
-    }
-    
-    try {
-      const params: any = { page };
-      
-      if (searchQuery) {
-        params.search = searchQuery;
+  const fetchArticles = useCallback(
+    async (page = 1, refresh = false) => {
+      if (refresh) {
+        setRefreshing(true);
+      } else if (!refresh && page === 1) {
+        setLoading(true);
       }
-      
-      if (selectedCategory !== 'all') {
-        params.category = selectedCategory;
-      }
-      
-      const response = await apiClient.getArticles(params) as unknown as ApiResponse<ArticlesResponse>;
-      
-      if (response?.data?.articles) {
-        const articlesWithBookmarks = response.data.articles.map(article => ({
-          ...article,
-          isBookmarked: false,
-        }));
-        
-        if (page === 1 || refresh) {
-          setArticles(articlesWithBookmarks);
-        } else {
-          setArticles(prev => [...prev, ...articlesWithBookmarks]);
+
+      try {
+        const params: any = { page };
+
+        if (searchQuery) {
+          params.search = searchQuery;
         }
-        
-        setCurrentPage(response.data.pagination?.page || 1);
-        setTotalPages(response.data.pagination?.pages || 1);
-        
-        // Загружаем категории, если это первая загрузка
-        if (categories.length === 1) {
-          const uniqueCategories = ['all', ...new Set(response.data.articles.map(article => article.category))];
-          setCategories(uniqueCategories);
+
+        if (selectedCategory !== 'all') {
+          params.category = selectedCategory;
         }
+
+        const response = (await apiClient.getArticles(
+          params
+        )) as unknown as ApiResponse<ArticlesResponse>;
+
+        if (response?.data?.articles) {
+          const articlesWithBookmarks = response.data.articles.map(article => ({
+            ...article,
+            isBookmarked: false,
+          }));
+
+          if (page === 1 || refresh) {
+            setArticles(articlesWithBookmarks);
+          } else {
+            setArticles(prev => [...prev, ...articlesWithBookmarks]);
+          }
+
+          setCurrentPage(response.data.pagination?.page || 1);
+          setTotalPages(response.data.pagination?.pages || 1);
+
+          // Загружаем категории, если это первая загрузка
+          if (categories.length === 1) {
+            const uniqueCategories = [
+              'all',
+              ...new Set(response.data.articles.map(article => article.category)),
+            ];
+            setCategories(uniqueCategories);
+          }
+        }
+
+        setError(null);
+      } catch (error) {
+        console.error('Ошибка при загрузке статей:', error);
+        setError(t('articles.loadError'));
+        Alert.alert(t('common.error'), t('articles.loadError'), [{ text: t('common.ok') }]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-      
-      setError(null);
-    } catch (error) {
-      console.error('Ошибка при загрузке статей:', error);
-      setError(t('articles.loadError'));
-      Alert.alert(
-        t('common.error'),
-        t('articles.loadError'),
-        [{ text: t('common.ok') }]
-      );
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [searchQuery, selectedCategory, categories.length, t]);
+    },
+    [searchQuery, selectedCategory, categories.length, t]
+  );
 
   // Загружаем статьи при первом рендере
   useEffect(() => {
@@ -109,25 +113,24 @@ export const ArticlesScreen: React.FC = () => {
     const delaySearch = setTimeout(() => {
       fetchArticles(1);
     }, 500);
-    
+
     return () => clearTimeout(delaySearch);
   }, [searchQuery, selectedCategory, fetchArticles]);
 
-  const filteredArticles = articles
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'likes':
-          // Для нашего API у нас пока нет счетчика лайков, поэтому оставляем по дате
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'comments':
-          // Для нашего API у нас пока нет счетчика комментариев, поэтому оставляем по дате
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        default:
-          return 0;
-      }
-    });
+  const filteredArticles = articles.sort((a, b) => {
+    switch (sortBy) {
+      case 'date':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'likes':
+        // Для нашего API у нас пока нет счетчика лайков, поэтому оставляем по дате
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'comments':
+        // Для нашего API у нас пока нет счетчика комментариев, поэтому оставляем по дате
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      default:
+        return 0;
+    }
+  });
 
   const handlePressIn = useCallback(() => {
     Animated.spring(scaleAnim, {
@@ -150,9 +153,7 @@ export const ArticlesScreen: React.FC = () => {
   const toggleBookmark = (articleId: string) => {
     setArticles(prevArticles =>
       prevArticles.map(article =>
-        article._id === articleId
-          ? { ...article, isBookmarked: !article.isBookmarked }
-          : article
+        article._id === articleId ? { ...article, isBookmarked: !article.isBookmarked } : article
       )
     );
   };
@@ -164,12 +165,7 @@ export const ArticlesScreen: React.FC = () => {
   };
 
   const renderArticle = ({ item }: { item: Article }) => (
-    <Animated.View
-      style={[
-        styles.articleContainer,
-        { transform: [{ scale: scaleAnim }] },
-      ]}
-    >
+    <Animated.View style={[styles.articleContainer, { transform: [{ scale: scaleAnim }] }]}>
       <TouchableOpacity
         style={[styles.articleCard, { backgroundColor: theme.colors.card }]}
         onPress={() => {
@@ -180,9 +176,9 @@ export const ArticlesScreen: React.FC = () => {
         onPressOut={handlePressOut}
         activeOpacity={0.7}
       >
-        <Image 
-          source={{ uri: item.imageUrl || 'https://picsum.photos/200/300' }} 
-          style={styles.articleImage} 
+        <Image
+          source={{ uri: item.imageUrl || 'https://picsum.photos/200/300' }}
+          style={styles.articleImage}
         />
         <View style={styles.articleContent}>
           <View style={styles.articleHeader}>
@@ -203,14 +199,14 @@ export const ArticlesScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {item.title}
-          </Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{item.title}</Text>
           <View style={styles.articleFooter}>
             <View style={styles.authorContainer}>
               <Ionicons name="person-circle-outline" size={16} color={theme.colors.textSecondary} />
               <Text style={[styles.author, { color: theme.colors.textSecondary }]}>
-                {item.author ? `${item.author.firstName} ${item.author.lastName}` : 'Автор не указан'}
+                {item.author
+                  ? `${item.author.firstName} ${item.author.lastName}`
+                  : 'Автор не указан'}
               </Text>
             </View>
             <View style={styles.statsContainer}>
@@ -243,10 +239,7 @@ export const ArticlesScreen: React.FC = () => {
             <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={styles.sortButton}
-          onPress={() => setShowSortModal(true)}
-        >
+        <TouchableOpacity style={styles.sortButton} onPress={() => setShowSortModal(true)}>
           <Ionicons name="funnel-outline" size={20} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
@@ -262,9 +255,8 @@ export const ArticlesScreen: React.FC = () => {
             style={[
               styles.categoryButton,
               {
-                backgroundColor: selectedCategory === category
-                  ? theme.colors.primary
-                  : theme.colors.card,
+                backgroundColor:
+                  selectedCategory === category ? theme.colors.primary : theme.colors.card,
               },
             ]}
             onPress={() => setSelectedCategory(category)}
@@ -273,9 +265,7 @@ export const ArticlesScreen: React.FC = () => {
               style={[
                 styles.categoryButtonText,
                 {
-                  color: selectedCategory === category
-                    ? theme.colors.white
-                    : theme.colors.text,
+                  color: selectedCategory === category ? theme.colors.white : theme.colors.text,
                 },
               ]}
             >
@@ -319,20 +309,16 @@ export const ArticlesScreen: React.FC = () => {
           onEndReachedThreshold={0.3}
           ListFooterComponent={
             currentPage < totalPages && !loading ? (
-              <ActivityIndicator 
-                size="small" 
+              <ActivityIndicator
+                size="small"
                 color={theme.colors.primary}
-                style={styles.footerLoader} 
+                style={styles.footerLoader}
               />
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons
-                name="newspaper-outline"
-                size={48}
-                color={theme.colors.textSecondary}
-              />
+              <Ionicons name="newspaper-outline" size={48} color={theme.colors.textSecondary} />
               <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
                 {t('noArticlesFound')}
               </Text>
@@ -353,18 +339,15 @@ export const ArticlesScreen: React.FC = () => {
           onPress={() => setShowSortModal(false)}
         >
           <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
-              {t('sortBy')}
-            </Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>{t('sortBy')}</Text>
             {(['date', 'likes', 'comments'] as SortOption[]).map(option => (
               <TouchableOpacity
                 key={option}
                 style={[
                   styles.sortOption,
                   {
-                    backgroundColor: sortBy === option
-                      ? theme.colors.primary + '20'
-                      : 'transparent',
+                    backgroundColor:
+                      sortBy === option ? theme.colors.primary + '20' : 'transparent',
                   },
                 ]}
                 onPress={() => {
@@ -376,9 +359,7 @@ export const ArticlesScreen: React.FC = () => {
                   style={[
                     styles.sortOptionText,
                     {
-                      color: sortBy === option
-                        ? theme.colors.primary
-                        : theme.colors.text,
+                      color: sortBy === option ? theme.colors.primary : theme.colors.text,
                     },
                   ]}
                 >
@@ -399,7 +380,9 @@ export const ArticlesScreen: React.FC = () => {
         onRequestClose={() => setShowArticleModal(false)}
       >
         {selectedArticle && (
-          <View style={[styles.articleModalContainer, { backgroundColor: theme.colors.background }]}>
+          <View
+            style={[styles.articleModalContainer, { backgroundColor: theme.colors.background }]}
+          >
             <View style={[styles.articleModalHeader, { backgroundColor: theme.colors.card }]}>
               <TouchableOpacity
                 style={styles.closeButton}
@@ -429,7 +412,9 @@ export const ArticlesScreen: React.FC = () => {
                 </Text>
                 <View style={styles.articleModalMeta}>
                   <Text style={[styles.articleModalAuthor, { color: theme.colors.textSecondary }]}>
-                    {selectedArticle.author ? `${selectedArticle.author.firstName} ${selectedArticle.author.lastName}` : 'Автор не указан'}
+                    {selectedArticle.author
+                      ? `${selectedArticle.author.firstName} ${selectedArticle.author.lastName}`
+                      : 'Автор не указан'}
                   </Text>
                   <Text style={[styles.articleModalDate, { color: theme.colors.textSecondary }]}>
                     {new Date(selectedArticle.createdAt).toLocaleDateString()}
@@ -448,118 +433,124 @@ export const ArticlesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    margin: 16,
+  articleCard: {
     borderRadius: 12,
+    elevation: 2,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  sortButton: {
-    padding: 8,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  articlesList: {
-    padding: 16,
   },
   articleContainer: {
     marginBottom: 16,
   },
-  articleCard: {
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  articleImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
   articleContent: {
     padding: 16,
+  },
+  articleFooter: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   articleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  categoryContainer: {
-    flexDirection: 'row',
+  articleImage: {
+    height: 200,
+    resizeMode: 'cover',
+    width: '100%',
+  },
+  articleModalAuthor: {
+    fontSize: 14,
+  },
+  articleModalContainer: {
+    flex: 1,
+  },
+  articleModalContent: {
+    flex: 1,
+  },
+  articleModalDate: {
+    fontSize: 14,
+  },
+  articleModalHeader: {
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 48,
+  },
+  articleModalImage: {
+    height: 300,
+    resizeMode: 'cover',
+    width: '100%',
+  },
+  articleModalInfo: {
+    padding: 16,
+  },
+  articleModalMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  articleModalText: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  articleModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  articlesList: {
+    padding: 16,
+  },
+  author: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  authorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  bookmarkButton: {
+    padding: 4,
+  },
+  categoriesContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
   category: {
     fontSize: 12,
     fontWeight: '500',
     marginLeft: 4,
   },
-  bookmarkButton: {
-    padding: 4,
+  categoryButton: {
+    borderRadius: 20,
+    marginRight: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
-  articleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  categoryContainer: {
     alignItems: 'center',
-  },
-  authorContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
   },
-  author: {
-    fontSize: 12,
-    marginLeft: 4,
+  closeButton: {
+    padding: 8,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 12,
-  },
-  statText: {
-    fontSize: 12,
-    marginLeft: 4,
+  container: {
+    flex: 1,
   },
   emptyContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 32,
   },
   emptyText: {
@@ -567,86 +558,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '80%',
-    borderRadius: 12,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  sortOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  sortOptionText: {
-    fontSize: 16,
-  },
-  articleModalContainer: {
-    flex: 1,
-  },
-  articleModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingTop: 48,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  articleModalContent: {
-    flex: 1,
-  },
-  articleModalImage: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'cover',
-  },
-  articleModalInfo: {
-    padding: 16,
-  },
-  articleModalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  articleModalMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  articleModalAuthor: {
-    fontSize: 14,
-  },
-  articleModalDate: {
-    fontSize: 14,
-  },
-  articleModalText: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   errorContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 32,
   },
   errorText: {
@@ -654,17 +569,87 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
+  footerLoader: {
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalContent: {
+    borderRadius: 12,
+    padding: 16,
+    width: '80%',
+  },
+  modalOverlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
   retryButton: {
-    padding: 12,
     borderRadius: 8,
     marginTop: 16,
+    padding: 12,
   },
   retryButtonText: {
     fontSize: 16,
     fontWeight: '500',
   },
-  footerLoader: {
-    marginTop: 16,
-    marginBottom: 16,
+  searchContainer: {
+    alignItems: 'center',
+    borderRadius: 12,
+    elevation: 2,
+    flexDirection: 'row',
+    margin: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-}); 
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  sortButton: {
+    padding: 8,
+  },
+  sortOption: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    padding: 12,
+  },
+  sortOptionText: {
+    fontSize: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: 12,
+  },
+  statText: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  statsContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+});

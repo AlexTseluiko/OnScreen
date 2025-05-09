@@ -7,7 +7,7 @@ export enum NotificationType {
   SYSTEM = 'SYSTEM',
   REMINDER = 'REMINDER',
   REVIEW_ADDED = 'REVIEW_ADDED',
-  REVIEW_LIKED = 'REVIEW_LIKED'
+  REVIEW_LIKED = 'REVIEW_LIKED',
 }
 
 let io: Server;
@@ -99,12 +99,9 @@ export const markNotificationAsRead = async (notificationId: string, userId: str
 
 export const markAllNotificationsAsRead = async (userId: string) => {
   try {
-    await Notification.updateMany(
-      { user: userId, isRead: false },
-      { isRead: true }
-    );
+    await Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
     throw error;
   }
-}; 
+};

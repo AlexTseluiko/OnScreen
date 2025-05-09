@@ -51,36 +51,31 @@ export const AdminUsersScreen: React.FC = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await adminApi.getUsers({ 
-        page: pagination.page, 
-        limit: 10, 
-        search: searchTerm || undefined, 
-        role: roleFilter || undefined 
-      }) as unknown as ApiResponse<UsersResponse>;
-      
+      const response = (await adminApi.getUsers({
+        page: pagination.page,
+        limit: 10,
+        search: searchTerm || undefined,
+        role: roleFilter || undefined,
+      })) as unknown as ApiResponse<UsersResponse>;
+
       console.log('AdminUsersScreen.loadUsers: Получен ответ API', {
         hasUsers: !!response?.data?.users,
         userCount: response?.data?.users?.length || 0,
         hasValidPagination: !!response?.data?.pagination,
-        responseType: typeof response
+        responseType: typeof response,
       });
-      
+
       if (response?.data?.users) {
         setUsers(response.data.users);
       }
-      
+
       if (response?.data?.pagination) {
         setPagination(response.data.pagination);
         console.log('AdminUsersScreen.loadUsers: Пагинация обновлена', response.data.pagination);
       }
-      
     } catch (error) {
       console.error('Ошибка при загрузке пользователей:', error);
-      Alert.alert(
-        t('common.error'),
-        t('admin.users.loadError'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('admin.users.loadError'), [{ text: t('common.ok') }]);
     } finally {
       setLoading(false);
     }
@@ -90,7 +85,7 @@ export const AdminUsersScreen: React.FC = () => {
     // Сбрасываем страницу на первую при новом поиске
     setPagination({
       ...pagination,
-      page: 1
+      page: 1,
     });
     loadUsers();
   };
@@ -115,7 +110,7 @@ export const AdminUsersScreen: React.FC = () => {
       setLoading(true);
       await adminApi.toggleUserStatus(userId, isBlocked);
       Alert.alert(
-        t('common.success'), 
+        t('common.success'),
         isBlocked ? t('admin.userBlocked') : t('admin.userUnblocked')
       );
       loadUsers();
@@ -129,24 +124,20 @@ export const AdminUsersScreen: React.FC = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      Alert.alert(
-        t('admin.confirm'),
-        t('admin.deleteConfirmation'),
-        [
-          { text: t('admin.cancel'), style: 'cancel' },
-          {
-            text: t('admin.delete'),
-            style: 'destructive',
-            onPress: async () => {
-              setLoading(true);
-              await adminApi.deleteUser(userId);
-              Alert.alert(t('common.success'), t('admin.successDelete'));
-              loadUsers();
-              setLoading(false);
-            }
-          }
-        ]
-      );
+      Alert.alert(t('admin.confirm'), t('admin.deleteConfirmation'), [
+        { text: t('admin.cancel'), style: 'cancel' },
+        {
+          text: t('admin.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            await adminApi.deleteUser(userId);
+            Alert.alert(t('common.success'), t('admin.successDelete'));
+            loadUsers();
+            setLoading(false);
+          },
+        },
+      ]);
     } catch (error) {
       console.error('Ошибка при удалении пользователя:', error);
       Alert.alert(t('common.error'), t('admin.errorDelete'));
@@ -160,14 +151,10 @@ export const AdminUsersScreen: React.FC = () => {
         <Text style={[styles.userName, { color: theme.colors.text }]}>
           {item.firstName} {item.lastName}
         </Text>
-        <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>
-          {item.email}
-        </Text>
+        <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>{item.email}</Text>
         <View style={styles.userMeta}>
           <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
-            <Text style={[styles.badgeText, { color: theme.colors.white }]}>
-              {item.role}
-            </Text>
+            <Text style={[styles.badgeText, { color: theme.colors.white }]}>{item.role}</Text>
           </View>
           {item.isBlocked && (
             <View style={[styles.badge, { backgroundColor: theme.colors.error }]}>
@@ -178,7 +165,7 @@ export const AdminUsersScreen: React.FC = () => {
           )}
         </View>
       </View>
-      
+
       <View style={styles.actionsContainer}>
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
@@ -189,11 +176,11 @@ export const AdminUsersScreen: React.FC = () => {
         >
           <Text style={styles.actionButtonText}>{t('admin.changeRole')}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[
-            styles.actionButton, 
-            { backgroundColor: item.isBlocked ? theme.colors.success : theme.colors.error }
+            styles.actionButton,
+            { backgroundColor: item.isBlocked ? theme.colors.success : theme.colors.error },
           ]}
           onPress={() => handleToggleBlockUser(item._id, !item.isBlocked)}
         >
@@ -201,14 +188,14 @@ export const AdminUsersScreen: React.FC = () => {
             {item.isBlocked ? t('admin.unblock') : t('admin.block')}
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
           onPress={() => handleDeleteUser(item._id)}
         >
           <Text style={styles.actionButtonText}>{t('admin.delete')}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
           onPress={() => {
@@ -234,28 +221,28 @@ export const AdminUsersScreen: React.FC = () => {
           <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
             {t('admin.selectRole')}
           </Text>
-          
+
           <TouchableOpacity
             style={[styles.roleOption, { backgroundColor: theme.colors.primary }]}
             onPress={() => selectedUser && handleUpdateRole(selectedUser._id, 'admin')}
           >
             <Text style={styles.roleOptionText}>{t('admin.administrator')}</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.roleOption, { backgroundColor: theme.colors.primary }]}
             onPress={() => selectedUser && handleUpdateRole(selectedUser._id, 'doctor')}
           >
             <Text style={styles.roleOptionText}>{t('admin.doctor')}</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.roleOption, { backgroundColor: theme.colors.primary }]}
             onPress={() => selectedUser && handleUpdateRole(selectedUser._id, 'patient')}
           >
             <Text style={styles.roleOptionText}>{t('admin.patient')}</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.cancelButton, { backgroundColor: theme.colors.error }]}
             onPress={() => setIsRoleModalVisible(false)}
@@ -281,7 +268,7 @@ export const AdminUsersScreen: React.FC = () => {
               <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
                 {t('admin.userDetails')}
               </Text>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.id')}:
@@ -290,7 +277,7 @@ export const AdminUsersScreen: React.FC = () => {
                   {selectedUser._id}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.name')}:
@@ -299,7 +286,7 @@ export const AdminUsersScreen: React.FC = () => {
                   {selectedUser.firstName} {selectedUser.lastName}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.email')}:
@@ -308,7 +295,7 @@ export const AdminUsersScreen: React.FC = () => {
                   {selectedUser.email}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.role')}:
@@ -317,7 +304,7 @@ export const AdminUsersScreen: React.FC = () => {
                   {selectedUser.role}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.status')}:
@@ -326,7 +313,7 @@ export const AdminUsersScreen: React.FC = () => {
                   {selectedUser.isBlocked ? t('admin.blocked') : t('admin.active')}
                 </Text>
               </View>
-              
+
               <View style={styles.detailRow}>
                 <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
                   {t('admin.verification')}:
@@ -337,7 +324,7 @@ export const AdminUsersScreen: React.FC = () => {
               </View>
             </>
           )}
-          
+
           <TouchableOpacity
             style={[styles.cancelButton, { backgroundColor: theme.colors.primary }]}
             onPress={() => setIsDetailsModalVisible(false)}
@@ -352,14 +339,15 @@ export const AdminUsersScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          {t('admin.users')}
-        </Text>
+        <Text style={[styles.title, { color: theme.colors.text }]}>{t('admin.users')}</Text>
       </View>
-      
+
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { backgroundColor: theme.colors.card, color: theme.colors.text }]}
+          style={[
+            styles.searchInput,
+            { backgroundColor: theme.colors.card, color: theme.colors.text },
+          ]}
           placeholder={t('admin.searchUsers')}
           placeholderTextColor={theme.colors.textSecondary}
           value={searchTerm}
@@ -372,21 +360,23 @@ export const AdminUsersScreen: React.FC = () => {
           <Ionicons name="search" size={20} color={theme.colors.white} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.filterContainer}>
-        {['admin', 'doctor', 'patient', null].map((role) => (
+        {['admin', 'doctor', 'patient', null].map(role => (
           <TouchableOpacity
             key={role || 'all'}
             style={[
               styles.filterButton,
-              roleFilter === role ? { backgroundColor: theme.colors.primary } : { backgroundColor: theme.colors.card }
+              roleFilter === role
+                ? { backgroundColor: theme.colors.primary }
+                : { backgroundColor: theme.colors.card },
             ]}
             onPress={() => setRoleFilter(role)}
           >
             <Text
               style={[
                 styles.filterButtonText,
-                roleFilter === role ? { color: theme.colors.white } : { color: theme.colors.text }
+                roleFilter === role ? { color: theme.colors.white } : { color: theme.colors.text },
               ]}
             >
               {role ? t(`admin.roles.${role}`) : t('admin.allUsers')}
@@ -394,17 +384,15 @@ export const AdminUsersScreen: React.FC = () => {
           </TouchableOpacity>
         ))}
       </View>
-      
+
       <TouchableOpacity
         style={[styles.doctorRequestsButton, { backgroundColor: theme.colors.primary }]}
         onPress={() => navigation.navigate('DoctorRequests')}
       >
         <Ionicons name="medkit" size={20} color={theme.colors.white} />
-        <Text style={styles.doctorRequestsButtonText}>
-          {t('admin.doctorRequests')}
-        </Text>
+        <Text style={styles.doctorRequestsButtonText}>{t('admin.doctorRequests')}</Text>
       </TouchableOpacity>
-      
+
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
       ) : (
@@ -420,23 +408,23 @@ export const AdminUsersScreen: React.FC = () => {
             <>
               <FlatList
                 data={users}
-                keyExtractor={(item) => item._id}
+                keyExtractor={item => item._id}
                 renderItem={renderUserItem}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
               />
-              
+
               <View style={styles.pagination}>
                 <TouchableOpacity
                   style={[
                     styles.paginationButton,
-                    pagination.page <= 1 ? { opacity: 0.5 } : { opacity: 1 }
+                    pagination.page <= 1 ? { opacity: 0.5 } : { opacity: 1 },
                   ]}
                   onPress={() => {
                     if (pagination.page > 1) {
                       setPagination({
                         ...pagination,
-                        page: pagination.page - 1
+                        page: pagination.page - 1,
                       });
                     }
                   }}
@@ -444,21 +432,21 @@ export const AdminUsersScreen: React.FC = () => {
                 >
                   <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
                 </TouchableOpacity>
-                
+
                 <Text style={[styles.paginationText, { color: theme.colors.text }]}>
                   {t('admin.page')} {pagination.page} {t('admin.of')} {pagination.pages}
                 </Text>
-                
+
                 <TouchableOpacity
                   style={[
                     styles.paginationButton,
-                    pagination.page >= pagination.pages ? { opacity: 0.5 } : { opacity: 1 }
+                    pagination.page >= pagination.pages ? { opacity: 0.5 } : { opacity: 1 },
                   ]}
                   onPress={() => {
                     if (pagination.page < pagination.pages) {
                       setPagination({
                         ...pagination,
-                        page: pagination.page + 1
+                        page: pagination.page + 1,
                       });
                     }
                   }}
@@ -471,7 +459,7 @@ export const AdminUsersScreen: React.FC = () => {
           )}
         </>
       )}
-      
+
       <RoleModal />
       <UserDetailsModal />
     </View>
@@ -479,94 +467,15 @@ export const AdminUsersScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginRight: 8,
-  },
-  searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  filterButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  filterButtonText: {
-    fontSize: 12,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  usersList: {
-    flexGrow: 1,
-  },
-  userCard: {
-    borderRadius: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  userInfo: {
-    marginBottom: 12,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 14,
+  actionButton: {
+    borderRadius: 4,
     marginBottom: 8,
-  },
-  userMeta: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
     marginRight: 8,
-    marginBottom: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  badgeText: {
+  actionButtonText: {
+    color: '#fff',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -575,57 +484,102 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
   },
-  actionButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
+  badge: {
+    borderRadius: 12,
+    marginBottom: 4,
     marginRight: 8,
-    marginBottom: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
-  actionButtonText: {
-    color: '#fff',
+  badgeText: {
     fontSize: 12,
     fontWeight: 'bold',
   },
+  cancelButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    marginTop: 8,
+    paddingVertical: 12,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  detailLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  detailValue: {
+    flex: 2,
+    fontSize: 14,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  doctorRequestsButton: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 10,
+    padding: 12,
+  },
+  doctorRequestsButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   emptyContainer: {
-    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 32,
   },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
   },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  paginationButton: {
-    width: 32,
-    height: 32,
+  filterButton: {
+    borderColor: '#ddd',
     borderRadius: 16,
-    justifyContent: 'center',
+    borderWidth: 1,
+    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterButtonText: {
+    fontSize: 12,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  listContainer: {
+    flexGrow: 1,
+  },
+  loader: {
+    marginTop: 20,
+  },
+  loadingContainer: {
     alignItems: 'center',
-    marginHorizontal: 8,
-  },
-  paginationText: {
-    marginHorizontal: 16,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 16,
   },
   modalContent: {
-    width: '90%',
     borderRadius: 8,
+    elevation: 5,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -634,7 +588,14 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    width: '90%',
+  },
+  modalOverlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 16,
   },
   modalTitle: {
     fontSize: 20,
@@ -642,64 +603,91 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
+  pagination: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  paginationButton: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    marginHorizontal: 8,
+    width: 32,
+  },
+  paginationContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  paginationText: {
+    marginHorizontal: 16,
+  },
   roleOption: {
-    paddingVertical: 12,
+    alignItems: 'center',
     borderRadius: 8,
     marginBottom: 12,
-    alignItems: 'center',
+    paddingVertical: 12,
   },
   roleOptionText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  cancelButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 8,
+  searchButton: {
     alignItems: 'center',
+    borderRadius: 8,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
-  cancelButtonText: {
-    color: '#fff',
-    fontSize: 16,
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  searchInput: {
+    borderRadius: 8,
+    flex: 1,
+    height: 40,
+    marginRight: 8,
+    paddingHorizontal: 12,
+  },
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
   },
-  detailRow: {
-    flexDirection: 'row',
+  userCard: {
+    borderRadius: 8,
+    elevation: 2,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  userInfo: {
     marginBottom: 12,
   },
-  detailLabel: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  detailValue: {
-    flex: 2,
-    fontSize: 14,
-  },
-  doctorRequestsButton: {
+  userMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 10,
-    marginVertical: 10,
+    flexWrap: 'wrap',
   },
-  doctorRequestsButtonText: {
-    color: 'white',
-    marginLeft: 8,
-    fontWeight: '600',
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
-  loader: {
-    marginTop: 20,
-  },
-  listContainer: {
+  usersList: {
     flexGrow: 1,
   },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-}); 
+});

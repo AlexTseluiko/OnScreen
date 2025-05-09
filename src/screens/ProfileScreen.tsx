@@ -25,11 +25,7 @@ const ProfileScreen: React.FC = () => {
       navigation.replace('Login');
     } catch (error) {
       console.error('Logout error:', error);
-      Alert.alert(
-        t('common.error'),
-        t('profile.logoutError'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('profile.logoutError'), [{ text: t('common.ok') }]);
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +59,7 @@ const ProfileScreen: React.FC = () => {
             <Text style={[styles.name, { color: theme.colors.text }]}>
               {user?.name || t('common.user')}
             </Text>
-            <Text style={[styles.email, { color: theme.colors.textSecondary }]}>
-              {user?.email}
-            </Text>
+            <Text style={[styles.email, { color: theme.colors.textSecondary }]}>{user?.email}</Text>
           </View>
         </View>
       </View>
@@ -85,12 +79,7 @@ const ProfileScreen: React.FC = () => {
                 color={item.color || theme.colors.primary}
               />
             </View>
-            <Text
-              style={[
-                styles.menuItemText,
-                { color: item.color || theme.colors.text },
-              ]}
-            >
+            <Text style={[styles.menuItemText, { color: item.color || theme.colors.text }]}>
               {item.title}
             </Text>
             <Ionicons
@@ -107,57 +96,57 @@ const ProfileScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  chevron: {
+    marginLeft: 8,
+  },
   container: {
     flex: 1,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 48,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  profileInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  userInfo: {
-    marginLeft: 16,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 14,
   },
   content: {
     flex: 1,
     padding: 16,
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+  email: {
+    fontSize: 14,
+  },
+  header: {
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomWidth: 1,
+    padding: 20,
+    paddingTop: 48,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
     marginRight: 16,
+    width: 48,
+  },
+  menuItem: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    marginBottom: 12,
+    padding: 16,
   },
   menuItemText: {
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
   },
-  chevron: {
-    marginLeft: 8,
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  profileInfo: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  userInfo: {
+    marginLeft: 16,
   },
 });
 
-export default ProfileScreen; 
+export default ProfileScreen;

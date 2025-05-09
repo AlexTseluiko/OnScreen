@@ -28,7 +28,7 @@ export const getCurrentLocation = (): Promise<Location> => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      position => {
         resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -36,7 +36,7 @@ export const getCurrentLocation = (): Promise<Location> => {
           timestamp: position.timestamp,
         });
       },
-      (error) => {
+      error => {
         reject(error);
       },
       {
@@ -53,4 +53,4 @@ export const formatDistance = (distance: number): string => {
     return `${Math.round(distance * 1000)} м`;
   }
   return `${distance.toFixed(1)} км`;
-}; 
+};

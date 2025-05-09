@@ -3,54 +3,54 @@ import { NotificationType } from '../utils/notificationUtils';
 
 export interface INotification extends Document {
   user: mongoose.Types.ObjectId;
-  type: NotificationType;
   title: string;
   message: string;
-  data?: Record<string, any>;
+  type: string;
   isRead: boolean;
+  readAt?: Date;
+  data?: any;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const NotificationSchema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const NotificationSchema = new Schema<INotification>(
+  {
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: {
+      type: Date,
+    },
+    data: {
+      type: Schema.Types.Mixed,
+    },
   },
-  type: {
-    type: String,
-    enum: Object.values(NotificationType),
-    required: true
-  },
-  title: {
-    type: String,
-    required: true
-  },
-  message: {
-    type: String,
-    required: true
-  },
-  data: {
-    type: Schema.Types.Mixed
-  },
-  isRead: {
-    type: Boolean,
-    default: false
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Индексы для поиска
 NotificationSchema.index({ user: 1, createdAt: -1 });
 NotificationSchema.index({ isRead: 1 });
 
-// Создаем и экспортируем модель с обоими вариантами (именованный и по умолчанию) для совместимости
-const NotificationModel = mongoose.model<INotification>('Notification', NotificationSchema);
-
-// Именованный экспорт для использования с import { Notification } from ...
-export const Notification = NotificationModel;
-
-// Экспорт по умолчанию для использования с import Notification from ...
-export default NotificationModel; 
+// Создаем и экспортируем модель
+export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);

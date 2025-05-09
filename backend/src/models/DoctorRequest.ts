@@ -60,4 +60,4 @@ doctorRequestSchema.index({ user: 1 });
 doctorRequestSchema.index({ status: 1 });
 doctorRequestSchema.index({ createdAt: -1 });
 
-export const DoctorRequest = mongoose.model<IDoctorRequest>('DoctorRequest', doctorRequestSchema); 
+export const DoctorRequest = mongoose.model<IDoctorRequest>('DoctorRequest', doctorRequestSchema);

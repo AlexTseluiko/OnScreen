@@ -1,31 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Platform, StyleSheet, View, TouchableOpacity, Text, Dimensions } from 'react-native';
+import { Platform, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import type { Region as MapRegion } from 'react-native-maps';
 import { API_KEYS } from '../constants';
 import { getMarkerColor } from '../utils/mapUtils';
-import { MedicalFacility } from '../types/medical';
 import { useTheme } from '../contexts/ThemeContext';
 import { Clinic } from '../types/clinic';
+
+// Константы для цветов
+const COLORS = {
+  primary: '#4285F4',
+  white: '#FFFFFF',
+  error: 'rgba(255, 0, 0, 0.7)',
+  background: '#f1f1f1',
+  text: '#333333',
+  shadow: '#000000',
+};
+
+// Специальный тип для стилей iframe
+interface IFrameStyle {
+  width: string;
+  height: string;
+  border: string;
+}
 
 // Импортируем Location только для мобильных платформ
 const Location = Platform.OS !== 'web' ? require('expo-location') : null;
 
 interface MapMarker {
   id: string;
-  name: string;
-  address: string;
-  type: MedicalFacility['type'];
   coordinates: {
     latitude: number;
     longitude: number;
   };
+  type: 'clinic' | 'facility';
 }
 
 interface MapProps {
   clinics: Clinic[];
   initialRegion?: Region;
-  onMarkerPress?: (clinic: Clinic) => void;
+  onMarkerPress?: (marker: MapMarker) => void;
   selectedClinic?: Clinic;
 }
 
@@ -36,15 +49,23 @@ export const Map: React.FC<MapProps> = ({
   selectedClinic,
 }) => {
   const { theme } = useTheme();
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
+    null
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showMyLocation, setShowMyLocation] = useState(true);
-  const [region, setRegion] = useState<Region>(initialRegion || {
-    latitude: 55.7558,
-    longitude: 37.6173,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+  const [region, setRegion] = useState<Region>(
+    initialRegion || {
+      latitude: 55.7558,
+      longitude: 37.6173,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    }
+  );
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedRadius, setSelectedRadius] = useState<number>(10000);
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
@@ -56,13 +77,13 @@ export const Map: React.FC<MapProps> = ({
             setErrorMsg('Для отображения вашего местоположения необходимо разрешение');
             return;
           }
-          
+
           const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High
+            accuracy: Location.Accuracy.High,
           });
           const newLocation = {
             latitude: location.coords.latitude,
-            longitude: location.coords.longitude
+            longitude: location.coords.longitude,
           };
           setUserLocation(newLocation);
           setRegion({
@@ -73,10 +94,10 @@ export const Map: React.FC<MapProps> = ({
         } else if (Platform.OS === 'web') {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              (position) => {
+              position => {
                 const newLocation = {
                   latitude: position.coords.latitude,
-                  longitude: position.coords.longitude
+                  longitude: position.coords.longitude,
                 };
                 setUserLocation(newLocation);
                 setRegion({
@@ -84,8 +105,12 @@ export const Map: React.FC<MapProps> = ({
                   latitudeDelta: 0.01,
                   longitudeDelta: 0.01,
                 });
+                setCurrentLocation({
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                });
               },
-              (error) => {
+              error => {
                 setErrorMsg('Ошибка при получении местоположения: ' + error.message);
               },
               { enableHighAccuracy: true }
@@ -104,7 +129,7 @@ export const Map: React.FC<MapProps> = ({
   }, []);
 
   useEffect(() => {
-    if (selectedClinic && mapRef.current) {
+    if (selectedClinic?.address.coordinates && mapRef.current) {
       mapRef.current.animateToRegion({
         latitude: selectedClinic.address.coordinates.latitude,
         longitude: selectedClinic.address.coordinates.longitude,
@@ -126,89 +151,85 @@ export const Map: React.FC<MapProps> = ({
     }
   };
 
+  const handleMarkerPress = (marker: MapMarker) => {
+    if (onMarkerPress) {
+      onMarkerPress(marker);
+    }
+  };
+
   // Для веб-версии используем Google Maps JavaScript API
   if (Platform.OS === 'web') {
-    const markersString = clinics.map(clinic => 
-      `&markers=color:${getMarkerColor('clinic').replace('#', '')}|${clinic.address.coordinates.latitude},${clinic.address.coordinates.longitude}`
-    ).join('');
-    
-    const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
-    const [filtersOpen, setFiltersOpen] = useState(true);
-    const [selectedType, setSelectedType] = useState<string>('all');
-    const [selectedRadius, setSelectedRadius] = useState<number>(10000);
-    
-    useEffect(() => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const newLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            setCurrentLocation(newLocation);
-          },
-          (error) => {
-            setErrorMsg('Ошибка при получении местоположения: ' + error.message);
-          },
-          { enableHighAccuracy: true }
-        );
-      } else {
-        setErrorMsg('Ваш браузер не поддерживает геолокацию');
-      }
-    }, []);
+    const markersString = clinics
+      .filter(clinic => clinic.address.coordinates)
+      .map(
+        clinic =>
+          `&markers=color:${getMarkerColor('clinic').replace('#', '')}|${clinic.address.coordinates!.latitude},${clinic.address.coordinates!.longitude}`
+      )
+      .join('');
 
-    const mapUrl = currentLocation 
+    const mapUrl = currentLocation
       ? `https://www.google.com/maps/embed/v1/view?key=${API_KEYS.GOOGLE_MAPS}&center=${currentLocation.lat},${currentLocation.lng}&zoom=15&maptype=roadmap${markersString}`
       : `https://www.google.com/maps/embed/v1/view?key=${API_KEYS.GOOGLE_MAPS}&center=${region.latitude},${region.longitude}&zoom=15&maptype=roadmap${markersString}`;
-    
+
     return (
       <View style={styles.container}>
         <View style={styles.webFiltersContainer}>
           {filtersOpen ? (
             <>
               <View style={styles.filtersBlock}>
-                {/* Тип учреждения */}
-                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <View style={styles.filterRow}>
                   {['all', 'hospital', 'clinic', 'pharmacy'].map(type => (
                     <TouchableOpacity
                       key={type}
                       style={[styles.filterButton, selectedType === type && styles.activeFilter]}
                       onPress={() => setSelectedType(type)}
                     >
-                      <Text style={selectedType === type ? styles.activeFilterText : styles.filterText}>
-                        {type === 'all' ? 'Все' : type === 'hospital' ? 'Больницы' : type === 'clinic' ? 'Клиники' : 'Аптеки'}
+                      <Text
+                        style={selectedType === type ? styles.activeFilterText : styles.filterText}
+                      >
+                        {type === 'all'
+                          ? 'Все'
+                          : type === 'hospital'
+                            ? 'Больницы'
+                            : type === 'clinic'
+                              ? 'Клиники'
+                              : 'Аптеки'}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-                {/* Радиус */}
-                <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <View style={styles.filterRow}>
                   {[1000, 3000, 5000, 10000].map(r => (
                     <TouchableOpacity
                       key={r}
                       style={[styles.filterButton, selectedRadius === r && styles.activeFilter]}
                       onPress={() => setSelectedRadius(r)}
                     >
-                      <Text style={selectedRadius === r ? styles.activeFilterText : styles.filterText}>
+                      <Text
+                        style={selectedRadius === r ? styles.activeFilterText : styles.filterText}
+                      >
                         {r / 1000} км
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-                <TouchableOpacity onPress={() => setFiltersOpen(false)} style={styles.collapseButton}>
-                  <Text style={{ color: '#4285F4', fontWeight: 'bold' }}>Свернуть фильтры ▲</Text>
+                <TouchableOpacity
+                  onPress={() => setFiltersOpen(false)}
+                  style={styles.collapseButton}
+                >
+                  <Text style={styles.filterButtonText}>Свернуть фильтры ▲</Text>
                 </TouchableOpacity>
               </View>
             </>
           ) : (
             <TouchableOpacity onPress={() => setFiltersOpen(true)} style={styles.expandButton}>
-              <Text style={{ color: '#4285F4', fontWeight: 'bold' }}>Показать фильтры ▼</Text>
+              <Text style={styles.filterButtonText}>Показать фильтры ▼</Text>
             </TouchableOpacity>
           )}
         </View>
         <iframe
           src={mapUrl}
-          style={{ width: '100%', height: '100%', border: 'none' }}
+          style={{ width: '100%', height: '100%', border: 'none' } as IFrameStyle}
           allowFullScreen
         />
         {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
@@ -231,114 +252,130 @@ export const Map: React.FC<MapProps> = ({
         showsScale={true}
         customMapStyle={theme.isDark ? darkMapStyle : []}
       >
-        {clinics.map((clinic) => (
-          <Marker
-            key={clinic._id}
-            coordinate={{
-              latitude: clinic.address.coordinates.latitude,
-              longitude: clinic.address.coordinates.longitude,
-            }}
-            title={clinic.name}
-            description={clinic.address.street}
-            onPress={() => onMarkerPress?.(clinic)}
-            pinColor={selectedClinic?._id === clinic._id ? theme.colors.primary : undefined}
-          />
-        ))}
+        {clinics
+          .filter(clinic => clinic.address.coordinates)
+          .map(clinic => (
+            <Marker
+              key={clinic._id}
+              coordinate={{
+                latitude: clinic.address.coordinates!.latitude,
+                longitude: clinic.address.coordinates!.longitude,
+              }}
+              title={clinic.name}
+              description={clinic.address.street}
+              onPress={() =>
+                handleMarkerPress({
+                  id: clinic._id,
+                  coordinates: {
+                    latitude: clinic.address.coordinates!.latitude,
+                    longitude: clinic.address.coordinates!.longitude,
+                  },
+                  type: 'clinic',
+                })
+              }
+              pinColor={selectedClinic?._id === clinic._id ? theme.colors.primary : undefined}
+            />
+          ))}
       </MapView>
-      
-      <TouchableOpacity
-        style={styles.myLocationButton}
-        onPress={handleMyLocationPress}
-      >
+
+      <TouchableOpacity style={styles.myLocationButton} onPress={handleMyLocationPress}>
         <Text style={styles.myLocationButtonText}>Моё местоположение</Text>
       </TouchableOpacity>
-      
+
       {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  webFiltersContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    maxWidth: 300,
-  },
-  filtersBlock: {
-    padding: 5,
-  },
-  filterButton: {
-    marginHorizontal: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f1f1f1',
-  },
   activeFilter: {
-    backgroundColor: '#4285F4',
-  },
-  filterText: {
-    color: '#333',
-    fontSize: 12,
+    backgroundColor: COLORS.primary,
   },
   activeFilterText: {
-    color: 'white',
+    color: COLORS.white,
     fontSize: 12,
   },
   collapseButton: {
     alignSelf: 'center',
     marginTop: 8,
   },
+  container: {
+    flex: 1,
+    position: 'relative',
+  },
+  errorText: {
+    backgroundColor: COLORS.error,
+    bottom: 10,
+    color: COLORS.white,
+    left: 0,
+    padding: 10,
+    position: 'absolute',
+    right: 0,
+    textAlign: 'center',
+  },
   expandButton: {
     padding: 8,
   },
-  errorText: {
-    position: 'absolute',
-    bottom: 10,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255, 0, 0, 0.7)',
-    color: 'white',
-    padding: 10,
-    textAlign: 'center',
+  filterButton: {
+    backgroundColor: COLORS.background,
+    borderRadius: 16,
+    marginHorizontal: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterButtonText: {
+    color: COLORS.primary,
+    fontWeight: 'bold',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  filterText: {
+    color: COLORS.text,
+    fontSize: 12,
+  },
+  filtersBlock: {
+    padding: 5,
+  },
+  map: {
+    height: '100%',
+    width: '100%',
   },
   myLocationButton: {
-    position: 'absolute',
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
     bottom: 20,
-    right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    elevation: 3,
+    marginBottom: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    elevation: 3,
-    shadowColor: '#000',
+    position: 'absolute',
+    right: 20,
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    marginBottom: 8,
   },
   myLocationButtonText: {
-    color: '#4285F4',
-    fontWeight: 'bold',
+    color: COLORS.primary,
     fontSize: 14,
+    fontWeight: 'bold',
+  },
+  webFiltersContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    elevation: 5,
+    maxWidth: 300,
+    padding: 10,
+    position: 'absolute',
+    right: 10,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    top: 10,
+    zIndex: 10,
   },
 });
 
@@ -502,4 +539,4 @@ const darkMapStyle = [
       },
     ],
   },
-]; 
+];

@@ -58,4 +58,4 @@ export interface WorkingHours {
   friday?: { open: string; close: string };
   saturday?: { open: string; close: string };
   sunday?: { open: string; close: string };
-} 
+}

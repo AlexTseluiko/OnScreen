@@ -9,11 +9,7 @@ interface DatePickerFieldProps {
   onChange: (date: string) => void;
 }
 
-export const DatePickerField: React.FC<DatePickerFieldProps> = ({
-  label,
-  value,
-  onChange,
-}) => {
+export const DatePickerField: React.FC<DatePickerFieldProps> = ({ label, value, onChange }) => {
   const [show, setShow] = useState(false);
   const [date, setDate] = useState(value ? new Date(value) : new Date());
 
@@ -28,13 +24,8 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={styles.input}
-        onPress={() => setShow(true)}
-      >
-        <Text style={styles.dateText}>
-          {value || 'Выберите дату'}
-        </Text>
+      <TouchableOpacity style={styles.input} onPress={() => setShow(true)}>
+        <Text style={styles.dateText}>{value || 'Выберите дату'}</Text>
       </TouchableOpacity>
 
       {show && (
@@ -54,20 +45,20 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 12,
   },
-  label: {
-    fontSize: 14,
-    color: COLORS.gray,
-    marginBottom: 4,
+  dateText: {
+    color: COLORS.text,
+    fontSize: 16,
   },
   input: {
-    borderWidth: 1,
+    backgroundColor: COLORS.white,
     borderColor: COLORS.gray,
     borderRadius: 8,
+    borderWidth: 1,
     padding: 12,
-    backgroundColor: COLORS.white,
   },
-  dateText: {
-    fontSize: 16,
-    color: COLORS.text,
+  label: {
+    color: COLORS.gray,
+    fontSize: 14,
+    marginBottom: 4,
   },
-}); 
+});

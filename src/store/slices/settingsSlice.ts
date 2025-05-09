@@ -1,16 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { userStorage } from '../../utils/userStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppDispatch } from '../store';
 
-interface SettingsState {
+export interface SettingsState {
+  theme: 'light' | 'dark';
   language: string;
-  darkMode: boolean;
   notifications: boolean;
 }
 
 const initialState: SettingsState = {
-  language: 'en',
-  darkMode: false,
+  theme: 'light',
+  language: 'ru',
   notifications: true,
 };
 
@@ -18,48 +19,47 @@ const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
+    setTheme: (state, action: PayloadAction<'light' | 'dark'>) => {
+      state.theme = action.payload;
+    },
     setLanguage: (state, action: PayloadAction<string>) => {
       state.language = action.payload;
     },
-    toggleDarkMode: (state) => {
-      state.darkMode = !state.darkMode;
+    setNotifications: (state, action: PayloadAction<boolean>) => {
+      state.notifications = action.payload;
     },
-    toggleNotifications: (state) => {
-      state.notifications = !state.notifications;
+    resetSettings: () => {
+      return initialState;
     },
   },
 });
 
 // Экспортируем действие для выхода из аккаунта
-export const logoutUser = () => (dispatch: any) => {
+export const logoutUser = () => (_dispatch: AppDispatch) => {
   console.log('SettingsSlice: Начинаем очистку данных пользователя');
-  
+
   // Очищаем данные асинхронно, но не ждем завершения
-  userStorage.removeUserData()
+  userStorage
+    .clearUserData()
     .then(() => {
       console.log('SettingsSlice: Данные пользователя успешно удалены');
     })
-    .catch(error => {
+    .catch((error: Error) => {
       console.error('SettingsSlice: Ошибка при удалении данных пользователя:', error);
     });
-  
+
   // Асинхронно очищаем данные для AuthContext
   AsyncStorage.removeItem('token')
     .then(() => AsyncStorage.removeItem('user'))
     .then(() => {
       console.log('SettingsSlice: Данные авторизации удалены из AsyncStorage');
     })
-    .catch(error => {
+    .catch((error: Error) => {
       console.error('SettingsSlice: Ошибка при удалении данных авторизации:', error);
     });
-  
+
   return true;
 };
 
-export const {
-  setLanguage,
-  toggleDarkMode,
-  toggleNotifications,
-} = settingsSlice.actions;
-
-export default settingsSlice.reducer; 
+export const { setTheme, setLanguage, setNotifications, resetSettings } = settingsSlice.actions;
+export default settingsSlice.reducer;

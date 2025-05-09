@@ -1,7 +1,5 @@
 import express from 'express';
 import authRoutes from './auth';
-// Закомментируем или удалим несуществующие импорты
-// import userRoutes from './user';
 import clinicRoutes from './clinic';
 import doctorRoutes from './doctor';
 import appointmentRoutes from './appointment';
@@ -12,7 +10,7 @@ import notificationRoutes from './notification';
 import adminRoutes from './admin';
 import medicalRecordRoutes from './medicalRecord';
 import facilityRoutes from './facilityRoutes';
-import { authenticate, auth, checkRole } from '../middleware/auth';
+import { auth, checkRole } from '../middleware/auth';
 import { UserRole } from '../types/user';
 import messageRoutes from './message';
 import articleRoutes from './article';
@@ -29,35 +27,22 @@ router.get('/health', (req, res) => {
 
 // Публичные маршруты
 router.use('/auth', authRoutes);
-// router.use('/users', userRoutes); // Закомментируем, так как модуль не существует
-router.use('/clinics', clinicRoutes);
 router.use('/facilities', facilityRoutes);
 router.use('/feedback', feedbackRoutes);
 
-// Изменим маршрут для профиля на /profile
-router.use('/profile', authenticate, profileRoutes);
-
 // Защищенные маршруты
-router.use('/reviews', authenticate, reviewRoutes);
-router.use('/notifications', authenticate, notificationRoutes);
+router.use('/profile', auth, profileRoutes);
+router.use('/messages', auth, messageRoutes);
+router.use('/articles', auth, articleRoutes);
+router.use('/reviews', auth, reviewRoutes);
+router.use('/notifications', auth, notificationRoutes);
 router.use('/admin', auth, checkRole([UserRole.ADMIN]), adminRoutes);
-router.use('/appointments', authenticate, appointmentRoutes);
-router.use('/doctors', authenticate, doctorRoutes);
-router.use('/medical-records', authenticate, medicalRecordRoutes);
+router.use('/appointments', auth, appointmentRoutes);
+router.use('/doctors', auth, doctorRoutes);
+router.use('/clinics', auth, clinicRoutes);
+router.use('/medical-records', auth, medicalRecordRoutes);
+router.use('/doctor-profiles', auth, doctorProfileRoutes);
+router.use('/patient-profiles', auth, patientProfileRoutes);
+router.use('/users', auth, userRoutes);
 
-// Маршруты сообщений
-router.use('/messages', authenticate, messageRoutes);
-
-// Маршруты статей
-router.use('/articles', articleRoutes);
-
-// Маршруты профилей докторов
-router.use('/doctor-profiles', doctorProfileRoutes);
-
-// Маршруты профилей пациента
-router.use('/patient-profiles', patientProfileRoutes);
-
-// Маршруты для пользователей
-router.use('/users', userRoutes);
-
-export default router; 
+export default router;

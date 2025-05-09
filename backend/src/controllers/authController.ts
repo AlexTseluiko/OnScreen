@@ -13,7 +13,7 @@ console.log('SMTP Configuration:', {
   port: process.env.SMTP_PORT,
   user: process.env.SMTP_USER ? '***настроен***' : '***не настроен***',
   pass: process.env.SMTP_PASS ? '***настроен***' : '***не настроен***',
-  from: process.env.SMTP_FROM || '***не настроен***'
+  from: process.env.SMTP_FROM || '***не настроен***',
 });
 
 // Настройка транспорта для отправки email
@@ -33,12 +33,12 @@ const transporter = nodemailer.createTransport({
   logger: true, // включаем логирование
   tls: {
     // не проверяем сертификат сервера (только для тестирования!)
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
   },
 });
 
 // Проверка соединения с SMTP сервером при запуске
-transporter.verify(function(error, success) {
+transporter.verify(function (error, success) {
   if (error) {
     console.error('Ошибка соединения с почтовым сервером:', error);
   } else {
@@ -49,19 +49,19 @@ transporter.verify(function(error, success) {
 // Генерация JWT токена
 const generateToken = (userId: string, email: string, role: string = UserRole.PATIENT) => {
   console.log('Генерация токена для пользователя:', userId, 'с ролью:', role);
-  
+
   // Создаем токен с id, email и role
   const options: SignOptions = { expiresIn: JWT_EXPIRY as any };
   const token = jwt.sign(
-    { 
+    {
       id: userId,
       email,
-      role 
+      role,
     },
     JWT_SECRET as Secret,
     options
   );
-  
+
   console.log('Токен успешно создан, длина:', token.length);
   return token;
 };
@@ -157,35 +157,35 @@ export const login = async (req: Request, res: Response) => {
 
     // Проверяем наличие всех требуемых полей
     if (!email || !password) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Пожалуйста, заполните все обязательные поля' 
+      return res.status(400).json({
+        success: false,
+        message: 'Пожалуйста, заполните все обязательные поля',
       });
     }
 
     // Проверяем, существует ли пользователь
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Неверные учетные данные. Пожалуйста, проверьте почту и пароль.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Неверные учетные данные. Пожалуйста, проверьте почту и пароль.',
       });
     }
 
     // Проверяем, не заблокирован ли пользователь
     if (user.isBlocked) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Ваш аккаунт заблокирован. Пожалуйста, обратитесь к администратору.' 
+      return res.status(403).json({
+        success: false,
+        message: 'Ваш аккаунт заблокирован. Пожалуйста, обратитесь к администратору.',
       });
     }
 
     // Проверяем правильность пароля
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Неверные учетные данные. Пожалуйста, проверьте почту и пароль.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Неверные учетные данные. Пожалуйста, проверьте почту и пароль.',
       });
     }
 
@@ -199,21 +199,21 @@ export const login = async (req: Request, res: Response) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
-      isVerified: user.isVerified
+      isVerified: user.isVerified,
     };
 
     // Отправляем успешный ответ с токеном и данными пользователя
-    res.status(200).json({ 
-      success: true, 
-      token, 
-      user: userData, 
-      message: 'Вход выполнен успешно' 
+    res.status(200).json({
+      success: true,
+      token,
+      user: userData,
+      message: 'Вход выполнен успешно',
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ошибка сервера при входе в систему' 
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при входе в систему',
     });
   }
 };
@@ -251,9 +251,9 @@ export const verifyEmail = async (req: Request, res: Response) => {
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     console.log('Получен запрос на сброс пароля для пользователя:', req.body);
-    
+
     const { email } = req.body;
-    
+
     if (!email) {
       console.log('Email не указан в запросе');
       return res.status(400).json({ error: 'Email обязателен' });
@@ -261,22 +261,22 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     console.log(`Поиск пользователя с email: ${email}`);
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       console.log(`Пользователь с email ${email} не найден в базе данных`);
       return res.status(404).json({ error: 'Пользователь не найден' });
     }
-    
+
     console.log(`Пользователь найден, ID: ${user._id}`);
 
     // Генерация токена для сброса пароля
     const resetToken = crypto.randomBytes(32).toString('hex');
     console.log('Сгенерирован токен сброса пароля, длина:', resetToken.length);
-    
+
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 час
     console.log('Установлен токен сброса пароля и срок его действия (1 час)');
-    
+
     await user.save();
     console.log('Данные пользователя сохранены в базе данных');
 
@@ -298,19 +298,19 @@ export const forgotPassword = async (req: Request, res: Response) => {
         <p>Ссылка действительна в течение 1 часа.</p>
       `,
     };
-    
+
     console.log('Подготовлен email с инструкциями по сбросу пароля');
     console.log('Настройки SMTP:', {
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
       user: process.env.SMTP_USER ? '***настроен***' : '***не настроен***',
       pass: process.env.SMTP_PASS ? '***настроен***' : '***не настроен***',
-      from: process.env.SMTP_FROM
+      from: process.env.SMTP_FROM,
     });
-    
+
     // В режиме разработки или если есть флаг, пропускаем отправку письма
     const skipEmail = process.env.NODE_ENV === 'development' || process.env.SKIP_EMAIL === 'true';
-    
+
     if (skipEmail) {
       console.log('РЕЖИМ ТЕСТИРОВАНИЯ: Пропущена реальная отправка email.');
       console.log('Для завершения сброса пароля, используйте URL:', resetUrl);
@@ -330,33 +330,39 @@ export const forgotPassword = async (req: Request, res: Response) => {
     res.json({ message: 'Инструкции по сбросу пароля отправлены на ваш email' });
   } catch (error: unknown) {
     console.error('Ошибка при запросе сброса пароля:', error);
-    
+
     // Проверяем, является ли error объектом с сообщением
     if (error && typeof error === 'object') {
       // Безопасно проверяем наличие свойства message
       if ('message' in error) {
         console.error('Детали ошибки:', error.message || 'Нет сообщения об ошибке');
       }
-      
+
       // Проверяем наличие свойства code и его значение
       if ('code' in error) {
         const errorCode = (error as { code: string }).code;
-        
+
         if (errorCode === 'ECONNREFUSED') {
           console.error('Не удалось подключиться к почтовому серверу. Проверьте настройки SMTP.');
-          return res.status(500).json({ error: 'Не удалось отправить email. Проблема с почтовым сервером.' });
+          return res
+            .status(500)
+            .json({ error: 'Не удалось отправить email. Проблема с почтовым сервером.' });
         }
-        
+
         if (errorCode === 'EAUTH') {
-          console.error('Ошибка аутентификации на почтовом сервере. Проверьте учетные данные SMTP.');
+          console.error(
+            'Ошибка аутентификации на почтовом сервере. Проверьте учетные данные SMTP.'
+          );
           return res.status(500).json({ error: 'Ошибка аутентификации на почтовом сервере.' });
         }
-        
+
         if (errorCode === 'ESOCKET') {
-          console.error('Ошибка соединения с почтовым сервером. Проверьте настройки порта и хоста.');
+          console.error(
+            'Ошибка соединения с почтовым сервером. Проверьте настройки порта и хоста.'
+          );
           return res.status(500).json({ error: 'Ошибка соединения с почтовым сервером.' });
         }
-        
+
         // Дополнительная обработка других кодов ошибок
         console.error(`Код ошибки: ${errorCode}`);
       }
@@ -451,29 +457,33 @@ export const refreshToken = async (req: Request, res: Response) => {
   try {
     // Получаем текущий токен из заголовка авторизации
     const token = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     try {
       // Проверяем текущий токен
-      const decoded = jwt.verify(token, JWT_SECRET as Secret) as { id: string; email: string; role: string };
-      
+      const decoded = jwt.verify(token, JWT_SECRET as Secret) as {
+        id: string;
+        email: string;
+        role: string;
+      };
+
       // Находим пользователя в БД
       const user = await User.findById(decoded.id);
-      
+
       if (!user) {
         return res.status(404).json({ error: 'Пользователь не найден' });
       }
-      
+
       if (user.isBlocked) {
         return res.status(403).json({ error: 'Пользователь заблокирован' });
       }
-      
+
       // Генерируем новый токен с обновленным временем истечения
       const newToken = generateToken(user._id, user.email, user.role);
-      
+
       // Отправляем новый токен клиенту
       res.json({ token: newToken });
     } catch (jwtError) {
@@ -490,21 +500,21 @@ export const refreshToken = async (req: Request, res: Response) => {
 // Выход пользователя
 export const logout = async (req: Request, res: Response) => {
   try {
-    // В JWT аутентификации на стороне сервера нет необходимости 
+    // В JWT аутентификации на стороне сервера нет необходимости
     // хранить токены, так как они хранятся на клиенте
     // Просто подтверждаем успешный выход.
     console.log('Выполнен выход пользователя:', req.user?.id);
-    
+
     // Возвращаем успешный ответ
-    res.status(200).json({ 
-      success: true, 
-      message: 'Выход выполнен успешно' 
+    res.status(200).json({
+      success: true,
+      message: 'Выход выполнен успешно',
     });
   } catch (error) {
     console.error('Ошибка при выходе:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ошибка при выходе из системы' 
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при выходе из системы',
     });
   }
-}; 
+};

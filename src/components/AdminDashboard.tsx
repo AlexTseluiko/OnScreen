@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -50,23 +43,26 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
       // Получаем список пациентов
       const patientsData = await adminApi.getUsers({ role: 'PATIENT' });
 
-      setDoctors(doctorsData.users.map(d => ({
-        id: d._id,
-        name: `${d.firstName || ''} ${d.lastName || ''}`.trim(),
-        role: 'doctor',
-        email: d.email,
-        avatar: d.avatar,
-        verified: d.verified
-      })));
+      setDoctors(
+        doctorsData.users.map(d => ({
+          id: d._id,
+          name: `${d.firstName || ''} ${d.lastName || ''}`.trim(),
+          role: 'doctor',
+          email: d.email,
+          avatar: d.avatar,
+          verified: d.verified,
+        }))
+      );
 
-      setPatients(patientsData.users.map(p => ({
-        id: p._id,
-        name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
-        role: 'patient',
-        email: p.email,
-        avatar: p.avatar
-      })));
-
+      setPatients(
+        patientsData.users.map(p => ({
+          id: p._id,
+          name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+          role: 'patient',
+          email: p.email,
+          avatar: p.avatar,
+        }))
+      );
     } catch (error) {
       console.error('Error loading admin data:', error);
     } finally {
@@ -104,34 +100,50 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
           {t('admin.dashboard.title', 'Панель администратора')}
         </Text>
         <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
-          <Ionicons 
-            name={isDarkMode ? 'sunny-outline' : 'moon-outline'} 
-            size={24} 
-            color={theme.colors.text} 
+          <Ionicons
+            name={isDarkMode ? 'sunny-outline' : 'moon-outline'}
+            size={24}
+            color={theme.colors.text}
           />
         </TouchableOpacity>
       </View>
 
       <View style={styles.statsContainer}>
         <View style={styles.row}>
-          <View style={[styles.card, styles.cardUser, { backgroundColor: isDarkMode ? '#2a2d3a' : '#e6f2ff' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardUser,
+              { backgroundColor: isDarkMode ? '#2a2d3a' : '#e6f2ff' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <Ionicons name="people" size={32} color={theme.colors.primary} />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.totalUsers || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.totalUsers || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.totalUsers', 'Всего пользователей')}
               </Text>
             </View>
           </View>
 
-          <View style={[styles.card, styles.cardClinic, { backgroundColor: isDarkMode ? '#302a3a' : '#e6fff2' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardClinic,
+              { backgroundColor: isDarkMode ? '#302a3a' : '#e6fff2' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <FontAwesome5 name="hospital" size={28} color={theme.colors.primary} />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.clinics || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.clinics || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.clinics', 'Клиники')}
               </Text>
@@ -140,24 +152,40 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.card, styles.cardDoctor, { backgroundColor: isDarkMode ? '#2a3a3a' : '#e6ffff' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardDoctor,
+              { backgroundColor: isDarkMode ? '#2a3a3a' : '#e6ffff' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <FontAwesome5 name="user-md" size={28} color="#4f8a8b" />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.usersByRole.doctors || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.usersByRole.doctors || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.doctors', 'Врачи')}
               </Text>
             </View>
           </View>
 
-          <View style={[styles.card, styles.cardPatient, { backgroundColor: isDarkMode ? '#3a2a2a' : '#ffe6e6' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardPatient,
+              { backgroundColor: isDarkMode ? '#3a2a2a' : '#ffe6e6' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <FontAwesome5 name="user" size={28} color="#f67e7d" />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.usersByRole.patients || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.usersByRole.patients || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.patients', 'Пациенты')}
               </Text>
@@ -166,24 +194,40 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
         </View>
 
         <View style={styles.row}>
-          <View style={[styles.card, styles.cardAppointment, { backgroundColor: isDarkMode ? '#3a3a2a' : '#fffde6' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardAppointment,
+              { backgroundColor: isDarkMode ? '#3a3a2a' : '#fffde6' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <Ionicons name="calendar" size={32} color="#f8b400" />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.appointments || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.appointments || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.appointments', 'Приемы')}
               </Text>
             </View>
           </View>
 
-          <View style={[styles.card, styles.cardReview, { backgroundColor: isDarkMode ? '#352a3a' : '#f2e6ff' }]}>
+          <View
+            style={[
+              styles.card,
+              styles.cardReview,
+              { backgroundColor: isDarkMode ? '#352a3a' : '#f2e6ff' },
+            ]}
+          >
             <View style={styles.cardContent}>
               <View style={styles.iconContainer}>
                 <Ionicons name="star" size={32} color="#9b5de5" />
               </View>
-              <Text style={[styles.cardValue, { color: theme.colors.text }]}>{stats?.pendingReviews || 0}</Text>
+              <Text style={[styles.cardValue, { color: theme.colors.text }]}>
+                {stats?.pendingReviews || 0}
+              </Text>
               <Text style={[styles.cardLabel, { color: theme.colors.text }]}>
                 {t('admin.dashboard.pendingReviews', 'Отзывы')}
               </Text>
@@ -193,13 +237,13 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
       </View>
 
       <View style={styles.adminActions}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.adminActionButton, 
-            { 
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff', 
-              shadowColor: theme.colors.text
-            }
+            styles.adminActionButton,
+            {
+              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
+              shadowColor: theme.colors.text,
+            },
           ]}
           onPress={() => navigation.navigate('AdminUsersScreen')}
         >
@@ -212,13 +256,13 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
           <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.adminActionButton, 
-            { 
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff', 
-              shadowColor: theme.colors.text
-            }
+            styles.adminActionButton,
+            {
+              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
+              shadowColor: theme.colors.text,
+            },
           ]}
           onPress={() => navigation.navigate('ClinicsManagementScreen')}
         >
@@ -231,13 +275,13 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
           <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.adminActionButton, 
-            { 
-              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff', 
-              shadowColor: theme.colors.text
-            }
+            styles.adminActionButton,
+            {
+              backgroundColor: isDarkMode ? '#2a2d3a' : '#ffffff',
+              shadowColor: theme.colors.text,
+            },
           ]}
           onPress={() => navigation.navigate('NotificationsManagementScreen')}
         >
@@ -265,145 +309,145 @@ export const AdminDashboard = ({ navigation }: AdminDashboardProps) => {
 };
 
 const styles = StyleSheet.create({
+  activeTab: {
+    borderBottomWidth: 2,
+  },
+  adminActionButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    elevation: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    padding: 16,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  adminActions: {
+    marginBottom: 24,
+    padding: 16,
+  },
+  avatar: {
+    borderRadius: 25,
+    height: 50,
+    marginRight: 15,
+    width: 50,
+  },
+  buttonContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  buttonText: {
+    fontSize: 16,
+    marginLeft: 12,
+  },
+  card: {
+    borderRadius: 12,
+    elevation: 3,
+    padding: 16,
+    width: '48%',
+  },
+  cardAppointment: {},
+  cardClinic: {},
+  cardContent: {
+    alignItems: 'flex-start',
+  },
+  cardDoctor: {},
+  cardLabel: {
+    fontSize: 14,
+  },
+  cardPatient: {},
+  cardReview: {},
+  cardUser: {},
+  cardValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
   },
+  fab: {
+    alignItems: 'center',
+    borderRadius: 28,
+    bottom: 20,
+    elevation: 5,
+    height: 56,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 20,
+    width: 56,
+  },
   header: {
+    alignItems: 'center',
+    borderBottomColor: '#ddd',
+    borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
   },
-  themeToggle: {
-    padding: 8,
+  iconContainer: {
+    marginBottom: 8,
   },
-  statsContainer: {
-    padding: 16,
+  noData: {
+    fontSize: 16,
+    marginTop: 50,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  card: {
-    width: '48%',
-    borderRadius: 12,
-    elevation: 3,
+  statsContainer: {
     padding: 16,
-  },
-  cardContent: {
-    alignItems: 'flex-start',
-  },
-  cardUser: {},
-  cardClinic: {},
-  cardDoctor: {},
-  cardPatient: {},
-  cardAppointment: {},
-  cardReview: {},
-  iconContainer: {
-    marginBottom: 8,
-  },
-  cardValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  cardLabel: {
-    fontSize: 14,
-  },
-  adminActions: {
-    padding: 16,
-    marginBottom: 24,
-  },
-  adminActionButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e1e1',
   },
   tab: {
-    padding: 10,
     marginRight: 10,
+    padding: 10,
   },
-  activeTab: {
-    borderBottomWidth: 2,
+  tabContainer: {
+    borderBottomColor: '#e1e1e1',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    marginBottom: 15,
   },
   tabText: {
     fontSize: 16,
   },
-  userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e1e1',
+  themeToggle: {
+    padding: 8,
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
+  userEmail: {
+    color: '#666',
+    fontSize: 14,
   },
   userInfo: {
     flex: 1,
+  },
+  userItem: {
+    alignItems: 'center',
+    borderBottomColor: '#e1e1e1',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    padding: 15,
   },
   userName: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  userEmail: {
-    fontSize: 14,
-    color: '#666',
-  },
   verifyButton: {
+    borderRadius: 5,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 5,
   },
   verifyButtonText: {
     color: 'white',
     fontSize: 12,
   },
-  noData: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-  },
-  fab: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    right: 20,
-    bottom: 20,
-    borderRadius: 28,
-    elevation: 5,
-  },
-}); 
+});

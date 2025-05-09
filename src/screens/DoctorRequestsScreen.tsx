@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
@@ -20,25 +20,11 @@ import { COLORS } from '../constants';
 import { apiClient } from '../api/apiClient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
-
-interface DoctorRequest {
-  _id: string;
-  user: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  specialization: string;
-  experience: string;
-  education: string;
-  licenseNumber: string;
-  about: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  processedAt?: string;
-}
+import { RootStackParamList } from '../navigation/types';
+import { useUserStorage } from '../contexts/UserStorageContext';
+import { DoctorRequest } from '../types/doctor';
+import { ApiResponse } from '../types/api';
+import { colors } from '../theme/colors';
 
 // Добавляем экран для деталей запроса
 export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) => {
@@ -46,15 +32,15 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { requestId } = route.params;
-  
+
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState<DoctorRequest | null>(null);
   const [processing, setProcessing] = useState(false);
-  
+
   useEffect(() => {
     loadRequestDetails();
   }, [requestId]);
-  
+
   const loadRequestDetails = async () => {
     try {
       setLoading(true);
@@ -68,7 +54,7 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
       setLoading(false);
     }
   };
-  
+
   const handleApproveRequest = async () => {
     try {
       setProcessing(true);
@@ -96,12 +82,12 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
       setProcessing(false);
     }
   };
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
-  
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -119,7 +105,7 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
       </View>
     );
   }
-  
+
   if (!request) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -139,12 +125,12 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
       </View>
     );
   }
-  
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
@@ -156,30 +142,36 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
               {t('Детали запроса')}
             </Text>
           </View>
-          
+
           <ScrollView style={styles.content} bounces={false} showsVerticalScrollIndicator={false}>
             <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
               <View style={styles.statusSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                   {t('Статус')}
                 </Text>
-                <View style={[
-                  styles.statusBadge, 
-                  { 
-                    backgroundColor: 
-                      request.status === 'approved' ? COLORS.success : 
-                      request.status === 'rejected' ? COLORS.error : 
-                      COLORS.warning 
-                  }
-                ]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor:
+                        request.status === 'approved'
+                          ? COLORS.success
+                          : request.status === 'rejected'
+                            ? COLORS.error
+                            : COLORS.warning,
+                    },
+                  ]}
+                >
                   <Text style={styles.statusText}>
-                    {request.status === 'approved' ? t('Одобрен') : 
-                     request.status === 'rejected' ? t('Отклонен') : 
-                     t('Ожидает')}
+                    {request.status === 'approved'
+                      ? t('Одобрен')
+                      : request.status === 'rejected'
+                        ? t('Отклонен')
+                        : t('Ожидает')}
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                   {t('Информация о враче')}
@@ -201,7 +193,7 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                   {t('Профессиональная информация')}
@@ -239,7 +231,7 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.infoSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
                   {t('О себе')}
@@ -248,11 +240,9 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
                   {request.about}
                 </Text>
               </View>
-              
+
               <View style={styles.infoSection}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-                  {t('Даты')}
-                </Text>
+                <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{t('Даты')}</Text>
                 <View style={styles.infoRow}>
                   <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
                     {t('Дата создания')}:
@@ -274,7 +264,7 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
               </View>
             </View>
           </ScrollView>
-          
+
           {request.status === 'pending' && (
             <View style={[styles.footer, { backgroundColor: theme.colors.card }]}>
               <TouchableOpacity
@@ -308,342 +298,382 @@ export const DoctorRequestDetailsScreen: React.FC<{ route: any }> = ({ route }) 
 };
 
 // Мемоизированный рендер элемента запроса
-const RequestListItem = React.memo(({ 
-  item, 
-  theme, 
-  formatDate, 
-  onViewDetails, 
-  onApprove, 
-  onReject,
-  processingRequestId
-}: { 
-  item: DoctorRequest, 
-  theme: any, 
-  formatDate: (date: string) => string,
-  onViewDetails: (id: string) => void,
-  onApprove: (id: string) => void,
-  onReject: (id: string) => void,
-  processingRequestId: string | null
-}) => (
-  <View style={[styles.requestCard, { backgroundColor: theme.colors.card }]}>
-    <View style={styles.requestHeader}>
-      <View>
-        <Text style={[styles.userName, { color: theme.colors.text }]}>
-          {item.user.firstName} {item.user.lastName}
-        </Text>
-        <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>
-          {item.user.email}
-        </Text>
+const RequestListItem = React.memo(
+  ({
+    item,
+    theme,
+    formatDate,
+    onViewDetails,
+    onApprove,
+    onReject,
+    processingRequestId,
+  }: {
+    item: DoctorRequest;
+    theme: any;
+    formatDate: (date: string) => string;
+    onViewDetails: (id: string) => void;
+    onApprove: (id: string) => void;
+    onReject: (id: string) => void;
+    processingRequestId: string | null;
+  }) => (
+    <View style={[styles.requestCard, { backgroundColor: theme.colors.card }]}>
+      <View style={styles.requestHeader}>
+        <View>
+          <Text style={[styles.userName, { color: theme.colors.text }]}>
+            {item.user.firstName} {item.user.lastName}
+          </Text>
+          <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>
+            {item.user.email}
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.statusBadge,
+            {
+              backgroundColor:
+                item.status === 'approved'
+                  ? COLORS.success
+                  : item.status === 'rejected'
+                    ? COLORS.error
+                    : COLORS.warning,
+            },
+          ]}
+        >
+          <Text style={styles.statusText}>
+            {item.status === 'approved'
+              ? 'Одобрен'
+              : item.status === 'rejected'
+                ? 'Отклонен'
+                : 'Ожидает'}
+          </Text>
+        </View>
       </View>
-      <View style={[
-        styles.statusBadge, 
-        { 
-          backgroundColor: 
-            item.status === 'approved' ? COLORS.success : 
-            item.status === 'rejected' ? COLORS.error : 
-            COLORS.warning 
-        }
-      ]}>
-        <Text style={styles.statusText}>
-          {item.status === 'approved' ? 'Одобрен' : 
-           item.status === 'rejected' ? 'Отклонен' : 
-           'Ожидает'}
+
+      <View style={styles.requestInfo}>
+        <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
+          Специализация:
         </Text>
+        <Text style={[styles.infoValue, { color: theme.colors.text }]}>{item.specialization}</Text>
+      </View>
+
+      <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
+        Создан: {formatDate(item.createdAt)}
+      </Text>
+
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
+          onPress={() => onViewDetails(item._id)}
+        >
+          <Text style={styles.actionButtonText}>Детали</Text>
+        </TouchableOpacity>
+
+        {item.status === 'pending' && (
+          <>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: COLORS.success }]}
+              onPress={() => onApprove(item._id)}
+              disabled={processingRequestId === item._id}
+            >
+              {processingRequestId === item._id ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.actionButtonText}>Одобрить</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: COLORS.error }]}
+              onPress={() => onReject(item._id)}
+              disabled={processingRequestId === item._id}
+            >
+              {processingRequestId === item._id ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.actionButtonText}>Отклонить</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
-
-    <View style={styles.requestInfo}>
-      <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>
-        Специализация:
-      </Text>
-      <Text style={[styles.infoValue, { color: theme.colors.text }]}>
-        {item.specialization}
-      </Text>
-    </View>
-
-    <Text style={[styles.dateText, { color: theme.colors.textSecondary }]}>
-      Создан: {formatDate(item.createdAt)}
-    </Text>
-
-    <View style={styles.actionsContainer}>
-      <TouchableOpacity
-        style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
-        onPress={() => onViewDetails(item._id)}
-      >
-        <Text style={styles.actionButtonText}>Детали</Text>
-      </TouchableOpacity>
-      
-      {item.status === 'pending' && (
-        <>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: COLORS.success }]}
-            onPress={() => onApprove(item._id)}
-            disabled={processingRequestId === item._id}
-          >
-            {processingRequestId === item._id ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text style={styles.actionButtonText}>Одобрить</Text>
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: COLORS.error }]}
-            onPress={() => onReject(item._id)}
-            disabled={processingRequestId === item._id}
-          >
-            {processingRequestId === item._id ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text style={styles.actionButtonText}>Отклонить</Text>
-            )}
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
-  </View>
-));
+  )
+);
 
 // Основной экран запросов докторов
 export const DoctorRequestsScreen: React.FC = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const [loading, setLoading] = useState(true);
+  const { user } = useUserStorage();
   const [requests, setRequests] = useState<DoctorRequest[]>([]);
-  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRequests();
-  }, []);
-
-  const loadRequests = async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/admin/doctor-requests');
-      setRequests(response.data);
-    } catch (error) {
-      console.error('Ошибка при загрузке запросов:', error);
-      Alert.alert('Ошибка', 'Не удалось загрузить запросы на роль доктора');
+      setError(null);
+      const response = await fetch('http://localhost:3000/api/doctor-requests', {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      const data = (await response.json()) as ApiResponse<DoctorRequest[]>;
+      if (data.success) {
+        setRequests(data.data);
+      } else {
+        setError(data.message || 'Ошибка при загрузке заявок');
+      }
+    } catch (err) {
+      setError('Ошибка при загрузке заявок');
+      console.error('Ошибка при загрузке заявок:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApproveRequest = async (requestId: string) => {
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleRequest = async (requestId: string, action: 'approve' | 'reject') => {
     try {
-      setProcessingRequestId(requestId);
-      await apiClient.put(`/admin/doctor-requests/${requestId}`, { approved: true });
-      Alert.alert('Успех', 'Запрос одобрен. Пользователь получил роль доктора.');
-      loadRequests();
-    } catch (error) {
-      console.error('Ошибка при одобрении запроса:', error);
-      Alert.alert('Ошибка', 'Не удалось одобрить запрос');
-    } finally {
-      setProcessingRequestId(null);
+      const response = await fetch(
+        `http://localhost:3000/api/doctor-requests/${requestId}/${action}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
+      const data = (await response.json()) as ApiResponse<DoctorRequest>;
+      if (data.success) {
+        setRequests(requests.filter(request => request._id !== requestId));
+      } else {
+        setError(
+          data.message || `Ошибка при ${action === 'approve' ? 'одобрении' : 'отклонении'} заявки`
+        );
+      }
+    } catch (err) {
+      setError(`Ошибка при ${action === 'approve' ? 'одобрении' : 'отклонении'} заявки`);
+      console.error(`Ошибка при ${action === 'approve' ? 'одобрении' : 'отклонении'} заявки:`, err);
     }
-  };
-
-  const handleRejectRequest = async (requestId: string) => {
-    try {
-      setProcessingRequestId(requestId);
-      await apiClient.put(`/admin/doctor-requests/${requestId}`, { approved: false });
-      Alert.alert('Успех', 'Запрос отклонен');
-      loadRequests();
-    } catch (error) {
-      console.error('Ошибка при отклонении запроса:', error);
-      Alert.alert('Ошибка', 'Не удалось отклонить запрос');
-    } finally {
-      setProcessingRequestId(null);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-  };
-
-  const handleViewDetails = (requestId: string) => {
-    navigation.navigate('DoctorRequestDetails', { requestId });
   };
 
   const renderRequestItem = ({ item }: { item: DoctorRequest }) => (
-    <RequestListItem 
-      item={item}
-      theme={theme}
-      formatDate={formatDate}
-      onViewDetails={handleViewDetails}
-      onApprove={handleApproveRequest}
-      onReject={handleRejectRequest}
-      processingRequestId={processingRequestId}
-    />
+    <TouchableOpacity
+      style={styles.requestItem}
+      onPress={() => navigation.navigate('DoctorRequestDetails', { requestId: item._id })}
+    >
+      <View style={styles.requestHeader}>
+        <Text style={styles.requestName}>
+          {item.user.firstName} {item.user.lastName}
+        </Text>
+        <Text
+          style={[
+            styles.requestStatus,
+            item.status === 'pending' && styles.statusPending,
+            item.status === 'approved' && styles.statusApproved,
+            item.status === 'rejected' && styles.statusRejected,
+          ]}
+        >
+          {item.status === 'pending' && 'На рассмотрении'}
+          {item.status === 'approved' && 'Одобрено'}
+          {item.status === 'rejected' && 'Отклонено'}
+        </Text>
+      </View>
+      <Text style={styles.requestSpecialization}>{item.specialization}</Text>
+      <Text style={styles.requestExperience}>Опыт работы: {item.experience} лет</Text>
+      {item.status === 'pending' && (
+        <View style={styles.requestActions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.approveButton]}
+            onPress={() => handleRequest(item._id, 'approve')}
+          >
+            <Text style={styles.actionButtonText}>Одобрить</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.rejectButton]}
+            onPress={() => handleRequest(item._id, 'reject')}
+          >
+            <Text style={styles.actionButtonText}>Отклонить</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
-    </View>
-  );
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchRequests}>
+          <Text style={styles.retryButtonText}>Повторить</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
-          {t('Запросы на роль врача')}
-        </Text>
-      </View>
-      
-          {requests.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-            {t('Нет запросов на рассмотрении')}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={requests}
-          renderItem={renderRequestItem}
-              keyExtractor={(item) => item._id}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
-          initialNumToRender={5}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-            />
-      )}
+    <View style={styles.container}>
+      <FlatList
+        data={requests}
+        renderItem={renderRequestItem}
+        keyExtractor={item => item._id}
+        contentContainerStyle={styles.list}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  aboutText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
-  header: {
-    padding: 16,
-    flexDirection: 'row',
+  actionButton: {
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: Platform.OS === 'ios' ? '#FFFFFF' : undefined,
-    zIndex: 10,
+    borderRadius: 6,
+    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  actionsContainer: {
+    flexDirection: 'row',
   },
   backButton: {
     marginRight: 16,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  card: {
+    borderRadius: 10,
+    elevation: 2,
+    marginBottom: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  loadingContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  errorContainer: {
+  content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
+  dateText: {
+    fontSize: 12,
+    marginBottom: 12,
   },
   emptyContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
   },
   emptyText: {
     fontSize: 16,
     textAlign: 'center',
   },
-  listContainer: {
-    padding: 16,
-    paddingBottom: 24,
+  errorContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
   },
-  requestCard: {
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
-  requestHeader: {
+  footer: {
+    backgroundColor: '#fff',
+    borderTopColor: '#f0f0f0',
+    borderTopWidth: 1,
+    bottom: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    left: 0,
+    padding: 16,
+    position: 'relative',
+    right: 0,
+    zIndex: 2,
   },
-  userName: {
+  footerButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: 8,
+    paddingVertical: 12,
+  },
+  footerButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  userEmail: {
-    fontSize: 14,
+  header: {
+    alignItems: 'center',
+    backgroundColor: Platform.OS === 'ios' ? '#FFFFFF' : undefined,
+    borderBottomColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    padding: 16,
+    zIndex: 10,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-  },
-  requestInfo: {
-    marginBottom: 8,
   },
   infoLabel: {
     fontSize: 14,
     marginBottom: 4,
   },
+  infoRow: {
+    marginBottom: 8,
+  },
+  infoSection: {
+    borderBottomColor: '#f0f0f0',
+    borderBottomWidth: 1,
+    marginBottom: 16,
+    paddingBottom: 16,
+  },
   infoValue: {
     fontSize: 14,
     fontWeight: '500',
   },
-  dateText: {
-    fontSize: 12,
-    marginBottom: 12,
+  listContainer: {
+    padding: 16,
+    paddingBottom: 24,
   },
-  actionsContainer: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    marginHorizontal: 4,
+  loadingContainer: {
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
   },
-  actionButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  card: {
+  requestCard: {
     borderRadius: 10,
-    padding: 16,
+    elevation: 2,
     marginBottom: 16,
+    padding: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -651,55 +681,112 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
-  statusSection: {
+  requestHeader: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  infoSection: {
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+  requestInfo: {
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
   },
-  infoRow: {
-    marginBottom: 8,
+  statusBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  aboutText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  footer: {
+  statusSection: {
+    alignItems: 'center',
     flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    position: 'relative',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  footerButton: {
+  statusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  userEmail: {
+    fontSize: 14,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  centered: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  list: {
+    padding: 16,
+  },
+  requestItem: {
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  requestName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  requestStatus: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusPending: {
+    color: colors.warning,
+  },
+  statusApproved: {
+    color: colors.success,
+  },
+  statusRejected: {
+    color: colors.error,
+  },
+  requestSpecialization: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  requestExperience: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  requestActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 12,
+    gap: 8,
+  },
+  approveButton: {
+    backgroundColor: colors.success,
+  },
+  rejectButton: {
+    backgroundColor: colors.error,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    marginHorizontal: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  footerButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  retryButtonText: {
+    color: colors.white,
     fontSize: 16,
+    fontWeight: '500',
   },
-}); 
+});

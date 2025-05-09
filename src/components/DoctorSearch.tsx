@@ -33,19 +33,19 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await doctorsApi.searchDoctors({
         search: searchQuery,
         page: pageNum,
-        limit: 10
+        limit: 10,
       });
-      
+
       if (pageNum === 1) {
         setDoctors(response.data.doctors);
       } else {
         setDoctors(prev => [...prev, ...response.data.doctors]);
       }
-      
+
       setHasMore(response.data.doctors.length === 10);
     } catch (err) {
       setError(t('common.error'));
@@ -81,17 +81,12 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
     >
       <View style={styles.doctorCard}>
         {item.photoUrl ? (
-          <Image
-            source={{ uri: item.photoUrl }}
-            style={styles.doctorPhoto}
-          />
+          <Image source={{ uri: item.photoUrl }} style={styles.doctorPhoto} />
         ) : (
           <DefaultAvatar size={50} />
         )}
         <View style={styles.doctorInfo}>
-          <Text style={[styles.doctorName, { color: theme.colors.text }]}>
-            {item.name}
-          </Text>
+          <Text style={[styles.doctorName, { color: theme.colors.text }]}>{item.name}</Text>
           <Text style={[styles.doctorSpecialization, { color: theme.colors.textSecondary }]}>
             {item.specialization}
           </Text>
@@ -130,11 +125,7 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
         />
       </View>
 
-      {error && (
-        <Text style={[styles.errorText, { color: theme.colors.error }]}>
-          {error}
-        </Text>
-      )}
+      {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
 
       <FlatList
         data={doctors}
@@ -142,59 +133,41 @@ export const DoctorSearch: React.FC<DoctorSearchProps> = ({ onSelectDoctor }) =>
         keyExtractor={item => item.id}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={() => (
+        ListFooterComponent={() =>
           loading ? (
-            <ActivityIndicator
-              size="large"
-              color={theme.colors.primary}
-              style={styles.loader}
-            />
+            <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
           ) : null
-        )}
-        ListEmptyComponent={() => (
+        }
+        ListEmptyComponent={() =>
           !loading && !error ? (
             <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
               {t('noDoctorsFound')}
             </Text>
           ) : null
-        )}
+        }
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  clinicName: {
+    fontSize: 14,
+  },
   container: {
     flex: 1,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    margin: 10,
-    borderRadius: 8,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-  },
   doctorCard: {
-    flexDirection: 'row',
-    padding: 15,
-    marginHorizontal: 10,
-    marginVertical: 5,
     borderRadius: 8,
     elevation: 2,
+    flexDirection: 'row',
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  doctorPhoto: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
   },
   doctorInfo: {
     flex: 1,
@@ -205,6 +178,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
+  doctorPhoto: {
+    borderRadius: 40,
+    height: 80,
+    width: 80,
+  },
   doctorSpecialization: {
     fontSize: 14,
     marginBottom: 8,
@@ -213,27 +191,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 8,
   },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  statText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  clinicName: {
-    fontSize: 14,
+  emptyText: {
+    margin: 20,
+    textAlign: 'center',
   },
   errorText: {
-    textAlign: 'center',
     margin: 10,
-  },
-  emptyText: {
     textAlign: 'center',
-    margin: 20,
   },
   loader: {
     margin: 20,
   },
-}); 
+  searchContainer: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    margin: 10,
+    padding: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  statItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginRight: 16,
+  },
+  statText: {
+    fontSize: 14,
+    marginLeft: 4,
+  },
+});

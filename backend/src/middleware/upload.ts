@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Request } from 'express';
 
 // Создаем директорию для загрузки, если она не существует
 const uploadDir = path.join(__dirname, '../../public/uploads');
@@ -10,10 +11,18 @@ if (!fs.existsSync(uploadDir)) {
 
 // Конфигурация хранилища для multer
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: function (
+    req: Request,
+    file: Express.Multer.File,
+    cb: (error: Error | null, destination: string) => void
+  ) {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: function (
+    req: Request,
+    file: Express.Multer.File,
+    cb: (error: Error | null, filename: string) => void
+  ) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
     cb(null, file.fieldname + '-' + uniqueSuffix + ext);
@@ -21,7 +30,7 @@ const storage = multer.diskStorage({
 });
 
 // Фильтрация файлов по типу
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Принимаем только изображения
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
@@ -37,4 +46,4 @@ export const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024, // Ограничение размера файла (5MB)
   },
-}); 
+});

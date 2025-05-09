@@ -1,6 +1,4 @@
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
 
 // Загрузка переменных окружения из .env файла
 dotenv.config();
@@ -23,17 +21,15 @@ export const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 const requiredEnvVars = ['JWT_SECRET'];
 
 if (NODE_ENV === 'production') {
-  const missingVars = requiredEnvVars.filter(
-    (envVar) => !process.env[envVar]
-  );
-  
+  const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
   if (missingVars.length > 0) {
     console.error(
       `Missing required environment variables in production: ${missingVars.join(', ')}`
     );
     process.exit(1);
   }
-} 
+}
 
 // Настройки электронной почты
 export const EMAIL_CONFIG = {
@@ -47,4 +43,11 @@ export const EMAIL_CONFIG = {
 };
 
 // Базовый URL для frontend
-export const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5000'; 
+export const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5000';
+
+export const config = {
+  port: process.env.PORT || 5000,
+  mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/onscreen',
+  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
+  nodeEnv: process.env.NODE_ENV || 'development',
+};

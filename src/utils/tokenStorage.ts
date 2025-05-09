@@ -7,9 +7,12 @@ const AUTH_TOKEN_KEY = 'token'; // Ключ, используемый в AuthCon
 // Функция для сохранения токена авторизации
 export const storeToken = async (token: string): Promise<void> => {
   try {
-    console.log(`storeToken: Сохраняем токен в ${TOKEN_KEY}:`, token ? `${token.substring(0, 10)}...` : 'отсутствует');
+    console.log(
+      `storeToken: Сохраняем токен в ${TOKEN_KEY}:`,
+      token ? `${token.substring(0, 10)}...` : 'отсутствует'
+    );
     await AsyncStorage.setItem(TOKEN_KEY, token);
-    
+
     // Также сохраняем токен в AUTH_TOKEN_KEY для совместимости с AuthContext
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
     console.log('storeToken: Токен также сохранен в', AUTH_TOKEN_KEY);
@@ -22,7 +25,10 @@ export const storeToken = async (token: string): Promise<void> => {
 export const getToken = async (): Promise<string | null> => {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-    console.log(`getToken: Получен токен из ${TOKEN_KEY}:`, token ? `${token.substring(0, 10)}...` : 'отсутствует');
+    console.log(
+      `getToken: Получен токен из ${TOKEN_KEY}:`,
+      token ? `${token.substring(0, 10)}...` : 'отсутствует'
+    );
     return token;
   } catch (error) {
     console.error('Ошибка при получении токена:', error);
@@ -83,11 +89,11 @@ export const syncTokens = async (): Promise<string | null> => {
   try {
     // Сначала пробуем получить токен из основного хранилища
     let token = await AsyncStorage.getItem(TOKEN_KEY);
-    
+
     // Если токен не найден, проверяем в AuthContext
     if (!token) {
       token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-      
+
       // Если нашли токен в AuthContext, сохраняем его и в основное хранилище
       if (token) {
         console.log('Синхронизация: токен найден в AuthContext, копируем в основное хранилище');
@@ -96,17 +102,17 @@ export const syncTokens = async (): Promise<string | null> => {
     } else {
       // Если токен есть в основном хранилище, проверяем есть ли он в AuthContext
       const authToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-      
+
       // Если в AuthContext нет токена или он отличается, обновляем его
       if (!authToken || authToken !== token) {
         console.log('Синхронизация: обновляем токен в AuthContext');
         await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
       }
     }
-    
+
     return token;
   } catch (error) {
     console.error('Ошибка при синхронизации токенов:', error);
     return null;
   }
-}; 
+};

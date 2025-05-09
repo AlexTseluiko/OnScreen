@@ -58,4 +58,4 @@ scheduledNotificationSchema.index({ status: 1, scheduledTime: 1 });
 export const ScheduledNotification = mongoose.model<IScheduledNotification>(
   'ScheduledNotification',
   scheduledNotificationSchema
-); 
+);

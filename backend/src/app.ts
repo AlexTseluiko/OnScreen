@@ -20,24 +20,24 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   'http://localhost:19006', // Web версия Expo
   'http://localhost:19000', // Expo dev tools
-  'http://localhost:3000',  // Web версия React
-  'http://localhost:8081',  // Metro bundler
-  'http://10.0.2.2:19006',  // Android эмулятор для web
-  'http://10.0.2.2:3000',   // Android эмулятор
-  'capacitor://localhost',  // Capacitor 
-  'http://localhost',       // Локальные тесты
+  'http://localhost:3000', // Web версия React
+  'http://localhost:8081', // Metro bundler
+  'http://10.0.2.2:19006', // Android эмулятор для web
+  'http://10.0.2.2:3000', // Android эмулятор
+  'capacitor://localhost', // Capacitor
+  'http://localhost', // Локальные тесты
   'http://192.168.31.250:19006', // IP машины для Expo Web
-  'http://192.168.31.250:8081',  // IP машины для Metro
-  'http://192.168.31.250:5000',  // IP машины для браузера
-  'exp://192.168.31.250:8081',   // Expo URL формат
-  'exp://192.168.31.250:19000',  // Expo DevTools
+  'http://192.168.31.250:8081', // IP машины для Metro
+  'http://192.168.31.250:5000', // IP машины для браузера
+  'exp://192.168.31.250:8081', // Expo URL формат
+  'exp://192.168.31.250:19000', // Expo DevTools
 ];
 
 // Настройка CORS для WebSocket
 const io = new Server(httpServer, {
   cors: {
     // В режиме разработки разрешаем подключения с любых источников
-    origin: function(origin, callback) {
+    origin: function (origin, callback) {
       if (!origin || process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else if (allowedOrigins.indexOf(origin) !== -1) {
@@ -47,7 +47,7 @@ const io = new Server(httpServer, {
       }
     },
     methods: ['GET', 'POST'],
-    credentials: true
+    credentials: true,
   },
 });
 
@@ -67,24 +67,26 @@ app.use((req, res, next) => {
 });
 
 // Настройка CORS для Express
-app.use(cors({
-  origin: function(origin, callback) {
-    // Для разработки разрешаем запросы без origin (например, из Postman)
-    if (!origin || process.env.NODE_ENV === 'development') {
-      return callback(null, true);
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.warn(`Заблокированный запрос от ${origin}`);
-      callback(null, true); // В режиме разработки всё равно пропускаем
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Для разработки разрешаем запросы без origin (например, из Postman)
+      if (!origin || process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        console.warn(`Заблокированный запрос от ${origin}`);
+        callback(null, true); // В режиме разработки всё равно пропускаем
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -133,18 +135,18 @@ mongoose
       console.log(`Access via http://localhost:${PORT} or http://<your-ip-address>:${PORT}`);
     });
   })
-  .catch((error) => {
+  .catch(error => {
     console.error('MongoDB connection error:', error);
     process.exit(1);
   });
 
 // Обработка необработанных исключений
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('Uncaught Exception:', error);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', error => {
   console.error('Unhandled Rejection:', error);
   process.exit(1);
 });

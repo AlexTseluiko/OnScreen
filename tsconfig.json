@@ -1,12 +1,14 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "strict": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["src/*"]
+      "@/*": ["src/*"]
     },
     "jsx": "react-native",
     "target": "esnext",
-    "lib": ["esnext"],
+    "lib": ["dom", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "noEmit": true,
@@ -14,9 +16,8 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "strict": true
+    "isolatedModules": true
   },
-  "extends": "expo/tsconfig.base",
   "include": ["src/**/*"],
   "exclude": ["node_modules", "babel.config.js", "metro.config.js"]
 }

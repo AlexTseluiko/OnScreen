@@ -108,29 +108,17 @@ export const ResetPasswordScreen: React.FC = () => {
 
   const handleSavePassword = async () => {
     if (!newPassword || !confirmPassword) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.fillAllFields'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('auth.fillAllFields'), [{ text: t('common.ok') }]);
       return;
     }
 
     if (newPassword.length < 8) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.passwordTooShort'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('auth.passwordTooShort'), [{ text: t('common.ok') }]);
       return;
     }
 
     if (!passwordsMatch) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.passwordsDoNotMatch'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('auth.passwordsDoNotMatch'), [{ text: t('common.ok') }]);
       return;
     }
 
@@ -139,25 +127,17 @@ export const ResetPasswordScreen: React.FC = () => {
     try {
       const response = await authApi.resetPassword(token, newPassword);
       setIsSuccess(true);
-      Alert.alert(
-        t('common.success'),
-        t('auth.passwordChanged'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.success'), t('auth.passwordChanged'), [{ text: t('common.ok') }]);
     } catch (error: any) {
       console.error('Ошибка сброса пароля:', error);
-      
+
       let errorMessage = 'Не удалось сбросить пароль';
-      
+
       if (error.message) {
         errorMessage = error.message;
       }
-      
-      Alert.alert(
-        t('common.error'),
-        errorMessage,
-        [{ text: t('common.ok') }]
-      );
+
+      Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
     } finally {
       setIsLoading(false);
     }
@@ -173,10 +153,7 @@ export const ResetPasswordScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {!isSuccess ? (
           <>
             <View style={styles.header}>
@@ -194,10 +171,7 @@ export const ResetPasswordScreen: React.FC = () => {
                   {t('auth.newPassword')}
                 </Text>
                 <View
-                  style={[
-                    styles.inputWrapper,
-                    { backgroundColor: theme.colors.inputBackground },
-                  ]}
+                  style={[styles.inputWrapper, { backgroundColor: theme.colors.inputBackground }]}
                 >
                   <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text} />
                   <TextInput
@@ -283,9 +257,7 @@ export const ResetPasswordScreen: React.FC = () => {
                   </TouchableOpacity>
                 </View>
                 {!passwordsMatch && confirmPassword && (
-                  <Text style={styles.errorText}>
-                    {t('auth.passwordsDoNotMatch')}
-                  </Text>
+                  <Text style={styles.errorText}>{t('auth.passwordsDoNotMatch')}</Text>
                 )}
               </View>
 
@@ -294,18 +266,29 @@ export const ResetPasswordScreen: React.FC = () => {
                   styles.saveButton,
                   {
                     backgroundColor: theme.colors.primary,
-                    opacity: !newPassword || !confirmPassword || !passwordsMatch || passwordStrength < 2 || isLoading ? 0.6 : 1,
+                    opacity:
+                      !newPassword ||
+                      !confirmPassword ||
+                      !passwordsMatch ||
+                      passwordStrength < 2 ||
+                      isLoading
+                        ? 0.6
+                        : 1,
                   },
                 ]}
                 onPress={handleSavePassword}
-                disabled={!newPassword || !confirmPassword || !passwordsMatch || passwordStrength < 2 || isLoading}
+                disabled={
+                  !newPassword ||
+                  !confirmPassword ||
+                  !passwordsMatch ||
+                  passwordStrength < 2 ||
+                  isLoading
+                }
               >
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.saveButtonText}>
-                    {t('auth.saveNewPassword')}
-                  </Text>
+                  <Text style={styles.saveButtonText}>{t('auth.saveNewPassword')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -313,11 +296,7 @@ export const ResetPasswordScreen: React.FC = () => {
         ) : (
           <View style={styles.successContainer}>
             <View style={styles.iconContainer}>
-              <Ionicons
-                name="checkmark-circle"
-                size={80}
-                color={theme.colors.success}
-              />
+              <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
             </View>
             <Text style={[styles.successTitle, { color: theme.colors.text }]}>
               {t('common.success')}
@@ -329,9 +308,7 @@ export const ResetPasswordScreen: React.FC = () => {
               style={[styles.goToLoginButton, { backgroundColor: theme.colors.primary }]}
               onPress={handleGoToLogin}
             >
-              <Text style={styles.goToLoginText}>
-                {t('auth.goBackToLogin')}
-              </Text>
+              <Text style={styles.goToLoginText}>{t('auth.goBackToLogin')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -344,38 +321,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
   },
-  header: {
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 24,
+  eyeIcon: {
+    padding: 4,
   },
   form: {
     marginBottom: 24,
   },
+  goToLoginButton: {
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  goToLoginText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  header: {
+    marginBottom: 30,
+  },
+  iconContainer: {
+    marginBottom: 24,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
+  },
   inputContainer: {
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
   inputWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
-    height: 54,
     borderRadius: 12,
+    elevation: 3,
+    flexDirection: 'row',
+    height: 54,
     paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -384,34 +370,25 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
   },
   inputWrapperError: {
-    borderWidth: 1,
     borderColor: '#FF3B30',
+    borderWidth: 1,
   },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  passwordStrengthBar: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 2,
+    height: 4,
+    marginBottom: 4,
+    overflow: 'hidden',
   },
   passwordStrengthContainer: {
     marginTop: 8,
-  },
-  passwordStrengthBar: {
-    height: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 2,
-    marginBottom: 4,
-    overflow: 'hidden',
   },
   passwordStrengthFill: {
     height: 4,
@@ -421,9 +398,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   saveButton: {
-    height: 54,
-    borderRadius: 12,
     alignItems: 'center',
+    borderRadius: 12,
+    elevation: 3,
+    height: 54,
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -432,20 +410,29 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
   },
   saveButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
   },
   successContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
   },
-  iconContainer: {
-    marginBottom: 24,
+  successText: {
+    fontSize: 16,
+    marginBottom: 32,
+    textAlign: 'center',
   },
   successTitle: {
     fontSize: 24,
@@ -453,21 +440,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
-  successText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  goToLoginButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  goToLoginText: {
-    fontSize: 16,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    marginBottom: 8,
   },
 });
 
-export default ResetPasswordScreen; 
+export default ResetPasswordScreen;

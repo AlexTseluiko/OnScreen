@@ -1,23 +1,37 @@
 import React, { createContext, useContext } from 'react';
 import { userStorage } from '../utils/userStorage';
+import { User } from '../types/user';
+
+interface UserData {
+  user: User;
+  token: string;
+  refreshToken: string;
+}
 
 interface UserStorageContextType {
-  saveUserData: typeof userStorage.saveUserData;
-  getUserData: typeof userStorage.getUserData;
-  removeUserData: typeof userStorage.removeUserData;
-  isUserLoggedIn: typeof userStorage.isUserLoggedIn;
-  getToken: typeof userStorage.getToken;
-  getRefreshToken: typeof userStorage.getRefreshToken;
+  saveUserData: (data: UserData) => Promise<void>;
+  getUserData: () => Promise<User | null>;
+  getToken: () => Promise<string | null>;
+  getRefreshToken: () => Promise<string | null>;
+  clearUserData: () => Promise<void>;
+  isUserLoggedIn: () => Promise<boolean>;
 }
 
 const UserStorageContext = createContext<UserStorageContextType | undefined>(undefined);
 
 export const UserStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <UserStorageContext.Provider value={userStorage}>
-      {children}
-    </UserStorageContext.Provider>
-  );
+  const contextValue: UserStorageContextType = {
+    saveUserData: async (data: UserData) => {
+      await userStorage.saveUserData(data.user, data.token, data.refreshToken);
+    },
+    getUserData: userStorage.getUserData,
+    getToken: userStorage.getToken,
+    getRefreshToken: userStorage.getRefreshToken,
+    clearUserData: userStorage.clearUserData,
+    isUserLoggedIn: userStorage.isUserLoggedIn,
+  };
+
+  return <UserStorageContext.Provider value={contextValue}>{children}</UserStorageContext.Provider>;
 };
 
 export const useUserStorage = () => {
@@ -26,4 +40,4 @@ export const useUserStorage = () => {
     throw new Error('useUserStorage must be used within a UserStorageProvider');
   }
   return context;
-}; 
+};

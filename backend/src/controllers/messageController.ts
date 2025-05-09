@@ -124,4 +124,4 @@ export const deleteMessage = async (req: Request, res: Response) => {
     console.error('Delete message error:', error);
     res.status(500).json({ error: 'Ошибка при удалении сообщения' });
   }
-}; 
+};

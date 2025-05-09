@@ -1,8 +1,11 @@
 export enum NotificationType {
   SYSTEM = 'SYSTEM',
   MESSAGE = 'MESSAGE',
-  REVIEW = 'REVIEW',
-  APPOINTMENT = 'APPOINTMENT'
+  APPOINTMENT = 'APPOINTMENT',
+  REMINDER = 'REMINDER',
+  REVIEW_ADDED = 'REVIEW_ADDED',
+  REVIEW_LIKED = 'REVIEW_LIKED',
+  MEDICAL_RECORD = 'MEDICAL_RECORD',
 }
 
 export interface INotification {
@@ -13,4 +16,4 @@ export interface INotification {
   isRead: boolean;
   createdAt: Date;
   updatedAt: Date;
-} 
+}

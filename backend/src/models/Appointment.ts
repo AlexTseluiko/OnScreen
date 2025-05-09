@@ -4,7 +4,7 @@ export enum AppointmentStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
   CANCELLED = 'CANCELLED',
-  COMPLETED = 'COMPLETED'
+  COMPLETED = 'COMPLETED',
 }
 
 export interface IAppointment extends Document {
@@ -58,9 +58,11 @@ const appointmentSchema = new Schema<IAppointment>(
     notes: {
       type: String,
     },
-    symptoms: [{
-      type: String,
-    }],
+    symptoms: [
+      {
+        type: String,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -80,4 +82,4 @@ const AppointmentModel = mongoose.model<IAppointment>('Appointment', appointment
 export const Appointment = AppointmentModel;
 
 // Экспорт по умолчанию для использования с import Appointment from ...
-export default AppointmentModel; 
+export default AppointmentModel;

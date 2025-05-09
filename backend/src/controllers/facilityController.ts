@@ -4,17 +4,9 @@ import { Facility } from '../models/Facility';
 // Получение списка учреждений
 export const getFacilities = async (req: Request, res: Response) => {
   try {
-    const {
-      search,
-      type,
-      services,
-      rating,
-      lat,
-      lng,
-      radius,
-    } = req.query;
+    const { search, type, services, rating, lat, lng, radius } = req.query;
 
-    let query: any = {};
+    const query: any = {};
 
     // Поиск по тексту
     if (search) {
@@ -50,9 +42,7 @@ export const getFacilities = async (req: Request, res: Response) => {
       };
     }
 
-    const facilities = await Facility.find(query)
-      .select('-__v')
-      .sort({ rating: -1 });
+    const facilities = await Facility.find(query).select('-__v').sort({ rating: -1 });
 
     res.json(facilities);
   } catch (error) {
@@ -65,7 +55,7 @@ export const getFacilities = async (req: Request, res: Response) => {
 export const getFacilityById = async (req: Request, res: Response) => {
   try {
     const facility = await Facility.findById(req.params.id).select('-__v');
-    
+
     if (!facility) {
       return res.status(404).json({ error: 'Учреждение не найдено' });
     }
@@ -91,11 +81,9 @@ export const createFacility = async (req: Request, res: Response) => {
 // Обновление учреждения
 export const updateFacility = async (req: Request, res: Response) => {
   try {
-    const facility = await Facility.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    ).select('-__v');
+    const facility = await Facility.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    }).select('-__v');
 
     if (!facility) {
       return res.status(404).json({ error: 'Учреждение не найдено' });
@@ -122,4 +110,4 @@ export const deleteFacility = async (req: Request, res: Response) => {
     console.error('Delete facility error:', error);
     res.status(500).json({ error: 'Ошибка при удалении учреждения' });
   }
-}; 
+};

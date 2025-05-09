@@ -27,6 +27,14 @@ import { useAppDispatch } from '../store';
 import { login } from '../store/slices/authSlice';
 import { LoginCredentials } from '../types/user';
 import { User, UserRole } from '../types/auth';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '../store/slices/authSlice';
+import { apiClient } from '../api/apiClient';
+import { UserData } from '../types/user';
+import { LoginForm } from '../components/LoginForm';
+import { ErrorMessage } from '../components/ErrorMessage';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { COLORS } from '../constants';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -51,6 +59,8 @@ export const LoginScreen: React.FC = () => {
   const [isEmailValid, setIsEmailValid] = useState(true);
   const loginButtonRef = useRef<TouchableOpacity>(null);
   const timerRef = useRef<NodeJS.Timeout>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Очистка таймеров при размонтировании компонента
   useEffect(() => {
@@ -142,7 +152,7 @@ export const LoginScreen: React.FC = () => {
         toValue: 0.95,
         useNativeDriver: true,
       }).start();
-      
+
       // Проверяем поддержку вибрации на устройстве
       if (Platform.OS !== 'web') {
         Vibration.vibrate(50);
@@ -180,11 +190,7 @@ export const LoginScreen: React.FC = () => {
       }
     } else if (Platform.OS === 'ios') {
       // На iOS показываем Alert с автоматическим закрытием
-      Alert.alert(
-        t('common.success'),
-        message,
-        [{ text: t('common.ok'), style: 'default' }]
-      );
+      Alert.alert(t('common.success'), message, [{ text: t('common.ok'), style: 'default' }]);
     } else {
       // Для веб создаем кастомное уведомление
       if (typeof document !== 'undefined') {
@@ -200,9 +206,9 @@ export const LoginScreen: React.FC = () => {
         toast.style.borderRadius = '4px';
         toast.style.zIndex = '9999';
         toast.textContent = message;
-        
+
         document.body.appendChild(toast);
-        
+
         setTimeout(() => {
           if (document.body.contains(toast)) {
             document.body.removeChild(toast);
@@ -225,7 +231,7 @@ export const LoginScreen: React.FC = () => {
       if (result.success) {
         // Показываем уведомление об успешной аутентификации
         showToast(t('biometricSuccess') || 'Аутентификация успешна');
-        
+
         // Небольшая задержка для лучшего пользовательского опыта
         timerRef.current = setTimeout(() => {
           navigation.replace('Home');
@@ -253,30 +259,17 @@ export const LoginScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await dispatch(login(credentials)).unwrap();
-      if (response.user && response.token) {
-        // Преобразуем данные пользователя в правильный формат
-        const userData: User = {
-          id: response.user._id,
-          email: response.user.email,
-          role: mapUserRole(response.user.role),
-          name: `${response.user.firstName} ${response.user.lastName}`,
-          photoUrl: response.user.avatar,
-          createdAt: response.user.createdAt,
-          updatedAt: response.user.updatedAt
-        };
-        
-        await userStorage.saveUserData({
-          user: userData,
-          token: response.token,
-          refreshToken: response.token // Используем основной токен как refreshToken
-        });
-        navigation.replace('Home');
-      } else {
-        Alert.alert(t('error'), t('auth.invalidCredentials'));
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('auth.invalidCredentials'));
+      setError(null);
+
+      const response = await apiClient.post<UserData>('/auth/login', {
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      dispatch(loginSuccess(response));
+      navigation.replace('Home');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка входа');
     } finally {
       setLoading(false);
     }
@@ -308,17 +301,12 @@ export const LoginScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {t('auth.welcome')}
-          </Text>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{t('auth.welcome')}</Text>
           <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
             {t('auth.loginPrompt')}
           </Text>
@@ -326,19 +314,19 @@ export const LoginScreen: React.FC = () => {
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>
-              {t('auth.email')}
-            </Text>
-            <View style={[
-              styles.inputWrapper,
-              { backgroundColor: theme.colors.card },
-              !isEmailValid && credentials.email ? styles.inputWrapperError : {}
-            ]}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.email')}</Text>
+            <View
+              style={[
+                styles.inputWrapper,
+                { backgroundColor: theme.colors.card },
+                !isEmailValid && credentials.email ? styles.inputWrapperError : {},
+              ]}
+            >
               <Ionicons name="mail-outline" size={20} color={theme.colors.text} />
               <TextInput
                 style={[styles.input, { color: theme.colors.text }]}
                 value={credentials.email}
-                onChangeText={(text) => setCredentials({ ...credentials, email: text })}
+                onChangeText={text => setCredentials({ ...credentials, email: text })}
                 placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor={theme.colors.textSecondary}
                 keyboardType="email-address"
@@ -347,25 +335,18 @@ export const LoginScreen: React.FC = () => {
               />
             </View>
             {!isEmailValid && credentials.email && (
-              <Text style={styles.errorText}>
-                {t('auth.invalidEmail')}
-              </Text>
+              <Text style={styles.errorText}>{t('auth.invalidEmail')}</Text>
             )}
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>
-              {t('auth.password')}
-            </Text>
-            <View style={[
-              styles.inputWrapper,
-              { backgroundColor: theme.colors.card }
-            ]}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.password')}</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.colors.card }]}>
               <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text} />
               <TextInput
                 style={[styles.input, { color: theme.colors.text }]}
                 value={credentials.password}
-                onChangeText={(text) => setCredentials({ ...credentials, password: text })}
+                onChangeText={text => setCredentials({ ...credentials, password: text })}
                 placeholder={t('auth.passwordPlaceholder')}
                 placeholderTextColor={theme.colors.textSecondary}
                 secureTextEntry={!showPassword}
@@ -383,7 +364,7 @@ export const LoginScreen: React.FC = () => {
                 />
               </TouchableOpacity>
             </View>
-            
+
             {showPasswordStrength && (
               <View style={styles.passwordStrengthContainer}>
                 <View style={styles.passwordStrengthBar}>
@@ -423,9 +404,7 @@ export const LoginScreen: React.FC = () => {
                   },
                 ]}
               >
-                {rememberMe && (
-                  <Ionicons name="checkmark" size={14} color="#FFF" />
-                )}
+                {rememberMe && <Ionicons name="checkmark" size={14} color="#FFF" />}
               </View>
               <Text style={[styles.rememberMeText, { color: theme.colors.text }]}>
                 {t('auth.rememberMe')}
@@ -440,12 +419,10 @@ export const LoginScreen: React.FC = () => {
           </View>
 
           <Animated.View
-            style={[
-              {
-                transform: [{ scale: scaleAnim }],
-                opacity: loading ? 0.8 : 1,
-              },
-            ]}
+            style={{
+              transform: [{ scale: scaleAnim }],
+              opacity: loading ? 0.8 : 1,
+            }}
           >
             <TouchableOpacity
               ref={loginButtonRef}
@@ -453,7 +430,7 @@ export const LoginScreen: React.FC = () => {
                 styles.loginButton,
                 {
                   backgroundColor: theme.colors.primary,
-                  opacity: (!credentials.email || !credentials.password || !isEmailValid) ? 0.6 : 1,
+                  opacity: !credentials.email || !credentials.password || !isEmailValid ? 0.6 : 1,
                 },
               ]}
               onPress={handleLogin}
@@ -470,15 +447,8 @@ export const LoginScreen: React.FC = () => {
           </Animated.View>
 
           {isBiometricAvailable && (
-            <TouchableOpacity
-              style={styles.biometricButton}
-              onPress={handleBiometricAuth}
-            >
-              <Ionicons
-                name="finger-print-outline"
-                size={24}
-                color={theme.colors.primary}
-              />
+            <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
+              <Ionicons name="finger-print-outline" size={24} color={theme.colors.primary} />
               <Text style={[styles.biometricText, { color: theme.colors.text }]}>
                 {t('auth.loginWithBiometric')}
               </Text>
@@ -530,49 +500,100 @@ export const LoginScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {error && <ErrorMessage message={error} />}
+        {isLoading && <LoadingSpinner />}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  biometricButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 8,
+    padding: 12,
+  },
+  biometricText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  checkbox: {
+    alignItems: 'center',
+    borderRadius: 4,
+    borderWidth: 1,
+    height: 20,
+    justifyContent: 'center',
+    marginRight: 8,
+    width: 20,
+  },
   container: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
+  divider: {
+    flex: 1,
+    height: 1,
   },
-  header: {
-    marginBottom: 30,
+  dividerContainer: {
     alignItems: 'center',
+    flexDirection: 'row',
+    marginVertical: 24,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
+  dividerText: {
+    fontSize: 14,
+    marginHorizontal: 16,
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  footerText: {
+    fontSize: 14,
+  },
+  forgotPassword: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   form: {
     marginBottom: 24,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 10,
   },
   inputContainer: {
     gap: 8,
     marginBottom: 20,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   inputWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
-    height: 54,
     borderRadius: 12,
+    elevation: 3,
+    flexDirection: 'row',
+    height: 54,
     paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -581,63 +602,20 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
   },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  passwordStrengthContainer: {
-    marginTop: 8,
-  },
-  passwordStrengthBar: {
-    height: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 2,
-    marginBottom: 4,
-    overflow: 'hidden',
-  },
-  passwordStrengthFill: {
-    height: 4,
-  },
-  passwordStrengthText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  optionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+  inputWrapperError: {
+    borderColor: '#FF3B30',
     borderWidth: 1,
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  rememberMeText: {
+  label: {
     fontSize: 14,
-  },
-  forgotPassword: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontWeight: 'bold',
   },
   loginButton: {
-    height: 54,
-    borderRadius: 12,
     alignItems: 'center',
+    borderRadius: 12,
+    elevation: 3,
+    height: 54,
     justifyContent: 'center',
     marginBottom: 16,
     shadowColor: '#000',
@@ -647,49 +625,51 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
   },
   loginButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
-  biometricButton: {
-    flexDirection: 'row',
+  optionsContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginVertical: 8,
-  },
-  biometricText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  dividerContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginBottom: 24,
   },
-  socialButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 16,
+  passwordStrengthBar: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 2,
+    height: 4,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  passwordStrengthContainer: {
+    marginTop: 8,
+  },
+  passwordStrengthFill: {
+    height: 4,
+  },
+  passwordStrengthText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  rememberMeContainer: {
     alignItems: 'center',
+    flexDirection: 'row',
+  },
+  rememberMeText: {
+    fontSize: 14,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  socialButton: {
+    alignItems: 'center',
+    borderRadius: 16,
+    elevation: 3,
+    height: 80,
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -698,33 +678,26 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
+    width: 80,
   },
   socialButtonText: {
     fontSize: 14,
     fontWeight: '500',
     marginTop: 8,
   },
-  footer: {
+  socialButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
+    justifyContent: 'space-around',
+    marginBottom: 24,
   },
-  footerText: {
-    fontSize: 14,
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
   },
-  footerLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  inputWrapperError: {
-    borderColor: '#FF3B30',
-    borderWidth: 1,
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
-  },
-}); 
+});

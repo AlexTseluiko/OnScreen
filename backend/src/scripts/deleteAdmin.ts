@@ -13,13 +13,12 @@ async function deleteAdmin() {
 
     // Удаляем администратора
     const result = await User.deleteOne({ email: adminEmail });
-    
+
     if (result.deletedCount > 0) {
       console.log('Администратор успешно удален');
     } else {
       console.log('Администратор не найден');
     }
-
   } catch (error) {
     console.error('Ошибка при удалении администратора:', error);
   } finally {
@@ -27,4 +26,4 @@ async function deleteAdmin() {
   }
 }
 
-deleteAdmin(); 
+deleteAdmin();

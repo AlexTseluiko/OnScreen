@@ -9,100 +9,47 @@ import {
   TextInput,
   Modal,
   Animated,
-  Alert,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Расширенные данные для демонстрации
-const mockPrograms = [
-  {
-    id: '1',
-    title: 'Скрининг рака молочной железы',
-    ageRange: '40-69',
-    frequency: 'Раз в 2 года',
-    description: 'Маммография для раннего выявления рака молочной железы',
-    icon: 'female',
-    category: 'Женское здоровье',
-    details: 'Маммография - это рентгенологическое исследование молочных желез, которое позволяет выявить рак на ранних стадиях. Рекомендуется проходить женщинам в возрасте 40-69 лет каждые 2 года.',
-    riskFactors: ['Возраст старше 40 лет', 'Наследственность', 'Раннее начало менструации', 'Поздняя менопауза'],
-    nextScreening: null,
-  },
-  {
-    id: '2',
-    title: 'Скрининг рака шейки матки',
-    ageRange: '21-65',
-    frequency: 'Раз в 3 года',
-    description: 'Цитологическое исследование мазка с шейки матки',
-    icon: 'medkit',
-    category: 'Женское здоровье',
-    details: 'Цитологическое исследование (ПАП-тест) позволяет выявить предраковые изменения в клетках шейки матки. Рекомендуется проходить женщинам в возрасте 21-65 лет каждые 3 года.',
-    riskFactors: ['Раннее начало половой жизни', 'Множественные половые партнеры', 'Курение', 'ВПЧ-инфекция'],
-    nextScreening: null,
-  },
-  {
-    id: '3',
-    title: 'Скрининг рака толстой кишки',
-    ageRange: '50-75',
-    frequency: 'Раз в 10 лет',
-    description: 'Колоноскопия для раннего выявления рака толстой кишки',
-    icon: 'analytics',
-    category: 'ЖКТ',
-    details: 'Колоноскопия - это эндоскопическое исследование толстой кишки, которое позволяет выявить полипы и рак на ранних стадиях. Рекомендуется проходить людям в возрасте 50-75 лет каждые 10 лет.',
-    riskFactors: ['Возраст старше 50 лет', 'Наследственность', 'Воспалительные заболевания кишечника', 'Неправильное питание'],
-    nextScreening: null,
-  },
-  {
-    id: '4',
-    title: 'Скрининг рака предстательной железы',
-    ageRange: '50-70',
-    frequency: 'Раз в 2 года',
-    description: 'Анализ крови на ПСА и пальцевое ректальное исследование',
-    icon: 'male',
-    category: 'Мужское здоровье',
-    details: 'Скрининг включает анализ крови на ПСА и пальцевое ректальное исследование. Рекомендуется мужчинам в возрасте 50-70 лет проходить обследование каждые 2 года.',
-    riskFactors: ['Возраст старше 50 лет', 'Наследственность', 'Афроамериканское происхождение', 'Ожирение'],
-    nextScreening: null,
-  },
-  {
-    id: '5',
-    title: 'Скрининг рака легких',
-    ageRange: '55-80',
-    frequency: 'Раз в год',
-    description: 'Низкодозная компьютерная томография легких',
-    icon: 'lungs',
-    category: 'Органы дыхания',
-    details: 'Низкодозная КТ легких позволяет выявить рак на ранних стадиях. Рекомендуется курящим людям в возрасте 55-80 лет проходить обследование ежегодно.',
-    riskFactors: ['Курение', 'Возраст старше 55 лет', 'Профессиональные вредности', 'Наследственность'],
-    nextScreening: null,
-  },
-  {
-    id: '6',
-    title: 'Скрининг рака кожи',
-    ageRange: '18+',
-    frequency: 'Раз в год',
-    description: 'Осмотр кожи у дерматолога',
-    icon: 'body',
-    category: 'Кожа',
-    details: 'Регулярный осмотр кожи позволяет выявить меланому и другие виды рака кожи на ранних стадиях. Рекомендуется всем взрослым проходить осмотр ежегодно.',
-    riskFactors: ['Светлая кожа', 'Солнечные ожоги в анамнезе', 'Наследственность', 'Множественные родинки'],
-    nextScreening: null,
-  },
-  {
-    id: '7',
-    title: 'Скрининг рака желудка',
-    ageRange: '45-75',
-    frequency: 'Раз в 3 года',
-    description: 'Гастроскопия',
-    icon: 'restaurant',
-    category: 'ЖКТ',
-    details: 'Гастроскопия позволяет выявить рак желудка на ранних стадиях. Рекомендуется людям в возрасте 45-75 лет проходить обследование каждые 3 года.',
-    riskFactors: ['Возраст старше 45 лет', 'Наследственность', 'Хронический гастрит', 'Инфекция H. pylori'],
-    nextScreening: null,
-  },
-];
+interface Theme {
+  colors: {
+    background: string;
+    border: string;
+    card: string;
+    error: string;
+    overlay: string;
+    primary: string;
+    shadow: string;
+    text: string;
+    textSecondary: string;
+    white: string;
+  };
+}
+
+interface DynamicStyles {
+  categoriesContainer: ViewStyle;
+  favoriteFilterButtonActive: ViewStyle;
+  modalContent: ViewStyle;
+}
+
+interface ScreeningProgram {
+  id: string;
+  title: string;
+  description: string;
+  details: string;
+  riskFactors: string[];
+  ageRange: string;
+  frequency: string;
+  nextScreening?: string;
+  category: string;
+}
 
 const categories = [
   'Все',
@@ -114,23 +61,77 @@ const categories = [
   'ЖКТ',
 ];
 
+const getDynamicStyles = (theme: Theme): DynamicStyles => ({
+  categoriesContainer: {
+    borderBottomColor: theme.colors.border,
+    borderBottomWidth: 1,
+    padding: 16,
+  },
+  favoriteFilterButtonActive: {
+    backgroundColor: theme.colors.error + '20',
+    borderRadius: 20,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.background,
+    borderRadius: 12,
+    elevation: 5,
+    maxHeight: 600,
+    padding: 20,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    width: 350,
+  },
+});
+
 export const ScreeningProgramsScreen: React.FC = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const [programs, setPrograms] = useState<ScreeningProgram[]>([]);
+  const [favoritePrograms, setFavoritePrograms] = useState<string[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [selectedProgram, setSelectedProgram] = useState<ScreeningProgram | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedAge, setSelectedAge] = useState('40-69');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Все');
-  const [favoritePrograms, setFavoritePrograms] = useState([]);
-  const [showFavorites, setShowFavorites] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
 
   const ageRanges = ['18+', '21-65', '40-69', '45-75', '50-70', '50-75', '55-80'];
 
+  const dynamicStyles = getDynamicStyles(theme);
+
   useEffect(() => {
+    loadPrograms();
     loadFavorites();
   }, []);
+
+  const loadPrograms = async () => {
+    try {
+      setLoading(true);
+      // Здесь будет загрузка программ с сервера
+      const mockPrograms: ScreeningProgram[] = [
+        {
+          id: '1',
+          title: 'Общий медицинский осмотр',
+          description: 'Комплексное обследование организма',
+          details: 'Включает осмотр терапевта, анализы крови и мочи',
+          riskFactors: ['Возраст старше 40 лет', 'Наследственность'],
+          ageRange: '18+',
+          frequency: 'Раз в год',
+          category: 'Общие',
+        },
+        // Добавьте другие программы по необходимости
+      ];
+      setPrograms(mockPrograms);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadFavorites = async () => {
     try {
@@ -143,53 +144,32 @@ export const ScreeningProgramsScreen: React.FC = () => {
     }
   };
 
-  const toggleFavorite = async (programId) => {
+  const toggleFavorite = async (programId: string) => {
     try {
       const newFavorites = favoritePrograms.includes(programId)
         ? favoritePrograms.filter(id => id !== programId)
         : [...favoritePrograms, programId];
-      
-      await AsyncStorage.setItem('favoritePrograms', JSON.stringify(newFavorites));
+
       setFavoritePrograms(newFavorites);
-    } catch (error) {
-      console.error('Ошибка при сохранении избранного:', error);
+      await AsyncStorage.setItem('favoritePrograms', JSON.stringify(newFavorites));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка при обновлении избранного');
     }
   };
 
-  const scheduleNextScreening = (program) => {
-    const today = new Date();
-    let nextDate;
-    
-    switch (program.frequency) {
-      case 'Раз в год':
-        nextDate = new Date(today.setFullYear(today.getFullYear() + 1));
-        break;
-      case 'Раз в 2 года':
-        nextDate = new Date(today.setFullYear(today.getFullYear() + 2));
-        break;
-      case 'Раз в 3 года':
-        nextDate = new Date(today.setFullYear(today.getFullYear() + 3));
-        break;
-      case 'Раз в 10 лет':
-        nextDate = new Date(today.setFullYear(today.getFullYear() + 10));
-        break;
-      default:
-        nextDate = new Date(today.setMonth(today.getMonth() + 1));
-    }
-
-    Alert.alert(
-      'Напоминание установлено',
-      `Следующий скрининг запланирован на ${nextDate.toLocaleDateString()}`,
-      [{ text: 'OK' }]
-    );
+  const scheduleNextScreening = (program: ScreeningProgram | null) => {
+    if (!program) return;
+    console.log('Scheduling next screening for:', program.title);
   };
 
-  const filteredPrograms = mockPrograms.filter(program => {
-    const matchesAge = program.ageRange === selectedAge || 
+  const filteredPrograms = programs.filter(program => {
+    const matchesAge =
+      program.ageRange === selectedAge ||
       (selectedAge === '18+' && parseInt(program.ageRange.split('-')[0]) >= 18) ||
       (selectedAge !== '18+' && program.ageRange === selectedAge);
-    
-    const matchesSearch = program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+
+    const matchesSearch =
+      program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       program.description.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory = selectedCategory === 'Все' || program.category === selectedCategory;
@@ -213,104 +193,75 @@ export const ScreeningProgramsScreen: React.FC = () => {
     }).start();
   };
 
-  const renderProgram = ({ item }) => (
+  const renderProgram = ({ item }: { item: ScreeningProgram }) => (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
         style={[styles.programCard, { backgroundColor: theme.colors.card }]}
-        onPress={() => {
-          setSelectedProgram(item);
-          setShowModal(true);
-        }}
+        onPress={() => setSelectedProgram(item)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
         <View style={styles.programHeader}>
-          <Ionicons name={item.icon} size={24} color={theme.colors.primary} />
-          <View style={styles.programInfo}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              {item.title}
-            </Text>
-            <Text style={[styles.category, { color: theme.colors.textSecondary }]}>
-              {item.category}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => toggleFavorite(item.id)}
-            style={styles.favoriteButton}
-          >
+          <Text style={[styles.title, { color: theme.colors.text }]}>{item.title}</Text>
+          <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
             <Ionicons
               name={favoritePrograms.includes(item.id) ? 'heart' : 'heart-outline'}
               size={24}
-              color={favoritePrograms.includes(item.id) ? '#FF3B30' : theme.colors.textSecondary}
+              color={
+                favoritePrograms.includes(item.id) ? theme.colors.error : theme.colors.textSecondary
+              }
             />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.description, { color: theme.colors.text }]}>
+        <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
           {item.description}
         </Text>
-        <View style={styles.programFooter}>
-          <View>
-            <Text style={[styles.ageRange, { color: theme.colors.textSecondary }]}>
-              {t('ageRange')}: {item.ageRange}
-            </Text>
-            <Text style={[styles.frequency, { color: theme.colors.primary }]}>
-              {item.frequency}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.scheduleButton}
-            onPress={() => scheduleNextScreening(item)}
-          >
-            <Text style={styles.scheduleButtonText}>Запланировать</Text>
-          </TouchableOpacity>
-        </View>
+        {item.nextScreening && (
+          <Text style={[styles.nextScreeningText, { color: theme.colors.primary }]}>
+            {t('screening.nextScreening')}: {item.nextScreening}
+          </Text>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
 
   const renderProgramDetails = () => (
     <Modal
-      visible={showModal}
+      visible={selectedProgram !== null}
       animationType="slide"
       transparent={true}
-      onRequestClose={() => setShowModal(false)}
+      onRequestClose={() => setSelectedProgram(null)}
     >
-      <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.modal, { backgroundColor: theme.colors.overlay }]}>
+        <View style={dynamicStyles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
               {selectedProgram?.title}
             </Text>
-            <TouchableOpacity onPress={() => setShowModal(false)}>
+            <TouchableOpacity onPress={() => setSelectedProgram(null)}>
               <Ionicons name="close" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.modalBody}>
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>
-                Описание
-              </Text>
+              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Описание</Text>
               <Text style={[styles.detailText, { color: theme.colors.text }]}>
                 {selectedProgram?.details}
               </Text>
             </View>
-            
+
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>
-                Факторы риска
-              </Text>
+              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Факторы риска</Text>
               {selectedProgram?.riskFactors.map((factor, index) => (
                 <Text key={index} style={[styles.riskFactor, { color: theme.colors.text }]}>
                   • {factor}
                 </Text>
               ))}
             </View>
-            
+
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>
-                Рекомендации
-              </Text>
+              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Рекомендации</Text>
               <Text style={[styles.detailText, { color: theme.colors.text }]}>
                 Возраст: {selectedProgram?.ageRange}
               </Text>
@@ -320,13 +271,15 @@ export const ScreeningProgramsScreen: React.FC = () => {
             </View>
 
             <TouchableOpacity
-              style={[styles.scheduleButton, styles.modalScheduleButton]}
+              style={[styles.scheduleButton, { backgroundColor: theme.colors.primary }]}
               onPress={() => {
                 scheduleNextScreening(selectedProgram);
-                setShowModal(false);
+                setSelectedProgram(null);
               }}
             >
-              <Text style={styles.scheduleButtonText}>Запланировать следующий скрининг</Text>
+              <Text style={[styles.scheduleButtonText, { color: theme.colors.background }]}>
+                Запланировать следующий скрининг
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -336,7 +289,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { borderColor: theme.colors.border }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.colors.text }]}
@@ -346,13 +299,16 @@ export const ScreeningProgramsScreen: React.FC = () => {
           onChangeText={setSearchQuery}
         />
         <TouchableOpacity
-          style={[styles.favoriteFilterButton, showFavorites && styles.favoriteFilterButtonActive]}
+          style={[
+            styles.favoriteFilterButton,
+            showFavorites && dynamicStyles.favoriteFilterButtonActive,
+          ]}
           onPress={() => setShowFavorites(!showFavorites)}
         >
           <Ionicons
             name={showFavorites ? 'heart' : 'heart-outline'}
             size={24}
-            color={showFavorites ? '#FF3B30' : theme.colors.textSecondary}
+            color={showFavorites ? theme.colors.error : theme.colors.textSecondary}
           />
         </TouchableOpacity>
       </View>
@@ -360,7 +316,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
+        style={dynamicStyles.categoriesContainer}
       >
         {categories.map(category => (
           <TouchableOpacity
@@ -368,9 +324,8 @@ export const ScreeningProgramsScreen: React.FC = () => {
             style={[
               styles.categoryButton,
               {
-                backgroundColor: selectedCategory === category
-                  ? theme.colors.primary
-                  : theme.colors.card,
+                backgroundColor:
+                  selectedCategory === category ? theme.colors.primary : theme.colors.card,
               },
             ]}
             onPress={() => setSelectedCategory(category)}
@@ -379,9 +334,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
               style={[
                 styles.categoryButtonText,
                 {
-                  color: selectedCategory === category
-                    ? theme.colors.white
-                    : theme.colors.text,
+                  color: selectedCategory === category ? theme.colors.white : theme.colors.text,
                 },
               ]}
             >
@@ -402,9 +355,8 @@ export const ScreeningProgramsScreen: React.FC = () => {
             style={[
               styles.ageRangeButton,
               {
-                backgroundColor: selectedAge === ageRange
-                  ? theme.colors.primary
-                  : theme.colors.card,
+                backgroundColor:
+                  selectedAge === ageRange ? theme.colors.primary : theme.colors.card,
               },
             ]}
             onPress={() => setSelectedAge(ageRange)}
@@ -413,9 +365,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
               style={[
                 styles.ageRangeButtonText,
                 {
-                  color: selectedAge === ageRange
-                    ? theme.colors.white
-                    : theme.colors.text,
+                  color: selectedAge === ageRange ? theme.colors.white : theme.colors.text,
                 },
               ]}
             >
@@ -425,12 +375,20 @@ export const ScreeningProgramsScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      <FlatList
-        data={filteredPrograms}
-        renderItem={renderProgram}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.programsList}
-      />
+      {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredPrograms}
+          renderItem={renderProgram}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.programsList}
+        />
+      )}
 
       {renderProgramDetails()}
     </View>
@@ -438,166 +396,141 @@ export const ScreeningProgramsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-    padding: 8,
-  },
-  favoriteFilterButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  favoriteFilterButtonActive: {
-    backgroundColor: '#FFE5E5',
-    borderRadius: 20,
-  },
-  categoriesContainer: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  ageRangesContainer: {
-    padding: 16,
-  },
   ageRangeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
-  },
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  } as ViewStyle,
   ageRangeButtonText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  programsList: {
+  } as TextStyle,
+  ageRangesContainer: {
     padding: 16,
-  },
-  programCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  programHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  programInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  category: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  programFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ageRange: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  frequency: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  favoriteButton: {
-    padding: 8,
-  },
-  scheduleButton: {
-    backgroundColor: '#007AFF',
+  } as ViewStyle,
+  categoryButton: {
+    borderRadius: 20,
+    marginRight: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-  },
-  scheduleButtonText: {
-    color: '#FFFFFF',
+  } as ViewStyle,
+  categoryButtonText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  modalContainer: {
+  } as TextStyle,
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    maxHeight: '80%',
-    borderRadius: 12,
-    padding: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    flex: 1,
-    marginRight: 16,
-  },
-  modalBody: {
-    flex: 1,
-  },
+    padding: 16,
+  } as ViewStyle,
+  description: {
+    fontSize: 14,
+    marginBottom: 8,
+  } as TextStyle,
   detailSection: {
     marginBottom: 20,
-  },
+  } as ViewStyle,
+  detailText: {
+    fontSize: 16,
+    marginBottom: 4,
+  } as TextStyle,
   detailTitle: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
-  },
-  detailText: {
-    fontSize: 16,
-    lineHeight: 24,
+  } as TextStyle,
+  errorText: {
+    fontSize: 14,
+    margin: 16,
+    textAlign: 'center',
+  } as TextStyle,
+  favoriteFilterButton: {
+    marginLeft: 8,
+    padding: 8,
+  } as ViewStyle,
+  loadingContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  } as ViewStyle,
+  modal: {
+    alignItems: 'center',
+    bottom: 0,
+    flex: 1,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  } as ViewStyle,
+  modalBody: {
+    flex: 1,
+  } as ViewStyle,
+  modalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  } as ViewStyle,
+  modalTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+  } as TextStyle,
+  nextScreeningText: {
+    fontSize: 14,
+    fontWeight: '500',
+  } as TextStyle,
+  programCard: {
+    borderRadius: 12,
+    elevation: 4,
+    marginBottom: 16,
+    padding: 16,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  } as ViewStyle,
+  programHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
-  },
+  } as ViewStyle,
+  programsList: {
+    padding: 16,
+  } as ViewStyle,
   riskFactor: {
     fontSize: 16,
-    lineHeight: 24,
     marginBottom: 4,
-  },
-  modalScheduleButton: {
-    marginTop: 20,
-    alignSelf: 'center',
-  },
-}); 
+    paddingLeft: 8,
+  } as TextStyle,
+  scheduleButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    marginTop: 16,
+    padding: 16,
+  } as ViewStyle,
+  scheduleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  } as TextStyle,
+  searchContainer: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginBottom: 16,
+    paddingHorizontal: 12,
+  } as ViewStyle,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    marginLeft: 8,
+    padding: 8,
+  } as TextStyle,
+  title: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+  } as TextStyle,
+});

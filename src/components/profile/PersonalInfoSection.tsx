@@ -27,13 +27,17 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
   theme,
 }) => {
   const { t } = useTranslation();
-  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
-      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>{t('profile.personalInfo')}</Text>
-      
+      <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+        {t('profile.personalInfo')}
+      </Text>
+
       <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{t('profile.name')}</Text>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          {t('profile.name')}
+        </Text>
         <TextInput
           style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.disabled }]}
           value={name}
@@ -56,7 +60,9 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{t('profile.phone')}</Text>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          {t('profile.phone')}
+        </Text>
         <TextInput
           style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.disabled }]}
           value={phone}
@@ -68,7 +74,9 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{t('profile.address')}</Text>
+        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+          {t('profile.address')}
+        </Text>
         <TextInput
           style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.disabled }]}
           value={address}
@@ -85,43 +93,43 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
+    padding: 16,
     ...Platform.select({
       web: {
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
       },
       android: {
-        elevation: 3
+        elevation: 3,
       },
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4
-      }
-    })
+        shadowRadius: 4,
+      },
+    }),
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  input: {
+    borderColor: COLORS.gray,
+    borderRadius: 8,
+    borderWidth: 1,
     color: COLORS.text,
+    fontSize: 16,
+    padding: 12,
   },
   inputContainer: {
     marginBottom: 12,
   },
   label: {
-    fontSize: 14,
     color: COLORS.gray,
+    fontSize: 14,
     marginBottom: 4,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: COLORS.gray,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+  sectionTitle: {
     color: COLORS.text,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
-}); 
+});

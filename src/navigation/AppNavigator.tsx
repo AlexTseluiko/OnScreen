@@ -63,15 +63,21 @@ export const AppNavigator: React.FC = () => {
     // Когда контекст авторизации загружен, снимаем состояние загрузки
     if (!authLoading) {
       setIsLoading(false);
-      console.log('Состояние авторизации загружено. Пользователь:', user ? 'авторизован' : 'не авторизован');
+      console.log(
+        'Состояние авторизации загружено. Пользователь:',
+        user ? 'авторизован' : 'не авторизован'
+      );
     }
   }, [authLoading, user]);
-  
+
   useEffect(() => {
     // Отслеживаем изменения авторизации для обновления навигации при выходе
     if (!authLoading) {
-      console.log('Статус авторизации изменился. Пользователь:', user ? 'авторизован' : 'не авторизован');
-      
+      console.log(
+        'Статус авторизации изменился. Пользователь:',
+        user ? 'авторизован' : 'не авторизован'
+      );
+
       // Если пользователь не авторизован, перенаправляем на страницу входа
       if (!user && !isLoading) {
         console.log('Пользователь не авторизован, перенаправление на экран входа');
@@ -110,9 +116,7 @@ export const AppNavigator: React.FC = () => {
             fontWeight: 'bold',
           },
           headerBackTitleVisible: false,
-          headerBackImage: () => (
-            <Ionicons name="chevron-back" size={24} color="white" />
-          ),
+          headerBackImage: () => <Ionicons name="chevron-back" size={24} color="white" />,
         }}
       >
         <Stack.Screen
@@ -229,7 +233,7 @@ export const AppNavigator: React.FC = () => {
             title: t('admin.users'),
           }}
           listeners={({ navigation }) => ({
-            beforeRemove: (e) => {
+            beforeRemove: e => {
               if (!checkAdminAccess(navigation)) {
                 e.preventDefault();
               }
@@ -246,7 +250,7 @@ export const AppNavigator: React.FC = () => {
             title: t('admin.doctorRequests'),
           }}
           listeners={({ navigation }) => ({
-            beforeRemove: (e) => {
+            beforeRemove: e => {
               if (!checkAdminAccess(navigation)) {
                 e.preventDefault();
               }
@@ -265,11 +269,11 @@ export const AppNavigator: React.FC = () => {
             cardStyleInterpolator: ({ current: { progress } }) => ({
               cardStyle: {
                 opacity: progress,
-              }
+              },
             }),
           }}
           listeners={({ navigation }) => ({
-            beforeRemove: (e) => {
+            beforeRemove: e => {
               if (!checkAdminAccess(navigation)) {
                 e.preventDefault();
               }
@@ -303,4 +307,4 @@ export const AppNavigator: React.FC = () => {
       </Stack.Navigator>
     </NavigationContainer>
   );
-}; 
+};

@@ -20,7 +20,7 @@ export const FeedbackScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const darkMode = useAppSelector(state => state.settings.darkMode);
-  
+
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackType, setFeedbackType] = useState<'suggestion' | 'bug' | 'other'>('suggestion');
   const [loading, setLoading] = useState(false);
@@ -28,11 +28,7 @@ export const FeedbackScreen: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!feedbackText.trim()) {
-      Alert.alert(
-        t('common.error'),
-        t('feedback.emptyFeedbackError'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('feedback.emptyFeedbackError'), [{ text: t('common.ok') }]);
       return;
     }
 
@@ -43,14 +39,10 @@ export const FeedbackScreen: React.FC = () => {
       const response = await feedbackApi.sendFeedback({
         feedbackText,
         feedbackType,
-        email: email.trim() || undefined
+        email: email.trim() || undefined,
       });
 
-      Alert.alert(
-        t('common.success'),
-        t('feedback.submitSuccess'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.success'), t('feedback.submitSuccess'), [{ text: t('common.ok') }]);
 
       // Очистить форму
       setFeedbackText('');
@@ -58,11 +50,7 @@ export const FeedbackScreen: React.FC = () => {
       setEmail('');
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      Alert.alert(
-        t('common.error'),
-        t('feedback.submitError'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('common.error'), t('feedback.submitError'), [{ text: t('common.ok') }]);
     } finally {
       setLoading(false);
     }
@@ -78,9 +66,9 @@ export const FeedbackScreen: React.FC = () => {
         styles.typeButton,
         {
           backgroundColor: feedbackType === type ? theme.colors.primary : theme.colors.card,
-          borderColor: theme.colors.primary
+          borderColor: theme.colors.primary,
         },
-        feedbackType === type && styles.selectedTypeButton
+        feedbackType === type && styles.selectedTypeButton,
       ]}
       onPress={() => setFeedbackType(type)}
     >
@@ -93,7 +81,7 @@ export const FeedbackScreen: React.FC = () => {
         style={[
           styles.typeButtonText,
           { color: feedbackType === type ? COLORS.white : theme.colors.primary },
-          feedbackType === type && styles.selectedTypeButtonText
+          feedbackType === type && styles.selectedTypeButtonText,
         ]}
       >
         {label}
@@ -104,7 +92,9 @@ export const FeedbackScreen: React.FC = () => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>{t('feedback.title')}</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+          {t('feedback.title')}
+        </Text>
         <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
           {t('feedback.subtitle')}
         </Text>
@@ -117,15 +107,17 @@ export const FeedbackScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.text }]}>{t('feedback.yourFeedback')}</Text>
+        <Text style={[styles.label, { color: theme.colors.text }]}>
+          {t('feedback.yourFeedback')}
+        </Text>
         <TextInput
           style={[
-            styles.textArea, 
-            { 
+            styles.textArea,
+            {
               backgroundColor: theme.colors.card,
               color: theme.colors.text,
-              borderColor: darkMode ? '#555' : '#e0e0e0' 
-            }
+              borderColor: darkMode ? '#555' : '#e0e0e0',
+            },
           ]}
           multiline
           numberOfLines={8}
@@ -138,15 +130,17 @@ export const FeedbackScreen: React.FC = () => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.text }]}>{t('feedback.emailOptional')}</Text>
+        <Text style={[styles.label, { color: theme.colors.text }]}>
+          {t('feedback.emailOptional')}
+        </Text>
         <TextInput
           style={[
-            styles.input, 
-            { 
+            styles.input,
+            {
               backgroundColor: theme.colors.card,
               color: theme.colors.text,
-              borderColor: darkMode ? '#555' : '#e0e0e0' 
-            }
+              borderColor: darkMode ? '#555' : '#e0e0e0',
+            },
           ]}
           placeholder={t('feedback.emailPlaceholder')}
           placeholderTextColor={theme.colors.textSecondary}
@@ -171,7 +165,9 @@ export const FeedbackScreen: React.FC = () => {
 
       <View style={styles.infoContainer}>
         <Ionicons name="information-circle-outline" size={20} color={theme.colors.textSecondary} />
-        <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>{t('feedback.privacyInfo')}</Text>
+        <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
+          {t('feedback.privacyInfo')}
+        </Text>
       </View>
     </ScrollView>
   );
@@ -185,40 +181,32 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
+  headerSubtitle: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  headerSubtitle: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  typesContainer: {
+  infoContainer: {
+    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 24,
   },
-  typeButton: {
+  infoText: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 4,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  input: {
+    backgroundColor: COLORS.white,
+    borderColor: '#e0e0e0',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.white,
-  },
-  selectedTypeButton: {
-    backgroundColor: COLORS.primary,
-  },
-  typeButtonText: {
-    marginTop: 8,
-    fontSize: 14,
-    color: COLORS.primary,
-  },
-  selectedTypeButtonText: {
-    color: COLORS.white,
+    fontSize: 16,
+    padding: 12,
   },
   inputContainer: {
     marginBottom: 20,
@@ -228,43 +216,51 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
   },
-  textArea: {
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    minHeight: 150,
+  selectedTypeButton: {
+    backgroundColor: COLORS.primary,
   },
-  input: {
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+  selectedTypeButtonText: {
+    color: COLORS.white,
   },
   submitButton: {
-    paddingVertical: 16,
-    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 16,
+    borderRadius: 8,
     marginBottom: 24,
+    marginTop: 16,
+    paddingVertical: 16,
   },
   submitButtonText: {
     color: COLORS.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
-  infoContainer: {
-    flexDirection: 'row',
+  textArea: {
+    backgroundColor: COLORS.white,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    fontSize: 16,
+    minHeight: 150,
+    padding: 12,
+  },
+  typeButton: {
     alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.primary,
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    marginHorizontal: 4,
+    paddingVertical: 12,
+  },
+  typeButtonText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    marginTop: 8,
+  },
+  typesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 24,
   },
-  infoText: {
-    fontSize: 14,
-    marginLeft: 8,
-    flex: 1,
-  },
-}); 
+});

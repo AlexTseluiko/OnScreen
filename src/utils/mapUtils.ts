@@ -119,4 +119,4 @@ export const sortByDistance = (
     );
     return distanceA - distanceB;
   });
-}; 
+};

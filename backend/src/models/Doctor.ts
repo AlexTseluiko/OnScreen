@@ -32,22 +32,28 @@ const doctorSchema = new Schema<IDoctor>(
       ref: 'Clinic',
       required: true,
     },
-    specialization: [{
-      type: String,
-      required: true,
-    }],
+    specialization: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     experience: {
       type: Number,
       required: true,
       min: 0,
     },
-    education: [{
-      type: String,
-      required: true,
-    }],
-    certifications: [{
-      type: String,
-    }],
+    education: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    certifications: [
+      {
+        type: String,
+      },
+    ],
     rating: {
       type: Number,
       default: 0,
@@ -81,4 +87,4 @@ doctorSchema.index({ clinic: 1, specialization: 1 });
 doctorSchema.index({ rating: -1 });
 doctorSchema.index({ isAvailable: 1 });
 
-export const Doctor = mongoose.model<IDoctor>('Doctor', doctorSchema); 
+export const Doctor = mongoose.model<IDoctor>('Doctor', doctorSchema);
