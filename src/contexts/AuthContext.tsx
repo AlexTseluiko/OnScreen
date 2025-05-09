@@ -1,19 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api/authApi';
 import { useUserStorage } from './UserStorageContext';
-import { User } from '../types/models';
+import { User } from '../types/user';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   logout: () => Promise<void>;
-  clearError: () => void;
+  register: (userData: Partial<User>) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,37 +41,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       setError(null);
+      console.log('Отправка запроса на вход...');
       const response = await authApi.login(email, password);
-      if (response.success && response.data) {
-        const { user, token, refreshToken } = response.data;
-        await saveUserData({ user, token, refreshToken });
-        setUser(user);
+      console.log('Получен ответ от сервера:', response);
+
+      if (response.success && response.token && response.user) {
+        const { user, token } = response;
+        console.log('Сохранение данных пользователя...');
+        await saveUserData({ user, token, refreshToken: token });
+        console.log('Установка состояния пользователя...');
+        setUser(user as User);
+        console.log('Пользователь успешно авторизован:', user);
       } else {
+        console.error('Ошибка в ответе сервера:', response);
         setError(response.message || 'Ошибка при входе');
       }
     } catch (err) {
-      setError('Ошибка при входе');
       console.error('Ошибка при входе:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (email: string, password: string, firstName: string, lastName: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await authApi.register(email, password, firstName, lastName);
-      if (response.success && response.data) {
-        const { user, token, refreshToken } = response.data;
-        await saveUserData({ user, token, refreshToken });
-        setUser(user);
-      } else {
-        setError(response.message || 'Ошибка при регистрации');
-      }
-    } catch (err) {
-      setError('Ошибка при регистрации');
-      console.error('Ошибка при регистрации:', err);
+      setError('Ошибка при входе');
     } finally {
       setLoading(false);
     }
@@ -90,7 +76,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const clearError = () => setError(null);
+  const register = async (userData: Partial<User>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authApi.register(
+        userData.email || '',
+        userData.password || '',
+        userData.firstName || '',
+        userData.lastName || ''
+      );
+      if (response.success && response.token && response.user) {
+        const { user, token } = response;
+        await saveUserData({ user, token, refreshToken: token });
+        setUser(user as User);
+      } else {
+        setError(response.message || 'Ошибка при регистрации');
+      }
+    } catch (err) {
+      setError('Ошибка при регистрации');
+      console.error('Ошибка при регистрации:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -99,9 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         error,
         login,
-        register,
         logout,
-        clearError,
+        register,
       }}
     >
       {children}

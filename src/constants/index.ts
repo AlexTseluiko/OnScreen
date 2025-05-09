@@ -1,9 +1,57 @@
-// Цвета
-export const COLORS = {
-  primary: '#3A7BFF',
+interface ColorTheme {
+  primary: string;
+  background: string;
+  whiteBackground: string;
+  text: string;
+  textSecondary: string;
+  error: string;
+  success: string;
+  warning: string;
+  disabled: string;
+}
+
+interface Colors {
+  light: ColorTheme;
+  dark: ColorTheme;
+  secondary: string;
+  emergency: string;
+  text: string;
+  textSecondary: string;
+  white: string;
+  black: string;
+  gray: string;
+  success: string;
+  error: string;
+  warning: string;
+  lightGray: string;
+  whiteTransparent: string;
+}
+
+export const COLORS: Colors = {
+  light: {
+    primary: '#4285F4',
+    background: '#f1f1f1',
+    whiteBackground: '#FFFFFF',
+    text: '#333333',
+    textSecondary: '#666666',
+    error: '#FF0000',
+    success: '#4CAF50',
+    warning: '#FFC107',
+    disabled: '#CCCCCC',
+  },
+  dark: {
+    primary: '#4285F4',
+    background: '#121212',
+    whiteBackground: '#1E1E1E',
+    text: '#FFFFFF',
+    textSecondary: '#AAAAAA',
+    error: '#FF5252',
+    success: '#69F0AE',
+    warning: '#FFD740',
+    disabled: '#666666',
+  },
   secondary: '#4CAF50',
   emergency: '#FF3B30',
-  background: '#FFFFFF',
   text: '#000000',
   textSecondary: '#8E8E93',
   white: '#FFFFFF',
@@ -14,7 +62,7 @@ export const COLORS = {
   warning: '#FFC107',
   lightGray: '#E0E0E0',
   whiteTransparent: 'rgba(255, 255, 255, 0.8)',
-};
+} as const;
 
 // Начальные координаты карты
 export const INITIAL_REGION = {

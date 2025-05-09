@@ -10,7 +10,6 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
-  Vibration,
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -20,21 +19,11 @@ import { useTranslation } from 'react-i18next';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { authApi, AuthError } from '../api/auth';
-import { useAuth } from '../contexts/AuthContext';
-import { useUserStorage } from '../contexts/UserStorageContext';
-import { useAppDispatch } from '../store';
-import { login } from '../store/slices/authSlice';
 import { LoginCredentials } from '../types/user';
-import { User, UserRole } from '../types/auth';
-import { useDispatch } from 'react-redux';
-import { loginSuccess } from '../store/slices/authSlice';
-import { apiClient } from '../api/apiClient';
-import { UserData } from '../types/user';
-import { LoginForm } from '../components/LoginForm';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { LoadingSpinner } from '../components/LoadingSpinner';
 import { COLORS } from '../constants';
+import { showPlatformToast, vibrate } from '../utils/platform';
+import { useAuth } from '../contexts/AuthContext';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -42,9 +31,7 @@ export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const { login: authLogin } = useAuth();
-  const userStorage = useUserStorage();
-  const dispatch = useAppDispatch();
+  const { login } = useAuth();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -59,7 +46,6 @@ export const LoginScreen: React.FC = () => {
   const [isEmailValid, setIsEmailValid] = useState(true);
   const loginButtonRef = useRef<TouchableOpacity>(null);
   const timerRef = useRef<NodeJS.Timeout>();
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Очистка таймеров при размонтировании компонента
@@ -150,13 +136,10 @@ export const LoginScreen: React.FC = () => {
     try {
       Animated.spring(scaleAnim, {
         toValue: 0.95,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
 
-      // Проверяем поддержку вибрации на устройстве
-      if (Platform.OS !== 'web') {
-        Vibration.vibrate(50);
-      }
+      vibrate();
     } catch (error) {
       console.error('Ошибка анимации:', error);
     }
@@ -165,61 +148,9 @@ export const LoginScreen: React.FC = () => {
   const handlePressOut = useCallback(() => {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [scaleAnim]);
-
-  // Функция для показа уведомления на разных платформах
-  const showToast = (message: string) => {
-    if (Platform.OS === 'android') {
-      try {
-        // Безопасный способ проверки наличия ToastAndroid, избегаем статических импортов
-        const RN = require('react-native');
-        if (RN && RN.ToastAndroid) {
-          RN.ToastAndroid.show(message, RN.ToastAndroid.SHORT);
-        } else if (Alert) {
-          // Запасной вариант для Android без ToastAndroid
-          Alert.alert(t('common.success'), message, [{ text: t('common.ok') }]);
-        }
-      } catch (error) {
-        console.error('Toast error:', error);
-        // Используем Alert как запасной вариант
-        if (Alert) {
-          Alert.alert(t('common.success'), message, [{ text: t('common.ok') }]);
-        }
-      }
-    } else if (Platform.OS === 'ios') {
-      // На iOS показываем Alert с автоматическим закрытием
-      Alert.alert(t('common.success'), message, [{ text: t('common.ok'), style: 'default' }]);
-    } else {
-      // Для веб создаем кастомное уведомление
-      if (typeof document !== 'undefined') {
-        // Проверяем, что мы в веб-окружении
-        const toast = document.createElement('div');
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.left = '50%';
-        toast.style.transform = 'translateX(-50%)';
-        toast.style.backgroundColor = '#2c2c2c';
-        toast.style.color = 'white';
-        toast.style.padding = '10px 20px';
-        toast.style.borderRadius = '4px';
-        toast.style.zIndex = '9999';
-        toast.textContent = message;
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-          if (document.body.contains(toast)) {
-            document.body.removeChild(toast);
-          }
-        }, 3000);
-      } else {
-        // Fallback для других платформ
-        console.log('Toast message:', message);
-      }
-    }
-  };
 
   const handleBiometricAuth = async () => {
     try {
@@ -229,10 +160,8 @@ export const LoginScreen: React.FC = () => {
       });
 
       if (result.success) {
-        // Показываем уведомление об успешной аутентификации
-        showToast(t('biometricSuccess') || 'Аутентификация успешна');
+        showPlatformToast(t('biometricSuccess') || 'Аутентификация успешна');
 
-        // Небольшая задержка для лучшего пользовательского опыта
         timerRef.current = setTimeout(() => {
           navigation.replace('Home');
         }, 800);
@@ -260,16 +189,16 @@ export const LoginScreen: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Отправка запроса на вход...');
 
-      const response = await apiClient.post<UserData>('/auth/login', {
-        email: credentials.email,
-        password: credentials.password,
-      });
+      await login(credentials.email, credentials.password);
+      console.log('Вход выполнен успешно');
 
-      dispatch(loginSuccess(response));
+      showPlatformToast(t('auth.loginSuccess') || 'Вход выполнен успешно');
       navigation.replace('Home');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка входа');
+    } catch (error) {
+      console.error('Ошибка входа:', error);
+      setError(error instanceof Error ? error.message : t('auth.loginError'));
     } finally {
       setLoading(false);
     }
@@ -282,20 +211,6 @@ export const LoginScreen: React.FC = () => {
       t('socialLoginNotAvailable') || `Вход через ${provider} временно недоступен.`,
       [{ text: t('common.ok') }]
     );
-  };
-
-  // Функция для преобразования роли пользователя
-  const mapUserRole = (role: string): UserRole => {
-    switch (role) {
-      case 'admin':
-        return UserRole.ADMIN;
-      case 'doctor':
-        return UserRole.DOCTOR;
-      case 'user':
-      case 'clinic':
-      default:
-        return UserRole.PATIENT;
-    }
   };
 
   return (
@@ -419,10 +334,13 @@ export const LoginScreen: React.FC = () => {
           </View>
 
           <Animated.View
-            style={{
-              transform: [{ scale: scaleAnim }],
-              opacity: loading ? 0.8 : 1,
-            }}
+            style={[
+              styles.loginButtonContainer,
+              {
+                transform: [{ scale: scaleAnim }],
+              },
+              loading ? styles.buttonOpacity : null,
+            ]}
           >
             <TouchableOpacity
               ref={loginButtonRef}
@@ -430,8 +348,10 @@ export const LoginScreen: React.FC = () => {
                 styles.loginButton,
                 {
                   backgroundColor: theme.colors.primary,
-                  opacity: !credentials.email || !credentials.password || !isEmailValid ? 0.6 : 1,
                 },
+                !credentials.email || !credentials.password || !isEmailValid
+                  ? styles.buttonOpacityDisabled
+                  : null,
               ]}
               onPress={handleLogin}
               onPressIn={handlePressIn}
@@ -439,7 +359,7 @@ export const LoginScreen: React.FC = () => {
               disabled={loading || !credentials.email || !credentials.password || !isEmailValid}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={COLORS.white} />
               ) : (
                 <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
               )}
@@ -502,7 +422,6 @@ export const LoginScreen: React.FC = () => {
         </View>
 
         {error && <ErrorMessage message={error} />}
-        {isLoading && <LoadingSpinner />}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -521,6 +440,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  buttonOpacity: {
+    opacity: 0.8,
+  },
+  buttonOpacityDisabled: {
+    opacity: 0.6,
   },
   checkbox: {
     alignItems: 'center',
@@ -548,7 +473,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   errorText: {
-    color: '#FF3B30',
+    color: COLORS.danger,
     fontSize: 12,
     marginTop: 4,
   },
@@ -595,7 +520,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 54,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -604,7 +529,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   inputWrapperError: {
-    borderColor: '#FF3B30',
+    borderColor: COLORS.danger,
     borderWidth: 1,
   },
   label: {
@@ -618,7 +543,7 @@ const styles = StyleSheet.create({
     height: 54,
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -626,8 +551,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+  loginButtonContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   loginButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -638,7 +567,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   passwordStrengthBar: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: COLORS.gray5,
     borderRadius: 2,
     height: 4,
     marginBottom: 4,
@@ -671,7 +600,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     height: 80,
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2,

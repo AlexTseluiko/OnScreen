@@ -1,6 +1,31 @@
 import { User as BaseUser } from './models';
 
-export type User = BaseUser;
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  bloodType?: string;
+  allergies?: string[];
+  chronicConditions?: string[];
+  medications?: string[];
+  emergencyContacts?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  }[];
+  firstName: string;
+  lastName: string;
+  role: 'PATIENT' | 'DOCTOR' | 'ADMIN';
+  phone?: string;
+  avatar?: string;
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  medicalHistory?: string[];
+  isVerified?: boolean;
+  isBlocked?: boolean;
+  password?: string;
+}
 
 export interface UserProfile extends User {
   birthDate?: string;

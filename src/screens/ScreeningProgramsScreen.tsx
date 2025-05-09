@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
@@ -49,6 +50,17 @@ interface ScreeningProgram {
   frequency: string;
   nextScreening?: string;
   category: string;
+  tests: ScreeningTest[];
+}
+
+interface ScreeningTest {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  preparation: string;
+  results: string;
 }
 
 const categories = [
@@ -122,6 +134,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
           ageRange: '18+',
           frequency: 'Раз в год',
           category: 'Общие',
+          tests: [],
         },
         // Добавьте другие программы по необходимости
       ];
@@ -182,14 +195,14 @@ export const ScreeningProgramsScreen: React.FC = () => {
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.95,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   };
 
   const handlePressOut = () => {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   };
 
@@ -486,9 +499,15 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 16,
     padding: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+        }
+      : {
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }),
   } as ViewStyle,
   programHeader: {
     alignItems: 'center',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View, TouchableOpacity, Text } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { default as MapView, Marker } from 'react-native-maps';
+import type { Region } from 'react-native-maps';
 import { API_KEYS } from '../constants/index';
 import { getMarkerColor } from '../utils/mapUtils';
 import { useTheme } from '../contexts/ThemeContext';
@@ -243,7 +244,7 @@ export const Map: React.FC<MapProps> = ({
     <View style={styles.container}>
       <MapView
         ref={mapRef}
-        provider={PROVIDER_GOOGLE}
+        provider="google"
         style={styles.map}
         region={region}
         showsUserLocation={showMyLocation}
@@ -346,16 +347,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 8,
     bottom: 20,
-    elevation: 3,
     marginBottom: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
     position: 'absolute',
     right: 20,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+        }
+      : {
+          elevation: 3,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }),
   },
   myLocationButtonText: {
     color: COLORS.primary,
@@ -365,17 +372,23 @@ const styles = StyleSheet.create({
   webFiltersContainer: {
     backgroundColor: COLORS.white,
     borderRadius: 8,
-    elevation: 5,
     maxWidth: 300,
     padding: 10,
     position: 'absolute',
     right: 10,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
     top: 10,
     zIndex: 10,
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
+        }
+      : {
+          elevation: 5,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+        }),
   },
 });
 

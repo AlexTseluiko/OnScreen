@@ -1,155 +1,254 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { COLORS } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/AppNavigator';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { DefaultAvatar } from '../components/DefaultAvatar';
-import { COLORS } from '../constants';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
-
-type MenuItem = {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-  color?: string;
-};
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ProfileScreen: React.FC = () => {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
-  const { user, logout } = useAuth();
-  const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const navigation = useNavigation<NavigationProp>();
+  const [, setIsEditing] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      setIsLoading(true);
-      await logout();
-      navigation.replace('Login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert(t('common.error'), t('profile.logoutError'), [{ text: t('common.ok') }]);
-    } finally {
-      setIsLoading(false);
+  const handleEditProfile = () => {
+    setIsEditing(true);
+    // Здесь будет логика редактирования профиля
+  };
+
+  const handleViewMedicalCard = () => {
+    navigation.navigate('MedicalCard');
+  };
+
+  const handleViewSchedule = () => {
+    // Временно перенаправляем на Home, пока не создадим экран Schedule
+    navigation.navigate('Home');
+  };
+
+  const handleViewPatients = () => {
+    // Временно перенаправляем на Home, пока не создадим экран Patients
+    navigation.navigate('Home');
+  };
+
+  const handleViewStatistics = () => {
+    // Временно перенаправляем на Home, пока не создадим экран Statistics
+    navigation.navigate('Home');
+  };
+
+  const handleChangePassword = () => {
+    navigation.navigate('ChangePassword');
+  };
+
+  const renderDoctorActions = () => (
+    <>
+      <TouchableOpacity style={styles.actionButton} onPress={handleViewSchedule}>
+        <Ionicons name="calendar" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Расписание приёмов</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={handleViewPatients}>
+        <Ionicons name="people" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Мои пациенты</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={handleViewStatistics}>
+        <Ionicons name="stats-chart" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Статистика</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="time" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>График работы</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="star" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Отзывы пациентов</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="document-text" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>История консультаций</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="folder" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Документы и сертификаты</Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderPatientActions = () => (
+    <>
+      <TouchableOpacity style={styles.actionButton} onPress={handleViewMedicalCard}>
+        <Ionicons name="medical" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Медицинская карта</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="time" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>История посещений</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="calendar" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Предстоящие записи</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="heart" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Избранные врачи</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => navigation.navigate('Notifications')}
+      >
+        <Ionicons name="notifications" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Уведомления о приёмах</Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderAdminActions = () => (
+    <>
+      <TouchableOpacity style={styles.actionButton} onPress={handleViewStatistics}>
+        <Ionicons name="stats-chart" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Статистика системы</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => navigation.navigate('AdminUsers')}
+      >
+        <Ionicons name="people" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Управление пользователями</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.actionButton}
+        onPress={() => navigation.navigate('DoctorRequests')}
+      >
+        <Ionicons name="document-text" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Заявки врачей</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="business" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Управление клиниками</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Settings')}>
+        <Ionicons name="settings" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Настройка системы</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="list" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Логи действий</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Home')}>
+        <Ionicons name="bar-chart" size={24} color={COLORS.light.primary} />
+        <Text style={styles.actionButtonText}>Отчеты</Text>
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderRoleSpecificActions = () => {
+    switch (user?.role) {
+      case 'DOCTOR':
+        return renderDoctorActions();
+      case 'ADMIN':
+        return renderAdminActions();
+      default:
+        return renderPatientActions();
     }
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      title: t('profile.changePassword'),
-      icon: 'lock-closed-outline',
-      onPress: () => navigation.navigate('ChangePassword'),
-    },
-    {
-      title: t('profile.settings'),
-      icon: 'settings-outline',
-      onPress: () => navigation.navigate('Settings'),
-    },
-    {
-      title: t('profile.logout'),
-      icon: 'log-out-outline',
-      onPress: handleLogout,
-      color: theme.colors.error,
-    },
-  ];
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.colors.card }]}>
-        <View style={styles.profileInfo}>
-          <DefaultAvatar size={80} />
-          <View style={styles.userInfo}>
-            <Text style={[styles.name, { color: theme.colors.text }]}>
-              {user ? `${user.firstName} ${user.lastName}` : t('common.user')}
-            </Text>
-            <Text style={[styles.email, { color: theme.colors.textSecondary }]}>{user?.email}</Text>
-          </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{ uri: user?.avatar || require('../assets/images/default-avatar.png') }}
+            style={styles.avatar}
+          />
+          <TouchableOpacity style={styles.editAvatarButton} onPress={handleEditProfile}>
+            <Ionicons name="camera" size={20} color={COLORS.light.whiteBackground} />
+          </TouchableOpacity>
         </View>
+        <Text style={styles.name}>{`${user?.firstName} ${user?.lastName}`}</Text>
+        <Text style={styles.role}>
+          {user?.role === 'DOCTOR' ? 'Врач' : user?.role === 'ADMIN' ? 'Администратор' : 'Пациент'}
+        </Text>
+        {user?.role === 'DOCTOR' && <Text style={styles.specialty}>Специальность не указана</Text>}
       </View>
 
-      <ScrollView style={styles.content}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.menuItem, { backgroundColor: theme.colors.card }]}
-            onPress={item.onPress}
-            disabled={isLoading}
-          >
-            <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '20' }]}>
-              <Ionicons name={item.icon} size={24} color={item.color || theme.colors.primary} />
-            </View>
-            <Text style={[styles.menuItemText, { color: item.color || theme.colors.text }]}>
-              {item.title}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={theme.colors.textSecondary}
-              style={styles.chevron}
-            />
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleEditProfile}>
+          <Ionicons name="create" size={24} color={COLORS.light.primary} />
+          <Text style={styles.actionButtonText}>Редактировать профиль</Text>
+        </TouchableOpacity>
+
+        {renderRoleSpecificActions()}
+
+        <TouchableOpacity style={styles.actionButton} onPress={handleChangePassword}>
+          <Ionicons name="key" size={24} color={COLORS.light.primary} />
+          <Text style={styles.actionButtonText}>Сменить пароль</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  chevron: {
-    marginLeft: 8,
-  },
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  email: {
-    fontSize: 14,
-  },
-  header: {
-    borderBottomColor: COLORS.lightGray,
-    borderBottomWidth: 1,
-    padding: 20,
-    paddingTop: 48,
-  },
-  iconContainer: {
+  actionButton: {
     alignItems: 'center',
-    borderRadius: 24,
-    height: 48,
-    justifyContent: 'center',
-    marginRight: 16,
-    width: 48,
-  },
-  menuItem: {
-    alignItems: 'center',
+    backgroundColor: COLORS.light.whiteBackground,
     borderRadius: 12,
     flexDirection: 'row',
     marginBottom: 12,
     padding: 16,
   },
-  menuItemText: {
-    flex: 1,
+  actionButtonText: {
+    color: COLORS.light.text,
     fontSize: 16,
-    fontWeight: '500',
+    marginLeft: 12,
+  },
+  avatar: {
+    borderRadius: 50,
+    height: 100,
+    width: 100,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  container: {
+    backgroundColor: COLORS.light.background,
+    flex: 1,
+  },
+  editAvatarButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.light.primary,
+    borderRadius: 20,
+    bottom: 0,
+    height: 40,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 0,
+    width: 40,
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: COLORS.light.whiteBackground,
+    padding: 20,
   },
   name: {
+    color: COLORS.light.text,
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginTop: 16,
   },
-  profileInfo: {
-    alignItems: 'center',
-    flexDirection: 'row',
+  role: {
+    color: COLORS.light.primary,
+    fontSize: 18,
+    marginTop: 8,
   },
-  userInfo: {
-    marginLeft: 16,
+  section: {
+    padding: 16,
+  },
+  specialty: {
+    color: COLORS.light.textSecondary,
+    fontSize: 16,
+    marginTop: 4,
   },
 });
 

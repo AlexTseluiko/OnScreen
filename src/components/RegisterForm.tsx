@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { RegisterData } from '../types/user';
 import { COLORS } from '../constants/colors';
-import { showToast } from '../utils/toast.android';
+import { showToast } from '../utils/toast';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

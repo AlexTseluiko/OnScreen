@@ -1,5 +1,31 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { COLORS } from './colors';
+
+const shadowStyle = Platform.select({
+  web: {
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+  },
+  default: {
+    elevation: 3,
+    shadowColor: COLORS.shadow.light,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+});
+
+const shadowStyleDark = Platform.select({
+  web: {
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)',
+  },
+  default: {
+    elevation: 3,
+    shadowColor: COLORS.shadow.dark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+});
 
 export const commonStyles = StyleSheet.create({
   // Контейнеры
@@ -25,24 +51,16 @@ export const commonStyles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.background.card.light,
     borderRadius: 8,
-    elevation: 3,
     marginVertical: 8,
     padding: 16,
-    shadowColor: COLORS.shadow.light,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...shadowStyle,
   },
   cardDark: {
     backgroundColor: COLORS.background.card.dark,
     borderRadius: 8,
-    elevation: 3,
     marginVertical: 8,
     padding: 16,
-    shadowColor: COLORS.shadow.dark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    ...shadowStyleDark,
   },
   container: {
     backgroundColor: COLORS.background.light,

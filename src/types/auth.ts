@@ -1,9 +1,10 @@
 import { User as BaseUser } from './models';
 
 export enum UserRole {
-  PATIENT = 'PATIENT',
-  DOCTOR = 'DOCTOR',
-  ADMIN = 'ADMIN',
+  ADMIN = 'admin',
+  DOCTOR = 'doctor',
+  PATIENT = 'patient',
+  CLINIC = 'clinic',
 }
 
 export type User = BaseUser;
@@ -11,7 +12,6 @@ export type User = BaseUser;
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -33,11 +33,8 @@ export interface RegisterData {
 export interface AuthResponse {
   success: boolean;
   message?: string;
-  data?: {
-    user: User;
-    token: string;
-    refreshToken: string;
-  };
+  token?: string;
+  user?: User;
 }
 
 export interface LoginRequest {
@@ -50,4 +47,22 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+}
+
+export interface LoginResponse {
+  user: User;
+  token: string;
+  refreshToken: string;
+}
+
+export interface UserData {
+  id: string;
+  email: string;
+  role: UserRole;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  createdAt: string;
+  updatedAt: string;
+  refreshToken: string;
 }

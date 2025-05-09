@@ -1,4 +1,3 @@
-import { PerformanceObserver, performance } from 'perf_hooks';
 import { logger } from './logger';
 
 export interface PerformanceMetric {
@@ -14,19 +13,7 @@ class PerformanceMonitor {
   private readonly MAX_METRICS = 1000;
 
   private constructor() {
-    const observer = new PerformanceObserver(list => {
-      const entries = list.getEntries();
-      entries.forEach(entry => {
-        this.addMetric({
-          name: entry.name,
-          duration: entry.duration,
-          timestamp: entry.startTime,
-          metadata: entry.detail as Record<string, unknown>,
-        });
-      });
-    });
-
-    observer.observe({ entryTypes: ['measure'] });
+    // В браузере нет PerformanceObserver для measure, поэтому просто инициализируем монитор
   }
 
   public static getInstance(): PerformanceMonitor {

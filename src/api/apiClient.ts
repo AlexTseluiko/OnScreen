@@ -15,6 +15,32 @@ import { Article } from '../types/article';
 import { Clinic } from '../types/clinic';
 import { performanceMonitor } from '../utils/performance';
 
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Добавляем перехватчик для обработки ошибок
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response) {
+      // Ошибка от сервера
+      return Promise.reject(new Error(error.response.data.message || 'Ошибка сервера'));
+    } else if (error.request) {
+      // Ошибка сети
+      return Promise.reject(new Error('Ошибка сети'));
+    } else {
+      // Другие ошибки
+      return Promise.reject(error);
+    }
+  }
+);
+
 export class ApiError extends Error {
   status: number;
   data: Record<string, unknown>;
@@ -219,5 +245,3 @@ export class ApiClientImpl implements ApiClient {
     return this.post('/auth/logout');
   }
 }
-
-export const apiClient = new ApiClientImpl();

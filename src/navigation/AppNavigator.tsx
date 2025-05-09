@@ -13,7 +13,7 @@ import { ChatScreen } from '../screens/ChatScreen';
 import { ScreeningProgramsScreen } from '../screens/ScreeningProgramsScreen';
 import { ClinicDetailsScreen } from '../screens/ClinicDetailsScreen';
 import { FeedbackScreen } from '../screens/FeedbackScreen';
-import { View, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,7 +25,7 @@ import { ResetPasswordScreen } from '../screens/ResetPasswordScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { MedicalCardScreen } from '../screens/MedicalCardScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -49,6 +49,7 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   Favorites: undefined;
   Notifications: undefined;
+  MedicalCard: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -76,28 +77,6 @@ export const AppNavigator: React.FC = () => {
     }
   }, [authLoading, user]);
 
-  useEffect(() => {
-    if (!authLoading) {
-      console.log(
-        'Статус авторизации изменился. Пользователь:',
-        user ? 'авторизован' : 'не авторизован'
-      );
-
-      if (!user && !isLoading) {
-        console.log('Пользователь не авторизован, перенаправление на экран входа');
-      }
-    }
-  }, [user, authLoading, isLoading]);
-
-  const checkAdminAccess = (navigation: StackNavigationProp<RootStackParamList>) => {
-    if (!user || user.role !== 'ADMIN') {
-      Alert.alert('Доступ запрещен', 'У вас нет прав для доступа к этому разделу');
-      navigation.goBack();
-      return false;
-    }
-    return true;
-  };
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -113,6 +92,14 @@ export const AppNavigator: React.FC = () => {
         screenOptions={{
           headerStyle: {
             backgroundColor: '#007AFF',
+            elevation: 4,
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
@@ -122,168 +109,165 @@ export const AppNavigator: React.FC = () => {
           headerBackImage: () => <Ionicons name="chevron-back" size={24} color="white" />,
         }}
       >
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{
-            title: t('auth.login'),
-          }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-          options={{
-            title: t('auth.register'),
-          }}
-        />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPasswordScreen}
-          options={{
-            title: t('auth.forgotPasswordTitle'),
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="ResetPassword"
-          component={ResetPasswordScreen}
-          options={{
-            title: t('auth.resetPasswordTitle'),
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Facilities"
-          component={FacilitiesScreen}
-          options={{
-            title: t('facilities'),
-          }}
-        />
-        <Stack.Screen
-          name="FacilitiesMap"
-          component={FacilitiesMapScreen}
-          options={{
-            title: t('facilitiesMap'),
-          }}
-        />
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{
-            title: t('profile.title'),
-          }}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{
-            title: t('settings.title'),
-          }}
-        />
-        <Stack.Screen
-          name="Articles"
-          component={ArticlesScreen}
-          options={{
-            title: t('articles'),
-          }}
-        />
-        <Stack.Screen
-          name="Chat"
-          component={ChatScreen}
-          options={{
-            title: t('chat'),
-          }}
-        />
-        <Stack.Screen
-          name="ScreeningPrograms"
-          component={ScreeningProgramsScreen}
-          options={{
-            title: t('screeningPrograms'),
-          }}
-        />
-        <Stack.Screen
-          name="ClinicDetails"
-          component={ClinicDetailsScreen}
-          options={{
-            title: t('clinic.details'),
-          }}
-        />
-        <Stack.Screen
-          name="Feedback"
-          component={FeedbackScreen}
-          options={{
-            title: t('feedback.title'),
-          }}
-        />
-        <Stack.Screen
-          name="EmergencyAIAssistant"
-          component={EmergencyAIAssistantScreen}
-          options={{
-            title: t('emergency'),
-          }}
-        />
-        <Stack.Screen
-          name="AdminUsers"
-          component={AdminUsersScreen}
-          options={{
-            title: t('admin.users'),
-          }}
-          listeners={({ navigation }) => ({
-            beforeRemove: e => {
-              if (!checkAdminAccess(navigation)) {
-                e.preventDefault();
-              }
-            },
-            focus: () => {
-              checkAdminAccess(navigation);
-            },
-          })}
-        />
-        <Stack.Screen
-          name="DoctorRequests"
-          component={DoctorRequestsScreen}
-          options={{
-            title: t('admin.doctorRequests'),
-          }}
-          listeners={({ navigation }) => ({
-            beforeRemove: e => {
-              if (!checkAdminAccess(navigation)) {
-                e.preventDefault();
-              }
-            },
-            focus: () => {
-              checkAdminAccess(navigation);
-            },
-          })}
-        />
-        <Stack.Screen
-          name="ChangePassword"
-          component={ChangePasswordScreen}
-          options={{
-            title: t('changePassword.title'),
-          }}
-        />
-        <Stack.Screen
-          name="Favorites"
-          component={FavoritesScreen}
-          options={{
-            title: t('favorites.title'),
-          }}
-        />
-        <Stack.Screen
-          name="Notifications"
-          component={NotificationsScreen}
-          options={{
-            title: t('notifications.title'),
-          }}
-        />
+        {!user ? (
+          // Неавторизованные экраны
+          <>
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{
+                title: t('auth.login'),
+              }}
+            />
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{
+                title: t('auth.register'),
+              }}
+            />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+              options={{
+                title: t('auth.forgotPasswordTitle'),
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
+              options={{
+                title: t('auth.resetPasswordTitle'),
+                headerShown: false,
+              }}
+            />
+          </>
+        ) : (
+          // Авторизованные экраны
+          <>
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="Facilities"
+              component={FacilitiesScreen}
+              options={{
+                title: t('facilities'),
+              }}
+            />
+            <Stack.Screen
+              name="FacilitiesMap"
+              component={FacilitiesMapScreen}
+              options={{
+                title: t('facilitiesMap'),
+              }}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{
+                title: t('profile.title'),
+              }}
+            />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{
+                title: t('settings.title'),
+              }}
+            />
+            <Stack.Screen
+              name="Articles"
+              component={ArticlesScreen}
+              options={{
+                title: t('articles'),
+              }}
+            />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={{
+                title: t('chat'),
+              }}
+            />
+            <Stack.Screen
+              name="ScreeningPrograms"
+              component={ScreeningProgramsScreen}
+              options={{
+                title: t('screeningPrograms'),
+              }}
+            />
+            <Stack.Screen
+              name="ClinicDetails"
+              component={ClinicDetailsScreen}
+              options={{
+                title: t('clinic.details'),
+              }}
+            />
+            <Stack.Screen
+              name="Feedback"
+              component={FeedbackScreen}
+              options={{
+                title: t('feedback.title'),
+              }}
+            />
+            <Stack.Screen
+              name="EmergencyAIAssistant"
+              component={EmergencyAIAssistantScreen}
+              options={{
+                title: t('emergency'),
+              }}
+            />
+            <Stack.Screen
+              name="AdminUsers"
+              component={AdminUsersScreen}
+              options={{
+                title: t('admin.users'),
+              }}
+            />
+            <Stack.Screen
+              name="DoctorRequests"
+              component={DoctorRequestsScreen}
+              options={{
+                title: t('admin.doctorRequests'),
+              }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{
+                title: t('changePassword.title'),
+              }}
+            />
+            <Stack.Screen
+              name="Favorites"
+              component={FavoritesScreen}
+              options={{
+                title: t('favorites.title'),
+              }}
+            />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={{
+                title: t('notifications.title'),
+              }}
+            />
+            <Stack.Screen
+              name="MedicalCard"
+              component={MedicalCardScreen}
+              options={{
+                title: t('navigation.medicalCard'),
+                headerShown: true,
+              }}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

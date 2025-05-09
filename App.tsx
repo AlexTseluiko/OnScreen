@@ -3,6 +3,8 @@ import { Provider } from 'react-redux';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store';
 import { ThemeProvider } from './src/theme/ThemeContext';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { UserStorageProvider } from './src/contexts/UserStorageContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
 const App = () => {
@@ -10,7 +12,11 @@ const App = () => {
     <Provider store={store}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AppNavigator />
+          <UserStorageProvider>
+            <AuthProvider>
+              <AppNavigator />
+            </AuthProvider>
+          </UserStorageProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </Provider>

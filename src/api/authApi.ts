@@ -1,6 +1,6 @@
 import { AuthResponse } from '../types/auth';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:5000/api';
 
 export const authApi = {
   async login(email: string, password: string): Promise<AuthResponse> {

@@ -8,11 +8,13 @@ const REFRESH_TOKEN_KEY = '@refreshToken';
 export const userStorage = {
   async saveUserData(user: User, token: string, refreshToken: string): Promise<void> {
     try {
+      console.log('Сохранение данных пользователя в AsyncStorage:', { user, token, refreshToken });
       await AsyncStorage.multiSet([
         [USER_KEY, JSON.stringify(user)],
         [TOKEN_KEY, token],
         [REFRESH_TOKEN_KEY, refreshToken],
       ]);
+      console.log('Данные пользователя успешно сохранены');
     } catch (error) {
       console.error('Ошибка при сохранении данных пользователя:', error);
       throw error;
@@ -21,7 +23,9 @@ export const userStorage = {
 
   async getUserData(): Promise<User | null> {
     try {
+      console.log('Получение данных пользователя из AsyncStorage');
       const userData = await AsyncStorage.getItem(USER_KEY);
+      console.log('Полученные данные пользователя:', userData);
       return userData ? JSON.parse(userData) : null;
     } catch (error) {
       console.error('Ошибка при получении данных пользователя:', error);
@@ -31,7 +35,10 @@ export const userStorage = {
 
   async getToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem(TOKEN_KEY);
+      console.log('Получение токена из AsyncStorage');
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+      console.log('Полученный токен:', token);
+      return token;
     } catch (error) {
       console.error('Ошибка при получении токена:', error);
       return null;
@@ -58,7 +65,7 @@ export const userStorage = {
 
   async isUserLoggedIn(): Promise<boolean> {
     try {
-      const token = await this.getToken();
+      const token = await userStorage.getToken();
       return !!token;
     } catch (error) {
       console.error('Ошибка при проверке авторизации:', error);

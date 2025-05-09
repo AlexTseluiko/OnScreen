@@ -5,23 +5,22 @@ export const COLORS = {
   success: '#34C759',
   danger: '#FF3B30',
   warning: '#FF9500',
-  info: '#5856D6',
+  info: '#5AC8FA',
+  light: '#F2F2F7',
+  dark: '#1C1C1E',
 
   // Нейтральные цвета
   white: '#FFFFFF',
   black: '#000000',
+  gray: '#8E8E93',
+  gray2: '#AEAEB2',
+  gray3: '#C7C7CC',
+  gray4: '#D1D1D6',
+  gray5: '#E5E5EA',
+  gray6: '#F2F2F7',
+  error: '#FF3B30',
   whiteTransparent: 'rgba(255, 255, 255, 0.8)',
-  gray: {
-    100: '#F5F5F5',
-    200: '#EEEEEE',
-    300: '#E0E0E0',
-    400: '#BDBDBD',
-    500: '#9E9E9E',
-    600: '#757575',
-    700: '#616161',
-    800: '#424242',
-    900: '#212121',
-  },
+
   // Фоновые цвета
   background: {
     light: '#FFFFFF',
@@ -48,10 +47,8 @@ export const COLORS = {
     dark: '#38383A',
   },
   // Тени
-  shadow: {
-    light: 'rgba(0, 0, 0, 0.1)',
-    dark: 'rgba(0, 0, 0, 0.3)',
-  },
+  shadow: '#000000',
+  overlay: 'rgba(0, 0, 0, 0.1)',
   // Состояния
   states: {
     hover: 'rgba(0, 0, 0, 0.04)',
@@ -59,6 +56,5 @@ export const COLORS = {
     disabled: 'rgba(0, 0, 0, 0.12)',
   },
   // Специальные цвета
-  overlay: 'rgba(0, 0, 0, 0.5)',
   transparent: 'transparent',
 } as const;
