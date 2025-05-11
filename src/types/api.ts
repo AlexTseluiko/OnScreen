@@ -10,9 +10,10 @@ export interface PaginationData {
 }
 
 export interface ApiResponse<T> {
-  status: 'success' | 'error';
+  success: boolean;
   data: T;
   message?: string;
+  error?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -67,8 +68,12 @@ export interface UsersResponse {
 
 export interface ArticlesResponse {
   articles: Article[];
-  pagination: PaginationData;
-  categories?: string[];
+  pagination?: {
+    total: number;
+    pages: number;
+    page: number;
+    limit: number;
+  };
 }
 
 export interface ClinicsResponse {
@@ -79,4 +84,12 @@ export interface ClinicsResponse {
 export interface CreateReviewParams {
   rating: number;
   comment: string;
+}
+
+export interface GetArticlesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  sortBy?: string;
 }

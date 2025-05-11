@@ -63,7 +63,52 @@ export interface CacheItem<T> {
 
 export interface PerformanceMetric {
   name: string;
-  duration: number;
-  timestamp: number;
-  metadata?: Record<string, any>;
+  value: number;
+  unit?: string;
+  timestamp: Date;
+  metadata?: Record<string, unknown>;
+}
+
+// Базовые типы для API ответов
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+// Типы для ошибок
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+// Типы для пагинации
+export interface PaginationParams {
+  page: number;
+  limit: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+// Типы для фильтрации
+export interface FilterParams {
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  filters?: Record<string, unknown>;
+}
+
+// Типы для метаданных
+export interface MetaData {
+  createdAt: string;
+  updatedAt: string;
+  version: number;
 }

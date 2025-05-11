@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,11 +17,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '../api/apiClient';
+import { articlesApi } from '../api/articlesApi';
 import { Article } from '../types/article';
-import { ApiResponse, ArticlesResponse } from '../types/api';
+import { COLORS } from '../theme/colors';
 
 type SortOption = 'date' | 'likes' | 'comments';
+
+const INACTIVE_CATEGORY_COLOR = '#E3EFFF';
+const TRANSPARENT_PRIMARY_COLOR = 'rgba(0, 122, 255, 0.2)';
+const MODAL_OVERLAY_COLOR = 'rgba(0, 0, 0, 0.5)';
+const TRANSPARENT_COLOR = 'transparent';
 
 export const ArticlesScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -51,19 +56,15 @@ export const ArticlesScreen: React.FC = () => {
       }
 
       try {
-        const params: any = { page };
+        const params = {
+          page,
+          limit: 10,
+          search: searchQuery || undefined,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          sortBy,
+        };
 
-        if (searchQuery) {
-          params.search = searchQuery;
-        }
-
-        if (selectedCategory !== 'all') {
-          params.category = selectedCategory;
-        }
-
-        const response = (await apiClient.getArticles(
-          params
-        )) as unknown as ApiResponse<ArticlesResponse>;
+        const response = await articlesApi.getArticles(params);
 
         if (response?.data?.articles) {
           const articlesWithBookmarks = response.data.articles.map(article => ({
@@ -82,11 +83,15 @@ export const ArticlesScreen: React.FC = () => {
 
           // Загружаем категории, если это первая загрузка
           if (categories.length === 1) {
-            const uniqueCategories = [
-              'all',
-              ...new Set(response.data.articles.map(article => article.category)),
-            ];
-            setCategories(uniqueCategories);
+            try {
+              const categoriesResponse = await articlesApi.getCategories();
+              if (categoriesResponse?.data?.categories) {
+                const uniqueCategories = ['all', ...categoriesResponse.data.categories];
+                setCategories(uniqueCategories);
+              }
+            } catch (catError) {
+              console.error('Ошибка при загрузке категорий:', catError);
+            }
           }
         }
 
@@ -100,7 +105,7 @@ export const ArticlesScreen: React.FC = () => {
         setRefreshing(false);
       }
     },
-    [searchQuery, selectedCategory, categories.length, t]
+    [searchQuery, selectedCategory, sortBy, categories.length, t]
   );
 
   // Загружаем статьи при первом рендере
@@ -122,10 +127,10 @@ export const ArticlesScreen: React.FC = () => {
       case 'date':
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'likes':
-        // Для нашего API у нас пока нет счетчика лайков, поэтому оставляем по дате
+        // Если в API нет счетчика лайков, оставляем сортировку по дате
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'comments':
-        // Для нашего API у нас пока нет счетчика комментариев, поэтому оставляем по дате
+        // Если в API нет счетчика комментариев, оставляем сортировку по дате
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       default:
         return 0;
@@ -150,12 +155,17 @@ export const ArticlesScreen: React.FC = () => {
     fetchArticles(1, true);
   }, [fetchArticles]);
 
-  const toggleBookmark = (articleId: string) => {
-    setArticles(prevArticles =>
-      prevArticles.map(article =>
-        article._id === articleId ? { ...article, isBookmarked: !article.isBookmarked } : article
-      )
-    );
+  const toggleBookmark = async (articleId: string) => {
+    try {
+      await articlesApi.toggleBookmark(articleId);
+      setArticles(prevArticles =>
+        prevArticles.map(article =>
+          article._id === articleId ? { ...article, isBookmarked: !article.isBookmarked } : article
+        )
+      );
+    } catch (error) {
+      console.error('Ошибка при изменении закладки:', error);
+    }
   };
 
   const loadMoreArticles = () => {
@@ -223,6 +233,25 @@ export const ArticlesScreen: React.FC = () => {
     </Animated.View>
   );
 
+  const renderSortOption = (option: SortOption, label: string) => (
+    <TouchableOpacity
+      style={styles.sortOption}
+      onPress={() => {
+        setSortBy(option);
+        setShowSortModal(false);
+      }}
+    >
+      <View style={styles.sortOptionRow}>
+        <Text style={[styles.sortOptionText, { color: theme.colors.text }]}>{label}</Text>
+        <View style={sortBy === option ? styles.selectedSortOption : styles.transparentBackground}>
+          {sortBy === option && (
+            <Ionicons name="checkmark" size={18} color={theme.colors.primary} />
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.card }]}>
@@ -248,16 +277,16 @@ export const ArticlesScreen: React.FC = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.categoriesContainer}
+        contentContainerStyle={styles.categoriesContent}
       >
         {categories.map(category => (
           <TouchableOpacity
             key={category}
             style={[
               styles.categoryButton,
-              {
-                backgroundColor:
-                  selectedCategory === category ? theme.colors.primary : theme.colors.card,
-              },
+              selectedCategory === category
+                ? styles.activeCategoryButton
+                : styles.inactiveCategoryButton,
             ]}
             onPress={() => setSelectedCategory(category)}
           >
@@ -265,32 +294,43 @@ export const ArticlesScreen: React.FC = () => {
               style={[
                 styles.categoryButtonText,
                 {
-                  color: selectedCategory === category ? theme.colors.white : theme.colors.text,
+                  color: selectedCategory === category ? theme.colors.white : theme.colors.primary,
                 },
               ]}
             >
-              {category === 'all' ? t('allCategories') : category}
+              {category === 'all' ? t('articles.allCategories') : category}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       {loading && !refreshing ? (
-        <View style={styles.loadingContainer}>
+        <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
+          <Ionicons name="alert-circle" size={48} color={theme.colors.error} />
           <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-            onPress={() => fetchArticles(1, true)}
+            onPress={onRefresh}
           >
             <Text style={[styles.retryButtonText, { color: theme.colors.white }]}>
-              {t('retry')}
+              {t('common.retry')}
             </Text>
           </TouchableOpacity>
+        </View>
+      ) : filteredArticles.length === 0 ? (
+        <View style={styles.noResultsContainer}>
+          <Ionicons name="document-text-outline" size={64} color={theme.colors.textSecondary} />
+          <Text style={[styles.noResultsText, { color: theme.colors.textSecondary }]}>
+            {searchQuery
+              ? t('articles.noSearchResults')
+              : selectedCategory !== 'all'
+                ? t('articles.noCategoryResults')
+                : t('articles.noArticles')}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -302,35 +342,27 @@ export const ArticlesScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.colors.primary}
+              colors={[COLORS.palette.primary]}
             />
           }
           onEndReached={loadMoreArticles}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
           ListFooterComponent={
-            currentPage < totalPages && !loading ? (
+            currentPage < totalPages ? (
               <ActivityIndicator
+                style={styles.footerLoader}
                 size="small"
                 color={theme.colors.primary}
-                style={styles.footerLoader}
               />
             ) : null
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="newspaper-outline" size={48} color={theme.colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                {t('noArticlesFound')}
-              </Text>
-            </View>
           }
         />
       )}
 
       <Modal
-        visible={showSortModal}
+        animationType="slide"
         transparent
-        animationType="fade"
+        visible={showSortModal}
         onRequestClose={() => setShowSortModal(false)}
       >
         <TouchableOpacity
@@ -338,52 +370,28 @@ export const ArticlesScreen: React.FC = () => {
           activeOpacity={1}
           onPress={() => setShowSortModal(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>{t('sortBy')}</Text>
-            {(['date', 'likes', 'comments'] as SortOption[]).map(option => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.sortOption,
-                  {
-                    backgroundColor:
-                      sortBy === option ? theme.colors.primary + '20' : 'transparent',
-                  },
-                ]}
-                onPress={() => {
-                  setSortBy(option);
-                  setShowSortModal(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.sortOptionText,
-                    {
-                      color: sortBy === option ? theme.colors.primary : theme.colors.text,
-                    },
-                  ]}
-                >
-                  {t(option)}
-                </Text>
-                {sortBy === option && (
-                  <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
+          <View style={[styles.sortModalContainer, { backgroundColor: theme.colors.card }]}>
+            <Text style={[styles.sortModalTitle, { color: theme.colors.text }]}>
+              {t('articles.sortBy')}
+            </Text>
+            {renderSortOption('date', t('articles.sortByDate'))}
+            {renderSortOption('likes', t('articles.sortByLikes'))}
+            {renderSortOption('comments', t('articles.sortByComments'))}
           </View>
         </TouchableOpacity>
       </Modal>
 
       <Modal
-        visible={showArticleModal}
         animationType="slide"
+        transparent={false}
+        visible={showArticleModal}
         onRequestClose={() => setShowArticleModal(false)}
       >
         {selectedArticle && (
           <View
             style={[styles.articleModalContainer, { backgroundColor: theme.colors.background }]}
           >
-            <View style={[styles.articleModalHeader, { backgroundColor: theme.colors.card }]}>
+            <View style={styles.articleModalHeader}>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setShowArticleModal(false)}
@@ -397,33 +405,57 @@ export const ArticlesScreen: React.FC = () => {
                 <Ionicons
                   name={selectedArticle.isBookmarked ? 'bookmark' : 'bookmark-outline'}
                   size={24}
-                  color={selectedArticle.isBookmarked ? theme.colors.primary : theme.colors.text}
+                  color={
+                    selectedArticle.isBookmarked ? theme.colors.primary : theme.colors.textSecondary
+                  }
                 />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.articleModalContent}>
+            <ScrollView
+              style={styles.articleModalContent}
+              contentContainerStyle={styles.articleModalContentContainer}
+            >
               <Image
-                source={{ uri: selectedArticle.imageUrl || 'https://picsum.photos/200/300' }}
+                source={{
+                  uri: selectedArticle.imageUrl || 'https://picsum.photos/400/200',
+                }}
                 style={styles.articleModalImage}
               />
-              <View style={styles.articleModalInfo}>
-                <Text style={[styles.articleModalTitle, { color: theme.colors.text }]}>
-                  {selectedArticle.title}
+              <View style={styles.articleModalCategoryContainer}>
+                <Text style={[styles.articleModalCategory, { color: theme.colors.primary }]}>
+                  {selectedArticle.category}
                 </Text>
-                <View style={styles.articleModalMeta}>
-                  <Text style={[styles.articleModalAuthor, { color: theme.colors.textSecondary }]}>
+              </View>
+              <Text style={[styles.articleModalTitle, { color: theme.colors.text }]}>
+                {selectedArticle.title}
+              </Text>
+              <View style={styles.articleModalMetadata}>
+                <View style={styles.articleModalAuthor}>
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={16}
+                    color={theme.colors.textSecondary}
+                  />
+                  <Text
+                    style={[styles.articleModalAuthorText, { color: theme.colors.textSecondary }]}
+                  >
                     {selectedArticle.author
                       ? `${selectedArticle.author.firstName} ${selectedArticle.author.lastName}`
                       : 'Автор не указан'}
                   </Text>
-                  <Text style={[styles.articleModalDate, { color: theme.colors.textSecondary }]}>
+                </View>
+                <View style={styles.articleModalDate}>
+                  <Ionicons name="time-outline" size={16} color={theme.colors.textSecondary} />
+                  <Text
+                    style={[styles.articleModalDateText, { color: theme.colors.textSecondary }]}
+                  >
                     {new Date(selectedArticle.createdAt).toLocaleDateString()}
                   </Text>
                 </View>
-                <Text style={[styles.articleModalText, { color: theme.colors.text }]}>
-                  {selectedArticle.content}
-                </Text>
               </View>
+              <Text style={[styles.articleModalContent, { color: theme.colors.text }]}>
+                {selectedArticle.content}
+              </Text>
             </ScrollView>
           </View>
         )}
@@ -433,12 +465,18 @@ export const ArticlesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  activeCategoryButton: {
+    backgroundColor: COLORS.palette.primary,
+  },
   articleCard: {
     borderRadius: 12,
-    elevation: 2,
+    elevation: 3,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: COLORS.palette.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
@@ -452,19 +490,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 8,
   },
   articleHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
   articleImage: {
-    height: 200,
-    resizeMode: 'cover',
+    height: 150,
     width: '100%',
   },
   articleModalAuthor: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginRight: 16,
+  },
+  articleModalAuthorText: {
     fontSize: 14,
+    marginLeft: 4,
+  },
+  articleModalCategory: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  articleModalCategoryContainer: {
+    marginBottom: 8,
   },
   articleModalContainer: {
     flex: 1,
@@ -472,40 +524,41 @@ const styles = StyleSheet.create({
   articleModalContent: {
     flex: 1,
   },
-  articleModalDate: {
-    fontSize: 14,
+  articleModalContentContainer: {
+    padding: 16,
+    paddingBottom: 32,
   },
-  articleModalHeader: {
+  articleModalDate: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-    paddingTop: 48,
   },
-  articleModalImage: {
-    height: 300,
-    resizeMode: 'cover',
-    width: '100%',
+  articleModalDateText: {
+    fontSize: 14,
+    marginLeft: 4,
   },
-  articleModalInfo: {
-    padding: 16,
-  },
-  articleModalMeta: {
+  articleModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    padding: 16,
   },
-  articleModalText: {
-    fontSize: 16,
-    lineHeight: 24,
+  articleModalImage: {
+    borderRadius: 12,
+    height: 200,
+    marginBottom: 16,
+    width: '100%',
+  },
+  articleModalMetadata: {
+    flexDirection: 'row',
+    marginBottom: 24,
   },
   articleModalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   articlesList: {
-    padding: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   author: {
     fontSize: 12,
@@ -519,7 +572,10 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   categoriesContainer: {
-    marginBottom: 16,
+    marginBottom: 8,
+    maxHeight: 50,
+  },
+  categoriesContent: {
     paddingHorizontal: 16,
   },
   category: {
@@ -528,7 +584,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   categoryButton: {
-    borderRadius: 20,
+    borderRadius: 16,
     marginRight: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -542,62 +598,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   closeButton: {
-    padding: 8,
+    padding: 4,
   },
   container: {
     flex: 1,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    marginTop: 16,
-    textAlign: 'center',
   },
   errorContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    padding: 32,
+    padding: 16,
   },
   errorText: {
     fontSize: 16,
+    marginBottom: 24,
     marginTop: 16,
     textAlign: 'center',
   },
   footerLoader: {
-    marginBottom: 16,
-    marginTop: 16,
+    marginVertical: 16,
   },
-  loadingContainer: {
+  inactiveCategoryButton: {
+    backgroundColor: INACTIVE_CATEGORY_COLOR,
+  },
+  loaderContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-  },
-  modalContent: {
-    borderRadius: 12,
-    padding: 16,
-    width: '80%',
   },
   modalOverlay: {
+    backgroundColor: MODAL_OVERLAY_COLOR,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  noResultsContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     flex: 1,
     justifyContent: 'center',
+    padding: 16,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
+  noResultsText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
   },
   retryButton: {
     borderRadius: 8,
-    marginTop: 16,
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   retryButtonText: {
     fontSize: 16,
@@ -605,31 +653,49 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     alignItems: 'center',
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 8,
     flexDirection: 'row',
+    height: 48,
     margin: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    paddingHorizontal: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     marginLeft: 8,
   },
+  selectedSortOption: {
+    backgroundColor: TRANSPARENT_PRIMARY_COLOR,
+  },
   sortButton: {
-    padding: 8,
+    marginLeft: 8,
+    padding: 4,
+  },
+  sortModalContainer: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    elevation: 5,
+    padding: 16,
+    shadowColor: COLORS.palette.black,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  sortModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
   },
   sortOption: {
+    paddingVertical: 12,
+  },
+  sortOptionRow: {
     alignItems: 'center',
-    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
-    padding: 12,
   },
   sortOptionText: {
     fontSize: 16,
@@ -644,12 +710,16 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   statsContainer: {
-    alignItems: 'center',
     flexDirection: 'row',
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  transparentBackground: {
+    backgroundColor: TRANSPARENT_COLOR,
   },
 });
+
+export default ArticlesScreen;

@@ -33,8 +33,10 @@ export interface RegisterData {
 export interface AuthResponse {
   success: boolean;
   message?: string;
+  user?: ApiUser;
   token?: string;
-  user?: User;
+  refreshToken?: string;
+  avatarUrl?: string;
 }
 
 export interface LoginRequest {

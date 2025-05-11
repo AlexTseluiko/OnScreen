@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
   ScrollView,
@@ -10,35 +9,13 @@ import {
   Modal,
   Animated,
   ActivityIndicator,
-  ViewStyle,
-  TextStyle,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface Theme {
-  colors: {
-    background: string;
-    border: string;
-    card: string;
-    error: string;
-    overlay: string;
-    primary: string;
-    shadow: string;
-    text: string;
-    textSecondary: string;
-    white: string;
-  };
-}
-
-interface DynamicStyles {
-  categoriesContainer: ViewStyle;
-  favoriteFilterButtonActive: ViewStyle;
-  modalContent: ViewStyle;
-}
+import styles, { getDynamicStyles } from './ScreeningProgramsScreen.styles';
 
 interface ScreeningProgram {
   id: string;
@@ -73,30 +50,6 @@ const categories = [
   'ЖКТ',
 ];
 
-const getDynamicStyles = (theme: Theme): DynamicStyles => ({
-  categoriesContainer: {
-    borderBottomColor: theme.colors.border,
-    borderBottomWidth: 1,
-    padding: 16,
-  },
-  favoriteFilterButtonActive: {
-    backgroundColor: theme.colors.error + '20',
-    borderRadius: 20,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.background,
-    borderRadius: 12,
-    elevation: 5,
-    maxHeight: 600,
-    padding: 20,
-    shadowColor: theme.colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    width: 350,
-  },
-});
-
 export const ScreeningProgramsScreen: React.FC = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -113,7 +66,20 @@ export const ScreeningProgramsScreen: React.FC = () => {
 
   const ageRanges = ['18+', '21-65', '40-69', '45-75', '50-70', '50-75', '55-80'];
 
-  const dynamicStyles = getDynamicStyles(theme);
+  const dynamicStyles = getDynamicStyles({
+    colors: {
+      background: theme.colors.background,
+      border: theme.colors.border || theme.colors.divider,
+      card: theme.colors.surface,
+      error: theme.colors.danger,
+      overlay: theme.colors.overlay,
+      primary: theme.colors.primary,
+      shadow: theme.colors.shadow,
+      text: theme.colors.text.primary,
+      textSecondary: theme.colors.text.secondary,
+      white: theme.colors.white,
+    },
+  });
 
   useEffect(() => {
     loadPrograms();
@@ -209,24 +175,26 @@ export const ScreeningProgramsScreen: React.FC = () => {
   const renderProgram = ({ item }: { item: ScreeningProgram }) => (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
-        style={[styles.programCard, { backgroundColor: theme.colors.card }]}
+        style={[styles.programCard, { backgroundColor: theme.colors.surface }]}
         onPress={() => setSelectedProgram(item)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
         <View style={styles.programHeader}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>{item.title}</Text>
+          <Text style={[styles.title, { color: theme.colors.text.primary }]}>{item.title}</Text>
           <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
             <Ionicons
               name={favoritePrograms.includes(item.id) ? 'heart' : 'heart-outline'}
               size={24}
               color={
-                favoritePrograms.includes(item.id) ? theme.colors.error : theme.colors.textSecondary
+                favoritePrograms.includes(item.id)
+                  ? theme.colors.danger
+                  : theme.colors.text.secondary
               }
             />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.description, { color: theme.colors.textSecondary }]}>
+        <Text style={[styles.description, { color: theme.colors.text.secondary }]}>
           {item.description}
         </Text>
         {item.nextScreening && (
@@ -248,37 +216,43 @@ export const ScreeningProgramsScreen: React.FC = () => {
       <View style={[styles.modal, { backgroundColor: theme.colors.overlay }]}>
         <View style={dynamicStyles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>
               {selectedProgram?.title}
             </Text>
             <TouchableOpacity onPress={() => setSelectedProgram(null)}>
-              <Ionicons name="close" size={24} color={theme.colors.text} />
+              <Ionicons name="close" size={24} color={theme.colors.text.primary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalBody}>
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Описание</Text>
-              <Text style={[styles.detailText, { color: theme.colors.text }]}>
+              <Text style={[styles.detailTitle, { color: theme.colors.text.primary }]}>
+                Описание
+              </Text>
+              <Text style={[styles.detailText, { color: theme.colors.text.primary }]}>
                 {selectedProgram?.details}
               </Text>
             </View>
 
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Факторы риска</Text>
+              <Text style={[styles.detailTitle, { color: theme.colors.text.primary }]}>
+                Факторы риска
+              </Text>
               {selectedProgram?.riskFactors.map((factor, index) => (
-                <Text key={index} style={[styles.riskFactor, { color: theme.colors.text }]}>
+                <Text key={index} style={[styles.riskFactor, { color: theme.colors.text.primary }]}>
                   • {factor}
                 </Text>
               ))}
             </View>
 
             <View style={styles.detailSection}>
-              <Text style={[styles.detailTitle, { color: theme.colors.text }]}>Рекомендации</Text>
-              <Text style={[styles.detailText, { color: theme.colors.text }]}>
+              <Text style={[styles.detailTitle, { color: theme.colors.text.primary }]}>
+                Рекомендации
+              </Text>
+              <Text style={[styles.detailText, { color: theme.colors.text.primary }]}>
                 Возраст: {selectedProgram?.ageRange}
               </Text>
-              <Text style={[styles.detailText, { color: theme.colors.text }]}>
+              <Text style={[styles.detailText, { color: theme.colors.text.primary }]}>
                 Частота: {selectedProgram?.frequency}
               </Text>
             </View>
@@ -290,7 +264,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
                 setSelectedProgram(null);
               }}
             >
-              <Text style={[styles.scheduleButtonText, { color: theme.colors.background }]}>
+              <Text style={[styles.scheduleButtonText, { color: theme.colors.white }]}>
                 Запланировать следующий скрининг
               </Text>
             </TouchableOpacity>
@@ -302,12 +276,17 @@ export const ScreeningProgramsScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.searchContainer, { borderColor: theme.colors.border }]}>
-        <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
+      <View
+        style={[
+          styles.searchContainer,
+          { borderColor: theme.colors.border || theme.colors.divider },
+        ]}
+      >
+        <Ionicons name="search" size={20} color={theme.colors.text.secondary} />
         <TextInput
-          style={[styles.searchInput, { color: theme.colors.text }]}
+          style={[styles.searchInput, { color: theme.colors.text.primary }]}
           placeholder={t('search.placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
+          placeholderTextColor={theme.colors.text.secondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -321,7 +300,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
           <Ionicons
             name={showFavorites ? 'heart' : 'heart-outline'}
             size={24}
-            color={showFavorites ? theme.colors.error : theme.colors.textSecondary}
+            color={showFavorites ? theme.colors.danger : theme.colors.text.secondary}
           />
         </TouchableOpacity>
       </View>
@@ -338,18 +317,17 @@ export const ScreeningProgramsScreen: React.FC = () => {
               styles.categoryButton,
               {
                 backgroundColor:
-                  selectedCategory === category ? theme.colors.primary : theme.colors.card,
+                  selectedCategory === category ? theme.colors.primary : theme.colors.surface,
               },
             ]}
             onPress={() => setSelectedCategory(category)}
           >
             <Text
-              style={[
-                styles.categoryButtonText,
-                {
-                  color: selectedCategory === category ? theme.colors.white : theme.colors.text,
-                },
-              ]}
+              style={{
+                ...styles.categoryButtonText,
+                color:
+                  selectedCategory === category ? theme.colors.white : theme.colors.text.primary,
+              }}
             >
               {category}
             </Text>
@@ -369,18 +347,16 @@ export const ScreeningProgramsScreen: React.FC = () => {
               styles.ageRangeButton,
               {
                 backgroundColor:
-                  selectedAge === ageRange ? theme.colors.primary : theme.colors.card,
+                  selectedAge === ageRange ? theme.colors.primary : theme.colors.surface,
               },
             ]}
             onPress={() => setSelectedAge(ageRange)}
           >
             <Text
-              style={[
-                styles.ageRangeButtonText,
-                {
-                  color: selectedAge === ageRange ? theme.colors.white : theme.colors.text,
-                },
-              ]}
+              style={{
+                ...styles.ageRangeButtonText,
+                color: selectedAge === ageRange ? theme.colors.white : theme.colors.text.primary,
+              }}
             >
               {ageRange}
             </Text>
@@ -388,7 +364,7 @@ export const ScreeningProgramsScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      {error && <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: theme.colors.danger }]}>{error}</Text>}
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -397,9 +373,16 @@ export const ScreeningProgramsScreen: React.FC = () => {
       ) : (
         <FlatList
           data={filteredPrograms}
-          renderItem={renderProgram}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.programsList}
+          renderItem={renderProgram}
+          style={styles.programsList}
+          contentContainerStyle={{ paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={[styles.errorText, { color: theme.colors.text.secondary }]}>
+              {t('screening.noPrograms')}
+            </Text>
+          }
         />
       )}
 
@@ -407,149 +390,3 @@ export const ScreeningProgramsScreen: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  ageRangeButton: {
-    borderRadius: 20,
-    marginRight: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  } as ViewStyle,
-  ageRangeButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  } as TextStyle,
-  ageRangesContainer: {
-    padding: 16,
-  } as ViewStyle,
-  categoryButton: {
-    borderRadius: 20,
-    marginRight: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  } as ViewStyle,
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  } as TextStyle,
-  container: {
-    flex: 1,
-    padding: 16,
-  } as ViewStyle,
-  description: {
-    fontSize: 14,
-    marginBottom: 8,
-  } as TextStyle,
-  detailSection: {
-    marginBottom: 20,
-  } as ViewStyle,
-  detailText: {
-    fontSize: 16,
-    marginBottom: 4,
-  } as TextStyle,
-  detailTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  } as TextStyle,
-  errorText: {
-    fontSize: 14,
-    margin: 16,
-    textAlign: 'center',
-  } as TextStyle,
-  favoriteFilterButton: {
-    marginLeft: 8,
-    padding: 8,
-  } as ViewStyle,
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  } as ViewStyle,
-  modal: {
-    alignItems: 'center',
-    bottom: 0,
-    flex: 1,
-    justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  } as ViewStyle,
-  modalBody: {
-    flex: 1,
-  } as ViewStyle,
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  } as ViewStyle,
-  modalTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
-  } as TextStyle,
-  nextScreeningText: {
-    fontSize: 14,
-    fontWeight: '500',
-  } as TextStyle,
-  programCard: {
-    borderRadius: 12,
-    elevation: 4,
-    marginBottom: 16,
-    padding: 16,
-    ...(Platform.OS === 'web'
-      ? {
-          boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
-        }
-      : {
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-        }),
-  } as ViewStyle,
-  programHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  } as ViewStyle,
-  programsList: {
-    padding: 16,
-  } as ViewStyle,
-  riskFactor: {
-    fontSize: 16,
-    marginBottom: 4,
-    paddingLeft: 8,
-  } as TextStyle,
-  scheduleButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    marginTop: 16,
-    padding: 16,
-  } as ViewStyle,
-  scheduleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  } as TextStyle,
-  searchContainer: {
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    flexDirection: 'row',
-    marginBottom: 16,
-    paddingHorizontal: 12,
-  } as ViewStyle,
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 8,
-    padding: 8,
-  } as TextStyle,
-  title: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-  } as TextStyle,
-});

@@ -1,253 +1,318 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { appointmentsApi, Appointment, AppointmentStatus } from '../api/appointments';
+import { useTheme } from '../theme/ThemeContext';
 
-interface Appointment {
-  id: string;
-  doctorName: string;
-  specialty: string;
-  date: string;
-  time: string;
-  clinicName: string;
-  address: string;
-  type: 'online' | 'offline';
-}
+// Импорт атомарных компонентов
+import { Text } from '../components/ui/atoms/Text';
+import { Button } from '../components/ui/atoms/Button';
+import { Card } from '../components/ui/molecules/Card';
+import { Icon } from '../components/ui/atoms/Icon';
+import { Badge } from '../components/ui/atoms/Badge';
+import { Spinner } from '../components/ui/atoms/Spinner';
 
 const UpcomingAppointmentsScreen: React.FC = () => {
-  useAuth();
-  const [appointments] = useState<Appointment[]>([
-    {
-      id: '1',
-      doctorName: 'Доктор Иванов',
-      specialty: 'Терапевт',
-      date: '20.03.2024',
-      time: '10:00',
-      clinicName: 'Медицинский центр "Здоровье"',
-      address: 'ул. Ленина, 10',
-      type: 'offline',
-    },
-    {
-      id: '2',
-      doctorName: 'Доктор Петрова',
-      specialty: 'Кардиолог',
-      date: '22.03.2024',
-      time: '15:30',
-      clinicName: 'Клиника "Кардио"',
-      address: 'ул. Пушкина, 5',
-      type: 'online',
-    },
-  ]);
+  const { theme } = useTheme();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCancelAppointment = (id: string) => {
-    // Здесь будет логика отмены приема
-    console.log('Отмена приема:', id);
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await appointmentsApi.getUserAppointments();
+      // Фильтруем и показываем только предстоящие приемы (PENDING, CONFIRMED)
+      const upcomingAppointments = data.filter(
+        app =>
+          app.status === AppointmentStatus.PENDING || app.status === AppointmentStatus.CONFIRMED
+      );
+      setAppointments(upcomingAppointments);
+    } catch (err) {
+      console.error('Ошибка при загрузке записей на прием:', err);
+      setError('Не удалось загрузить записи на прием. Пожалуйста, попробуйте позже.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRescheduleAppointment = (id: string) => {
+  const handleCancelAppointment = async (id: string) => {
+    Alert.alert('Отмена приема', 'Вы уверены, что хотите отменить запись на прием?', [
+      { text: 'Нет', style: 'cancel' },
+      {
+        text: 'Да, отменить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setLoading(true);
+            await appointmentsApi.cancelAppointment(id);
+            // Обновляем список после отмены
+            await fetchAppointments();
+            Alert.alert('Успешно', 'Запись на прием успешно отменена');
+          } catch (err) {
+            console.error('Ошибка при отмене приема:', err);
+            Alert.alert('Ошибка', 'Не удалось отменить запись. Пожалуйста, попробуйте позже.');
+          } finally {
+            setLoading(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleRescheduleAppointment = (_id: string) => {
     // Здесь будет логика переноса приема
-    console.log('Перенос приема:', id);
+    // В дальнейшем реализации потребуется навигация на экран выбора нового времени
+    Alert.alert('Информация', 'Функция переноса приема пока не реализована');
   };
+
+  const styles = StyleSheet.create({
+    actionButton: {
+      flex: 1,
+      marginHorizontal: 4,
+    },
+    actionsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 16,
+    },
+    appointmentCard: {
+      marginBottom: 12,
+    },
+    appointmentHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    appointmentInfo: {
+      marginVertical: 8,
+    },
+    appointmentsContainer: {
+      padding: 16,
+    },
+    centeredContainer: {
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+      padding: 20,
+    },
+    container: {
+      flex: 1,
+    },
+    emptyCard: {
+      marginHorizontal: 16,
+    },
+    emptyContainer: {
+      alignItems: 'center',
+    },
+    emptyText: {
+      color: theme.colors.text.secondary,
+      marginTop: 12,
+      textAlign: 'center',
+    },
+    errorText: {
+      marginTop: 12,
+      textAlign: 'center',
+    },
+    headerCard: {
+      marginBottom: 8,
+      padding: 20,
+    },
+    infoRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    infoText: {
+      marginLeft: 8,
+    },
+    loadingText: {
+      marginTop: 12,
+    },
+    primaryText: {
+      color: theme.colors.primary,
+    },
+    retryButton: {
+      marginTop: 20,
+    },
+    secondaryText: {
+      color: theme.colors.text.secondary,
+    },
+    statItem: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    statsContainer: {
+      flexDirection: 'row',
+      marginTop: 16,
+    },
+  });
+
+  if (loading) {
+    return (
+      <View style={styles.centeredContainer}>
+        <Spinner size="large" />
+        <Text variant="body" style={styles.loadingText}>
+          Загрузка записей...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centeredContainer}>
+        <Icon name="alert-circle" family="ionicons" size={64} color={theme.colors.danger} />
+        <Text variant="body" style={[styles.errorText, { color: theme.colors.danger }]}>
+          {error}
+        </Text>
+        <Button
+          title="Повторить"
+          onPress={fetchAppointments}
+          variant="primary"
+          style={styles.retryButton}
+        />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Предстоящие приемы</Text>
+      <Card elevated={false} containerStyle={styles.headerCard}>
+        <Text variant="heading">Предстоящие приемы</Text>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{appointments.length}</Text>
-            <Text style={styles.statLabel}>Запланировано</Text>
+            <Text variant="heading" style={styles.primaryText}>
+              {appointments.length}
+            </Text>
+            <Text variant="bodySmall" style={styles.secondaryText}>
+              Запланировано
+            </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+            <Text variant="heading" style={styles.primaryText}>
               {appointments.filter(a => a.type === 'online').length}
             </Text>
-            <Text style={styles.statLabel}>Онлайн</Text>
+            <Text variant="bodySmall" style={styles.secondaryText}>
+              Онлайн
+            </Text>
           </View>
         </View>
-      </View>
+      </Card>
 
       <View style={styles.appointmentsContainer}>
-        {appointments.map(appointment => (
-          <View key={appointment.id} style={styles.appointmentCard}>
-            <View style={styles.appointmentHeader}>
-              <View>
-                <Text style={styles.doctorName}>{appointment.doctorName}</Text>
-                <Text style={styles.specialty}>{appointment.specialty}</Text>
-              </View>
-              <View
-                style={[
-                  styles.typeBadge,
-                  {
-                    backgroundColor:
-                      appointment.type === 'online'
-                        ? COLORS.light.primary
-                        : COLORS.light.textSecondary,
-                  },
-                ]}
-              >
-                <Text style={styles.typeText}>
-                  {appointment.type === 'online' ? 'Онлайн' : 'В клинике'}
-                </Text>
-              </View>
+        {appointments.length === 0 ? (
+          <Card elevated containerStyle={styles.emptyCard}>
+            <View style={styles.emptyContainer}>
+              <Icon
+                name="calendar-outline"
+                family="ionicons"
+                size={64}
+                color={theme.colors.text.secondary}
+              />
+              <Text variant="body" style={styles.emptyText}>
+                У вас нет запланированных приемов
+              </Text>
             </View>
-
-            <View style={styles.appointmentInfo}>
-              <View style={styles.infoRow}>
-                <Ionicons name="calendar" size={16} color={COLORS.light.textSecondary} />
-                <Text style={styles.infoText}>
-                  {appointment.date} в {appointment.time}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Ionicons name="business" size={16} color={COLORS.light.textSecondary} />
-                <Text style={styles.infoText}>{appointment.clinicName}</Text>
-              </View>
-              {appointment.type === 'offline' && (
-                <View style={styles.infoRow}>
-                  <Ionicons name="location" size={16} color={COLORS.light.textSecondary} />
-                  <Text style={styles.infoText}>{appointment.address}</Text>
+          </Card>
+        ) : (
+          appointments.map(appointment => (
+            <Card key={appointment._id} containerStyle={styles.appointmentCard}>
+              <View style={styles.appointmentHeader}>
+                <View>
+                  <Text variant="subtitle">
+                    {appointment.doctor.firstName} {appointment.doctor.lastName}
+                  </Text>
+                  <Text variant="bodySmall" style={styles.secondaryText}>
+                    {appointment.doctor.specialty}
+                  </Text>
                 </View>
-              )}
-            </View>
+                <Badge
+                  label={appointment.type === 'online' ? 'Онлайн' : 'В клинике'}
+                  variant={appointment.type === 'online' ? 'primary' : 'secondary'}
+                />
+              </View>
 
-            <View style={styles.actionsContainer}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.rescheduleButton]}
-                onPress={() => handleRescheduleAppointment(appointment.id)}
-              >
-                <Ionicons name="calendar" size={16} color={COLORS.light.primary} />
-                <Text style={[styles.actionButtonText, styles.rescheduleButtonText]}>
-                  Перенести
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.cancelButton]}
-                onPress={() => handleCancelAppointment(appointment.id)}
-              >
-                <Ionicons name="close-circle" size={16} color={COLORS.light.error} />
-                <Text style={[styles.actionButtonText, styles.cancelButtonText]}>Отменить</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+              <View style={styles.appointmentInfo}>
+                <View style={styles.infoRow}>
+                  <Icon
+                    name="calendar"
+                    family="ionicons"
+                    size={16}
+                    color={theme.colors.text.secondary}
+                  />
+                  <Text variant="body" style={styles.infoText}>
+                    {appointment.date} в {appointment.time}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Icon
+                    name="business"
+                    family="ionicons"
+                    size={16}
+                    color={theme.colors.text.secondary}
+                  />
+                  <Text variant="body" style={styles.infoText}>
+                    {appointment.clinic.name}
+                  </Text>
+                </View>
+                {appointment.type === 'offline' && (
+                  <View style={styles.infoRow}>
+                    <Icon
+                      name="location"
+                      family="ionicons"
+                      size={16}
+                      color={theme.colors.text.secondary}
+                    />
+                    <Text variant="body" style={styles.infoText}>
+                      {appointment.clinic.address}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.actionsContainer}>
+                <Button
+                  title="Перенести"
+                  variant="outline"
+                  size="small"
+                  leftIcon={
+                    <Icon
+                      name="calendar"
+                      family="ionicons"
+                      size={16}
+                      color={theme.colors.primary}
+                    />
+                  }
+                  style={styles.actionButton}
+                  onPress={() => handleRescheduleAppointment(appointment._id)}
+                />
+                <Button
+                  title="Отменить"
+                  variant="outline"
+                  size="small"
+                  leftIcon={
+                    <Icon
+                      name="close-circle"
+                      family="ionicons"
+                      size={16}
+                      color={theme.colors.danger}
+                    />
+                  }
+                  style={[styles.actionButton, { borderColor: theme.colors.danger }]}
+                  onPress={() => handleCancelAppointment(appointment._id)}
+                />
+              </View>
+            </Card>
+          ))
+        )}
       </View>
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 8,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  appointmentCard: {
-    backgroundColor: COLORS.light.whiteBackground,
-    borderRadius: 12,
-    marginBottom: 12,
-    padding: 16,
-  },
-  appointmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  appointmentInfo: {
-    marginTop: 12,
-  },
-  appointmentsContainer: {
-    padding: 16,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.light.whiteBackground,
-    borderColor: COLORS.light.error,
-    borderWidth: 1,
-  },
-  cancelButtonText: {
-    color: COLORS.light.error,
-  },
-  container: {
-    backgroundColor: COLORS.light.background,
-    flex: 1,
-  },
-  doctorName: {
-    color: COLORS.light.text,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  header: {
-    backgroundColor: COLORS.light.whiteBackground,
-    padding: 20,
-  },
-  infoRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  infoText: {
-    color: COLORS.light.text,
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  rescheduleButton: {
-    backgroundColor: COLORS.light.whiteBackground,
-    borderColor: COLORS.light.primary,
-    borderWidth: 1,
-  },
-  rescheduleButtonText: {
-    color: COLORS.light.primary,
-  },
-  specialty: {
-    color: COLORS.light.textSecondary,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statLabel: {
-    color: COLORS.light.textSecondary,
-    fontSize: 14,
-    marginTop: 4,
-  },
-  statValue: {
-    color: COLORS.light.primary,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginTop: 16,
-  },
-  title: {
-    color: COLORS.light.text,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  typeBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  typeText: {
-    color: COLORS.light.whiteBackground,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-});
 
 export default UpcomingAppointmentsScreen;

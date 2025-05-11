@@ -2,8 +2,17 @@ import { User as BaseUser } from './models';
 
 export interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  role?: 'patient' | 'doctor' | 'admin';
+  gender?: 'male' | 'female' | 'other';
+  birthDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
   bloodType?: string;
   allergies?: string[];
   chronicConditions?: string[];
@@ -13,32 +22,15 @@ export interface User {
     phone: string;
     relationship: string;
   }[];
-  firstName: string;
-  lastName: string;
-  role: 'PATIENT' | 'DOCTOR' | 'ADMIN';
-  phone?: string;
-  avatar?: string;
-  birthDate?: string;
-  gender?: string;
-  address?: string;
-  medicalHistory?: string[];
   isVerified?: boolean;
   isBlocked?: boolean;
   password?: string;
 }
 
 export interface UserProfile extends User {
-  birthDate?: string;
-  gender?: string;
-  address?: string;
+  // Дополнительные поля для профиля пользователя
   medicalHistory?: string[];
-  allergies?: string[];
-  medications?: string[];
-  emergencyContacts?: {
-    name: string;
-    phone: string;
-    relationship: string;
-  }[];
+  // Удаляю дублирующиеся поля, так как они уже определены в User
 }
 
 export interface LoginCredentials {

@@ -1,32 +1,39 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
+import { View, StyleSheet, ScrollView, Alert, ViewStyle, TextStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { feedbackApi } from '../api/feedback';
 import { useTheme } from '../theme/ThemeContext';
+import { Text } from '../components/ui/atoms/Text';
+import { Button } from '../components/ui/atoms/Button';
+import { Input } from '../components/ui/atoms/Input';
+import { Card } from '../components/ui/molecules/Card';
+import { Icon } from '../components/ui/atoms/Icon';
 
-type IconName =
-  | 'bulb-outline'
-  | 'bug-outline'
-  | 'help-circle-outline'
-  | 'information-circle-outline';
+type FeedbackType = 'suggestion' | 'bug' | 'other';
+
+// Определяем интерфейс для стилей
+interface FeedbackScreenStyles {
+  container: ViewStyle;
+  contentCard: ViewStyle;
+  headerCard: ViewStyle;
+  headerSubtitle: TextStyle;
+  headerTitle: TextStyle;
+  infoContainer: ViewStyle;
+  infoText: TextStyle;
+  inputContainer: ViewStyle;
+  sectionTitle: TextStyle;
+  submitButton: ViewStyle;
+  textArea: ViewStyle & { textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center' };
+  typeButton: ViewStyle;
+  typesContainer: ViewStyle;
+}
 
 export const FeedbackScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
   const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackType, setFeedbackType] = useState<'suggestion' | 'bug' | 'other'>('suggestion');
+  const [feedbackType, setFeedbackType] = useState<FeedbackType>('suggestion');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
 
@@ -59,206 +66,147 @@ export const FeedbackScreen: React.FC = () => {
     }
   };
 
-  const renderFeedbackTypeButton = (
-    type: 'suggestion' | 'bug' | 'other',
-    icon: IconName,
-    label: string
-  ) => (
-    <TouchableOpacity
-      style={[
-        styles.typeButton,
-        {
-          backgroundColor: feedbackType === type ? theme.colors.primary : theme.colors.card,
-          borderColor: theme.colors.primary,
-        },
-        feedbackType === type && styles.selectedTypeButton,
-      ]}
-      onPress={() => setFeedbackType(type)}
-    >
-      <Ionicons
-        name={icon}
-        size={24}
-        color={feedbackType === type ? COLORS.white : theme.colors.primary}
+  const renderFeedbackTypeButton = (type: FeedbackType, iconName: string, label: string) => {
+    const isSelected = feedbackType === type;
+
+    return (
+      <Button
+        title={label}
+        variant={isSelected ? 'primary' : 'outline'}
+        size="small"
+        style={styles.typeButton}
+        leftIcon={
+          <Icon
+            name={iconName}
+            family="ionicons"
+            size={20}
+            color={isSelected ? theme.colors.text.inverse : theme.colors.primary}
+          />
+        }
+        onPress={() => setFeedbackType(type)}
       />
-      <Text
-        style={[
-          styles.typeButtonText,
-          { color: feedbackType === type ? COLORS.white : theme.colors.primary },
-          feedbackType === type && styles.selectedTypeButtonText,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+    <ScrollView style={styles.container}>
+      <Card elevated={false} containerStyle={styles.headerCard}>
+        <Text variant="heading" style={{ ...styles.headerTitle, color: theme.colors.text.primary }}>
           {t('feedback.title')}
         </Text>
-        <Text style={[styles.headerSubtitle, { color: theme.colors.textSecondary }]}>
+        <Text
+          variant="body"
+          style={{ ...styles.headerSubtitle, color: theme.colors.text.secondary }}
+        >
           {t('feedback.subtitle')}
         </Text>
-      </View>
+      </Card>
 
-      <View style={styles.typesContainer}>
-        {renderFeedbackTypeButton('suggestion', 'bulb-outline', t('feedback.suggestion'))}
-        {renderFeedbackTypeButton('bug', 'bug-outline', t('feedback.bug'))}
-        {renderFeedbackTypeButton('other', 'help-circle-outline', t('feedback.other'))}
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.text }]}>
-          {t('feedback.yourFeedback')}
+      <Card elevated containerStyle={styles.contentCard}>
+        <Text variant="subtitle" style={styles.sectionTitle}>
+          {t('feedback.typeQuestion')}
         </Text>
-        <TextInput
-          style={[
-            styles.textArea,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border,
-            },
-          ]}
+
+        <View style={styles.typesContainer}>
+          {renderFeedbackTypeButton('suggestion', 'bulb-outline', t('feedback.suggestion'))}
+          {renderFeedbackTypeButton('bug', 'bug-outline', t('feedback.bug'))}
+          {renderFeedbackTypeButton('other', 'help-circle-outline', t('feedback.other'))}
+        </View>
+
+        <Input
+          label={t('feedback.yourFeedback')}
           multiline
           numberOfLines={8}
           placeholder={t('feedback.placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
           value={feedbackText}
           onChangeText={setFeedbackText}
           textAlignVertical="top"
+          inputStyle={styles.textArea}
+          containerStyle={styles.inputContainer}
         />
-      </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={[styles.label, { color: theme.colors.text }]}>
-          {t('feedback.emailOptional')}
-        </Text>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.colors.card,
-              color: theme.colors.text,
-              borderColor: theme.colors.border,
-            },
-          ]}
+        <Input
+          label={t('feedback.emailOptional')}
           placeholder={t('feedback.emailPlaceholder')}
-          placeholderTextColor={theme.colors.textSecondary}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          containerStyle={styles.inputContainer}
         />
-      </View>
 
-      <TouchableOpacity
-        style={[styles.submitButton, { backgroundColor: theme.colors.primary }]}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={COLORS.white} />
-        ) : (
-          <Text style={styles.submitButtonText}>{t('feedback.submit')}</Text>
-        )}
-      </TouchableOpacity>
+        <Button
+          title={t('feedback.submit')}
+          onPress={handleSubmit}
+          loading={loading}
+          fullWidth
+          style={styles.submitButton}
+        />
 
-      <View style={styles.infoContainer}>
-        <Ionicons name="information-circle-outline" size={20} color={theme.colors.textSecondary} />
-        <Text style={[styles.infoText, { color: theme.colors.textSecondary }]}>
-          {t('feedback.privacyInfo')}
-        </Text>
-      </View>
+        <View style={styles.infoContainer}>
+          <Icon
+            name="information-circle-outline"
+            family="ionicons"
+            size={20}
+            color={theme.colors.text.secondary}
+          />
+          <Text
+            variant="caption"
+            style={{ ...styles.infoText, color: theme.colors.text.secondary }}
+          >
+            {t('feedback.privacyInfo')}
+          </Text>
+        </View>
+      </Card>
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<FeedbackScreenStyles>({
   container: {
     flex: 1,
     padding: 16,
   },
-  header: {
-    marginBottom: 24,
+  contentCard: {
+    padding: 16,
+  },
+  headerCard: {
+    marginBottom: 16,
+    padding: 16,
   },
   headerSubtitle: {
-    fontSize: 16,
-    lineHeight: 22,
+    marginTop: 8,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
+  headerTitle: {},
   infoContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: 24,
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
     marginLeft: 8,
-  },
-  input: {
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 16,
-    padding: 12,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  selectedTypeButton: {
-    backgroundColor: COLORS.primary,
-  },
-  selectedTypeButtonText: {
-    color: COLORS.white,
+  sectionTitle: {
+    marginBottom: 16,
   },
   submitButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    marginBottom: 24,
-    marginTop: 16,
-    paddingVertical: 16,
-  },
-  submitButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+    marginBottom: 16,
+    marginTop: 8,
   },
   textArea: {
-    borderRadius: 8,
-    borderWidth: 1,
-    fontSize: 16,
     minHeight: 150,
-    padding: 12,
+    textAlignVertical: 'top',
   },
   typeButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
     marginHorizontal: 4,
-    padding: 12,
-  },
-  typeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
   },
   typesContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 24,
   },
 });

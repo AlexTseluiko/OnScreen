@@ -13,8 +13,14 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface NotificationData {
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
 }

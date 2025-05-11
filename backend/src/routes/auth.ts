@@ -7,6 +7,7 @@ import {
   resetPassword,
   changePassword,
   refreshToken,
+  verifyToken,
 } from '../controllers/authController';
 import { auth } from '../middleware/auth';
 import { AuthRequest } from '../middleware/auth';
@@ -32,11 +33,9 @@ router.post('/reset-password', resetPassword);
 router.post('/change-password', auth, changePassword);
 
 // Обновление токена
-router.post('/refresh-token', refreshToken);
+router.post('/refresh', refreshToken);
 
-// Маршрут для проверки валидности токена
-router.get('/verify', auth, (req: AuthRequest, res) => {
-  res.status(200).json({ message: 'Token is valid', user: req.user });
-});
+// Проверка валидности токена
+router.get('/verify', auth, verifyToken);
 
 export default router;

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { API_URL, API_CONFIG } from '../config/api';
 import {
   ApiClient,
@@ -14,6 +14,8 @@ import { ApiResponse, PaginationData } from '../types/api';
 import { Article } from '../types/article';
 import { Clinic } from '../types/clinic';
 import { performanceMonitor } from '../utils/performance';
+import { logger } from '../utils/logger';
+import { networkManager } from '../utils/network';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -24,20 +26,109 @@ export const apiClient = axios.create({
   },
 });
 
+// Константы для настройки повторных попыток
+const RETRY_DELAY = 1000; // Задержка между повторными попытками (1 секунда)
+const MAX_RETRY_ATTEMPTS = 3; // Максимальное количество повторных попыток
+const RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504]; // Коды HTTP для повторных попыток
+
+// Тип для ответов API с данными ошибок
+interface ErrorResponseData {
+  message?: string;
+  error?: string | object;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
 // Добавляем перехватчик для обработки ошибок
 apiClient.interceptors.response.use(
   response => response,
-  error => {
-    if (error.response) {
-      // Ошибка от сервера
-      return Promise.reject(new Error(error.response.data.message || 'Ошибка сервера'));
-    } else if (error.request) {
-      // Ошибка сети
-      return Promise.reject(new Error('Ошибка сети'));
-    } else {
-      // Другие ошибки
-      return Promise.reject(error);
+  async (error: AxiosError) => {
+    const config = error.config as AxiosRequestConfig & {
+      _retry?: number; // Счетчик повторных попыток
+    };
+
+    // Не повторяем запросы для 4xx ошибок (кроме тех, что указаны в RETRY_STATUS_CODES)
+    const status = error.response?.status;
+
+    // Логируем все ошибки API
+    logger.error('API Error:', {
+      url: config.url,
+      method: config.method?.toUpperCase(),
+      status: status || 'No Response',
+      message: error.message,
+    });
+
+    // Проверяем, можем ли мы повторить запрос
+    if (
+      config &&
+      (!config._retry || config._retry < MAX_RETRY_ATTEMPTS) &&
+      ((status && RETRY_STATUS_CODES.includes(status)) || !error.response)
+    ) {
+      // Увеличиваем счетчик попыток
+      config._retry = (config._retry || 0) + 1;
+
+      // Логируем повторную попытку
+      logger.info(`Retrying API request (attempt ${config._retry}/${MAX_RETRY_ATTEMPTS})`, {
+        url: config.url,
+        method: config.method?.toUpperCase(),
+      });
+
+      // Добавляем экспоненциальную задержку перед повторной попыткой
+      const delay = RETRY_DELAY * Math.pow(2, config._retry - 1);
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Повторяем запрос
+      return apiClient(config);
     }
+
+    // Формируем понятное сообщение об ошибке
+    let errorMessage: string;
+    let errorCode: string;
+    let errorDetails: Record<string, unknown> | undefined;
+
+    if (error.response) {
+      // Ошибка от сервера с ответом
+      const responseData = error.response.data as ErrorResponseData;
+
+      if (typeof responseData === 'object' && responseData !== null) {
+        errorMessage =
+          responseData.message ||
+          (responseData.error && typeof responseData.error === 'string'
+            ? responseData.error
+            : '') ||
+          'Ошибка сервера';
+        errorCode = responseData.code || `HTTP_${error.response.status}`;
+        errorDetails = responseData.details;
+      } else {
+        errorMessage = 'Ошибка сервера';
+        errorCode = `HTTP_${error.response.status}`;
+      }
+    } else if (error.request) {
+      // Запрос был сделан, но ответа не получено
+      errorMessage = 'Нет ответа от сервера';
+      errorCode = 'NO_RESPONSE';
+
+      // Проверяем соединение с интернетом
+      if (!networkManager.isOnline()) {
+        errorMessage = 'Отсутствует соединение с интернетом';
+        errorCode = 'NETWORK_ERROR';
+      }
+    } else {
+      // Ошибка при настройке запроса
+      errorMessage = error.message || 'Неизвестная ошибка';
+      errorCode = 'REQUEST_SETUP_ERROR';
+    }
+
+    // Создаем расширенный объект ошибки
+    const apiError = {
+      message: errorMessage,
+      code: errorCode,
+      status: error.response?.status || 0,
+      details: errorDetails,
+      originalError: error,
+    };
+
+    return Promise.reject(apiError);
   }
 );
 
@@ -45,16 +136,19 @@ export class ApiError extends Error {
   status: number;
   data: Record<string, unknown>;
   isConnectionError: boolean;
+  code: string;
 
   constructor(
     message: string,
     status: number,
+    code: string = 'UNKNOWN_ERROR',
     data?: Record<string, unknown>,
     isConnectionError = false
   ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
     this.data = data || {};
     this.isConnectionError = isConnectionError;
   }
@@ -62,6 +156,7 @@ export class ApiError extends Error {
 
 export class ApiClientImpl implements ApiClient {
   private client: AxiosInstance;
+  private retryQueue: Map<string, { timestamp: number; retryCount: number }> = new Map();
 
   constructor(config: AxiosRequestConfig = {}) {
     this.client = axios.create({
@@ -90,9 +185,40 @@ export class ApiClientImpl implements ApiClient {
       async error => {
         if (error.response?.status === 401) {
           // Обработка истечения срока действия токена
-          localStorage.removeItem('token');
-          window.location.href = '/login';
+          // Здесь можно добавить логику обновления токена перед удалением
+          const refreshToken = localStorage.getItem('refreshToken');
+
+          if (refreshToken) {
+            try {
+              // Пытаемся обновить токен
+              const response = await axios.post(`${API_URL}/auth/refresh`, {
+                refreshToken,
+              });
+
+              if (response.data.token) {
+                // Сохраняем новые токены
+                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+
+                // Повторяем исходный запрос с новым токеном
+                const originalRequest = error.config;
+                originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
+                return this.client(originalRequest);
+              }
+            } catch (refreshError) {
+              // Если не удалось обновить токен, выходим из системы
+              localStorage.removeItem('token');
+              localStorage.removeItem('refreshToken');
+              window.location.href = '/login';
+              return Promise.reject(error);
+            }
+          } else {
+            // Если нет refreshToken, выходим сразу
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+          }
         }
+
         return Promise.reject(error);
       }
     );
@@ -106,7 +232,7 @@ export class ApiClientImpl implements ApiClient {
       return response.data;
     } catch (error) {
       performanceMonitor.recordApiError(url, 'GET', error);
-      throw error;
+      throw this.processError(error, url);
     }
   }
 
@@ -118,7 +244,7 @@ export class ApiClientImpl implements ApiClient {
       return response.data;
     } catch (error) {
       performanceMonitor.recordApiError(url, 'POST', error);
-      throw error;
+      throw this.processError(error, url);
     }
   }
 
@@ -130,7 +256,7 @@ export class ApiClientImpl implements ApiClient {
       return response.data;
     } catch (error) {
       performanceMonitor.recordApiError(url, 'PUT', error);
-      throw error;
+      throw this.processError(error, url);
     }
   }
 
@@ -142,8 +268,79 @@ export class ApiClientImpl implements ApiClient {
       return response.data;
     } catch (error) {
       performanceMonitor.recordApiError(url, 'DELETE', error);
-      throw error;
+      throw this.processError(error, url);
     }
+  }
+
+  /**
+   * Обрабатывает ошибку и форматирует ее в стандартный формат ApiError
+   */
+  private processError(error: unknown, url: string): ApiError {
+    // Если это уже наш ApiError, возвращаем его
+    if (error instanceof ApiError) {
+      return error;
+    }
+
+    let message = 'Неизвестная ошибка';
+    let status = 0;
+    let code = 'UNKNOWN_ERROR';
+    let data: Record<string, unknown> = {};
+    let isConnectionError = false;
+
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<unknown>;
+
+      if (axiosError.response) {
+        // Ошибка с ответом от сервера
+        status = axiosError.response.status;
+
+        // Пытаемся получить сообщение из ответа
+        if (axiosError.response.data) {
+          const responseData = axiosError.response.data as ErrorResponseData;
+          message =
+            responseData.message ||
+            (responseData.error && typeof responseData.error === 'string'
+              ? responseData.error
+              : '') ||
+            `HTTP Error ${status}`;
+          code = responseData.code || `HTTP_${status}`;
+          data = responseData.details || {};
+        } else {
+          message = `HTTP Error ${status}`;
+          code = `HTTP_${status}`;
+        }
+      } else if (axiosError.request) {
+        // Запрос был сделан, но ответа не получено
+        status = 0;
+        message = 'No response from server';
+        code = 'NO_RESPONSE';
+        isConnectionError = true;
+
+        // Проверяем соединение с интернетом
+        if (!networkManager.isOnline()) {
+          message = 'No internet connection';
+          code = 'NETWORK_ERROR';
+        }
+      } else {
+        // Что-то случилось при настройке запроса
+        status = 0;
+        message = axiosError.message || 'Request configuration error';
+        code = 'REQUEST_SETUP_ERROR';
+      }
+    } else if (error instanceof Error) {
+      // Общая ошибка JavaScript
+      status = 0;
+      message = error.message;
+      code = 'JS_ERROR';
+    }
+
+    logger.error(`API Error [${url}]: ${message}`, {
+      status,
+      code,
+      data,
+    });
+
+    return new ApiError(message, status, code, data, isConnectionError);
   }
 
   // Users
@@ -243,5 +440,11 @@ export class ApiClientImpl implements ApiClient {
 
   async logout(): Promise<ApiResponse<void>> {
     return this.post('/auth/logout');
+  }
+
+  async refreshToken(
+    refreshToken: string
+  ): Promise<ApiResponse<{ token: string; refreshToken: string }>> {
+    return this.post('/auth/refresh', { refreshToken });
   }
 }

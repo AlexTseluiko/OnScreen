@@ -1,12 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../types/user';
 
+// Определяем тип ApiUser, если он используется в функции saveUserData
+interface ApiUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
 const USER_KEY = '@user';
 const TOKEN_KEY = '@token';
 const REFRESH_TOKEN_KEY = '@refreshToken';
 
 export const userStorage = {
-  async saveUserData(user: User, token: string, refreshToken: string): Promise<void> {
+  async saveUserData(user: User | ApiUser, token: string, refreshToken: string): Promise<void> {
     try {
       console.log('Сохранение данных пользователя в AsyncStorage:', { user, token, refreshToken });
       await AsyncStorage.multiSet([

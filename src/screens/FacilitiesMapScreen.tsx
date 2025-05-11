@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../navigation/types';
-import { Map } from '../components/Map';
+import { Map } from '../components/organisms/Map';
+import type { MapMarker } from '../components/organisms/Map';
 import { clinicsApi } from '../api/clinics';
 import { facilitiesApi } from '../api/facilities';
 import { Clinic } from '../types/clinic';
 import { Facility } from '../types/facility';
+import styles from './FacilitiesMapScreen.styles';
 
 export const FacilitiesMapScreen: React.FC = () => {
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -33,16 +35,11 @@ export const FacilitiesMapScreen: React.FC = () => {
     }, [])
   );
 
-  const handleMarkerPress = (marker: { id: string; type: 'clinic' | 'facility' }) => {
+  const handleMarkerPress = (marker: MapMarker) => {
     if (marker.type === 'clinic') {
       const clinic = clinics.find(c => c._id === marker.id);
       if (clinic) {
         navigation.navigate('ClinicDetails', { clinicId: clinic._id });
-      }
-    } else {
-      const facility = facilities.find(f => f.id === marker.id);
-      if (facility) {
-        navigation.navigate('FacilityDetails', { facilityId: facility.id });
       }
     }
   };
@@ -53,9 +50,3 @@ export const FacilitiesMapScreen: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

@@ -1,31 +1,29 @@
-import { User } from './user';
-
 export interface Facility {
   id: string;
   name: string;
-  type: 'clinic' | 'hospital' | 'laboratory' | 'pharmacy';
+  description?: string;
   address: string;
-  description: string;
-  rating: number;
-  reviews: number;
   coordinates: {
-    lat: number;
-    lng: number;
+    latitude: number;
+    longitude: number;
   };
-  services: string[];
-  workingHours: {
+  type: 'sports' | 'entertainment' | 'education' | 'other';
+  rating?: number;
+  images?: string[];
+  workingHours?: {
     [key: string]: {
       open: string;
       close: string;
     };
   };
-  images: string[];
-  doctors?: User[];
-  contactInfo: {
-    phone: string;
-    email: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
     website?: string;
   };
+  amenities?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface FacilitySearchParams {

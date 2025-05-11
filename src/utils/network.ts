@@ -1,20 +1,38 @@
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { logger } from './logger';
 import { cache } from './cache';
 
-interface NetworkState {
+interface LogData {
+  [key: string]: unknown;
+}
+
+interface NetworkState extends LogData {
   isConnected: boolean;
   type: string;
   isInternetReachable: boolean | null;
 }
 
-interface PendingRequest {
+interface PendingRequest extends LogData {
   id: string;
   method: string;
   url: string;
-  data?: any;
+  data?: unknown;
   timestamp: number;
 }
+
+export interface NetworkResponse<T = unknown> {
+  data: T;
+  status: number;
+  headers: Record<string, string>;
+}
+
+export const handleNetworkError = (error: Error): void => {
+  console.error('Network error:', error.message);
+};
+
+export const parseResponse = <T = unknown>(response: Response): Promise<T> => {
+  return response.json();
+};
 
 class NetworkManager {
   private static instance: NetworkManager;
@@ -49,7 +67,7 @@ class NetworkManager {
     });
   }
 
-  private updateNetworkState(state: any) {
+  private updateNetworkState(state: NetInfoState) {
     const newState: NetworkState = {
       isConnected: state.isConnected ?? false,
       type: state.type,
@@ -83,7 +101,7 @@ class NetworkManager {
       ...request,
       id: Math.random().toString(36).substring(7),
       timestamp: Date.now(),
-    };
+    } as PendingRequest;
 
     this.pendingRequests.push(pendingRequest);
 

@@ -13,14 +13,11 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRoute } from '@react-navigation/native';
-import { COLORS } from '../constants';
-import ReviewsSection from '../components/ReviewsSection';
-import { Clinic, Review } from '../types/clinic';
+import { ReviewsSection } from '../components/organisms/ReviewsSection';
+import { Clinic } from '../types/clinic';
 import { ApiResponse, ClinicResponse } from '../types/api';
-import { CreateReviewParams } from '../api/types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useTheme } from '../contexts/ThemeContext';
-import { apiClient } from '../api/apiClient';
 import { RouteProp } from '@react-navigation/native';
 import { API_URL } from '../config/api';
 import { useUserStorage } from '../contexts/UserStorageContext';
@@ -32,6 +29,28 @@ interface RouteParams {
   clinic?: Clinic;
 }
 
+// Адаптированный тип Review для соответствия типам в ReviewsSection
+type APIReview = {
+  _id: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  date: string;
+  photos?: string[];
+};
+
+// Трансформировать API Review в формат Review для ReviewsSection
+const transformReview = (review: APIReview, index: number) => ({
+  id: Number(review._id) || index,
+  rating: review.rating,
+  text: review.comment,
+  author: review.userId,
+  date: new Date(review.date),
+  photos: review.photos,
+});
+
+const FAVORITE_BUTTON_BACKGROUND = 'rgba(255, 255, 255, 0.7)';
+
 export const ClinicDetailsScreen: React.FC = () => {
   const route = useRoute<ClinicDetailsRouteProp>();
   const params = route.params as RouteParams;
@@ -41,9 +60,11 @@ export const ClinicDetailsScreen: React.FC = () => {
 
   const [clinic, setClinic] = useState<Clinic | null>(params.clinic || null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<APIReview[]>([]);
   const [loading, setLoading] = useState(!params.clinic);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingReview, setIsAddingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.clinicId && !params.clinic) {
@@ -104,16 +125,40 @@ export const ClinicDetailsScreen: React.FC = () => {
     }
   };
 
-  const handleAddReview = async (review: Omit<Review, '_id' | 'userId'>) => {
+  const handleAddReview = async (reviewData: {
+    rating: number;
+    text: string;
+    photos?: string[];
+  }) => {
     try {
-      const reviewParams: CreateReviewParams = {
-        rating: review.rating,
-        comment: review.comment,
-      };
-      await apiClient.createReview(params.clinicId, reviewParams);
-      await fetchClinicDetails();
-    } catch (error) {
+      setIsAddingReview(true);
+      setReviewError(null);
+      const token = await getToken();
+
+      const response = await fetch(`${API_URL}/clinics/${params.clinicId}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: reviewData.rating,
+          comment: reviewData.text,
+          photos: reviewData.photos,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        await fetchClinicDetails();
+      } else {
+        setReviewError(data.message || 'Ошибка при добавлении отзыва');
+      }
+    } catch (err) {
+      setReviewError('Ошибка при добавлении отзыва');
       Alert.alert(t('error'), t('errorAddingReview'));
+    } finally {
+      setIsAddingReview(false);
     }
   };
 
@@ -166,6 +211,9 @@ export const ClinicDetailsScreen: React.FC = () => {
     );
   }
 
+  // Преобразование отзывов для соответствия типам ReviewsSection
+  const transformedReviews = reviews.map(transformReview);
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
@@ -173,7 +221,10 @@ export const ClinicDetailsScreen: React.FC = () => {
           source={{ uri: clinic.photos?.[0] || 'https://via.placeholder.com/400x200' }}
           style={styles.headerImage}
         />
-        <TouchableOpacity style={styles.favoriteButton} onPress={handleToggleFavorite}>
+        <TouchableOpacity
+          style={[styles.favoriteButton, { backgroundColor: FAVORITE_BUTTON_BACKGROUND }]}
+          onPress={handleToggleFavorite}
+        >
           <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
       </View>
@@ -196,8 +247,11 @@ export const ClinicDetailsScreen: React.FC = () => {
           <Text style={[styles.address, { color: theme.colors.textSecondary }]}>
             {clinic.address.street}, {clinic.address.city}
           </Text>
-          <TouchableOpacity onPress={handleCall} style={styles.contactButton}>
-            <Text style={[styles.contactButtonText, { color: theme.colors.textSecondary }]}>
+          <TouchableOpacity
+            onPress={handleCall}
+            style={[styles.contactButton, { backgroundColor: theme.colors.primary }]}
+          >
+            <Text style={[styles.contactButtonText, { color: theme.colors.white }]}>
               {t('details.call')}
             </Text>
           </TouchableOpacity>
@@ -256,7 +310,11 @@ export const ClinicDetailsScreen: React.FC = () => {
 
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.navigateButton]}
+            style={[
+              styles.actionButton,
+              styles.navigateButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
             onPress={handleNavigate}
           >
             <Text style={[styles.actionButtonText, { color: theme.colors.textSecondary }]}>
@@ -266,7 +324,11 @@ export const ClinicDetailsScreen: React.FC = () => {
 
           {clinic.website && (
             <TouchableOpacity
-              style={[styles.actionButton, styles.websiteButton]}
+              style={[
+                styles.actionButton,
+                styles.websiteButton,
+                { backgroundColor: theme.colors.secondary },
+              ]}
               onPress={handleWebsite}
             >
               <Text style={[styles.actionButtonText, { color: theme.colors.textSecondary }]}>
@@ -280,7 +342,13 @@ export const ClinicDetailsScreen: React.FC = () => {
           <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
             {t('details.reviews')}
           </Text>
-          <ReviewsSection reviews={reviews} clinicId={clinic._id} onAddReview={handleAddReview} />
+          <ReviewsSection
+            reviews={transformedReviews}
+            title={t('details.reviews')}
+            onAddReview={handleAddReview}
+            isAddingReview={isAddingReview}
+            error={reviewError || undefined}
+          />
         </View>
       </View>
     </ScrollView>
@@ -310,12 +378,10 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
     borderRadius: 5,
     padding: 10,
   },
   contactButtonText: {
-    color: COLORS.background,
     fontSize: 16,
   },
   container: {
@@ -331,7 +397,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   favoriteButton: {
-    backgroundColor: COLORS.whiteTransparent,
     borderRadius: 20,
     padding: 10,
     position: 'absolute',
@@ -357,9 +422,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  navigateButton: {
-    backgroundColor: COLORS.primary,
-  },
+  navigateButton: {},
   rating: {
     fontSize: 16,
     marginRight: 5,
@@ -384,9 +447,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  websiteButton: {
-    backgroundColor: COLORS.secondary,
-  },
+  websiteButton: {},
   workingHours: {
     fontSize: 16,
   },

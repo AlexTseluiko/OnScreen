@@ -1,29 +1,28 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
+import { View, Text, StyleSheet } from 'react-native';
+import { COLORS } from '../constants/colors';
 
 interface ErrorMessageProps {
   message: string;
 }
 
 export const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
-  const { theme } = useTheme();
-
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.danger + '20' }]}>
-      <Text style={[styles.text, { color: theme.colors.danger }]}>{message}</Text>
+    <View style={styles.container}>
+      <Text style={styles.text}>{message}</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
-    marginVertical: 8,
-    padding: 12,
+    backgroundColor: COLORS.danger + '20',
+    borderRadius: 5,
+    marginVertical: 5,
+    padding: 10,
   },
   text: {
+    color: COLORS.danger,
     fontSize: 14,
-    textAlign: 'center',
   },
 });

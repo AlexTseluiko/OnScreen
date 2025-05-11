@@ -1,36 +1,169 @@
-export const COLORS = {
-  light: {
-    background: '#FFFFFF',
-    text: '#000000',
-    textSecondary: '#8E8E93',
-    primary: '#007AFF',
-    border: '#E0E0E0',
-    error: '#FF3B30',
-    success: '#34C759',
-    warning: '#FF9500',
-    inputBackground: '#F9F9F9',
-    darkInputBackground: '#333333',
-    whiteBackground: '#FFFFFF',
-    whiteText: '#FFFFFF',
-    semiTransparentBlack: 'rgba(0,0,0,0.6)',
-    opacity70: 0.7,
-    lightGray: '#F5F5F5',
+/**
+ * Основная палитра цветов приложения
+ * Единый источник истины для всех цветов и тем
+ */
+
+// Основная палитра (цвета, не привязанные к темам)
+export const palette = {
+  // Основные цвета бренда
+  primary: '#007AFF',
+  primaryDark: '#0A84FF',
+  secondary: '#5856D6',
+  success: '#34C759',
+  successDark: '#30D158',
+  danger: '#FF3B30',
+  dangerDark: '#FF453A',
+  warning: '#FF9500',
+  warningDark: '#FF9F0A',
+  info: '#5AC8FA',
+
+  // Нейтральные цвета
+  white: '#FFFFFF',
+  black: '#000000',
+
+  // Оттенки серого
+  gray: {
+    50: '#F9FAFB',
+    100: '#F2F2F7',
+    200: '#E5E5EA',
+    300: '#D1D1D6',
+    400: '#C7C7CC',
+    500: '#AEAEB2',
+    600: '#8E8E93',
+    700: '#636366',
+    800: '#48484A',
+    900: '#1C1C1E',
   },
-  dark: {
-    background: '#000000',
-    text: '#FFFFFF',
-    textSecondary: '#8E8E93',
-    primary: '#0A84FF',
-    border: '#333333',
-    error: '#FF453A',
-    success: '#30D158',
-    warning: '#FF9F0A',
-    inputBackground: '#333333',
-    darkInputBackground: '#1C1C1E',
-    whiteBackground: '#FFFFFF',
-    whiteText: '#FFFFFF',
-    semiTransparentBlack: 'rgba(0,0,0,0.6)',
-    opacity70: 0.7,
-    lightGray: '#2C2C2E',
+
+  // Специальные цвета
+  emergency: '#f67e7d',
+  transparent: 'transparent',
+} as const;
+
+// Типы для цветовых схем
+export interface ColorTheme {
+  background: string;
+  surface: string;
+  text: {
+    primary: string;
+    secondary: string;
+    hint: string;
+    disabled: string;
+    inverse: string;
+  };
+  border: string;
+  divider: string;
+  shadow: string;
+  overlay: string;
+  inputBackground: string;
+  darkInputBackground: string;
+  white: string;
+
+  // Функциональные цвета
+  primary: string;
+  secondary: string;
+  success: string;
+  danger: string;
+  warning: string;
+  info: string;
+  error: string;
+  gray: string;
+}
+
+// Цветовая схема для светлой темы
+export const lightTheme: ColorTheme = {
+  background: palette.white,
+  surface: palette.white,
+  text: {
+    primary: palette.black,
+    secondary: palette.gray[600],
+    hint: palette.gray[500],
+    disabled: palette.gray[400],
+    inverse: palette.white,
   },
-};
+  border: palette.gray[200],
+  divider: palette.gray[200],
+  shadow: palette.black,
+  overlay: 'rgba(0, 0, 0, 0.1)',
+  inputBackground: '#F9F9F9',
+  darkInputBackground: '#333333',
+  white: palette.white,
+
+  primary: palette.primary,
+  secondary: palette.secondary,
+  success: palette.success,
+  danger: palette.danger,
+  warning: palette.warning,
+  info: palette.info,
+  error: palette.danger,
+  gray: '#888888',
+} as const;
+
+// Цветовая схема для темной темы
+export const darkTheme: ColorTheme = {
+  background: palette.gray[900],
+  surface: palette.gray[800],
+  text: {
+    primary: palette.white,
+    secondary: palette.gray[300],
+    hint: palette.gray[400],
+    disabled: palette.gray[600],
+    inverse: palette.black,
+  },
+  border: palette.gray[700],
+  divider: palette.gray[700],
+  shadow: palette.black,
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  inputBackground: '#333333',
+  darkInputBackground: '#1C1C1E',
+  white: palette.white,
+
+  primary: palette.primaryDark,
+  secondary: palette.secondary,
+  success: palette.successDark,
+  danger: palette.dangerDark,
+  warning: palette.warningDark,
+  info: palette.info,
+  error: palette.dangerDark,
+  gray: '#888888',
+} as const;
+
+// Семантические цвета для экранов и модулей
+export const semanticColors = {
+  appointment: {
+    light: '#fffde6',
+    dark: '#3a3a2a',
+  },
+  clinic: {
+    light: '#e6fff2',
+    dark: '#302a3a',
+  },
+  doctor: {
+    light: '#e6ffff',
+    dark: '#2a3a3a',
+  },
+  patient: {
+    light: '#ffe6e6',
+    dark: '#3a2a2a',
+  },
+  review: {
+    light: '#f2e6ff',
+    dark: '#352a3a',
+  },
+} as const;
+
+// Типизация для экспорта COLORS
+export interface Colors {
+  palette: typeof palette;
+  light: ColorTheme;
+  dark: ColorTheme;
+  semantic: typeof semanticColors;
+}
+
+// Экспортируем всё для использования в приложении
+export const COLORS: Colors = {
+  palette,
+  light: lightTheme,
+  dark: darkTheme,
+  semantic: semanticColors,
+} as const;

@@ -5,6 +5,8 @@ import { store } from './src/store';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { UserStorageProvider } from './src/contexts/UserStorageContext';
+import { UserRoleProvider } from './src/contexts/UserRoleContext';
+import { AuthRoleBridge } from './src/contexts/AuthRoleBridge';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
 const App = () => {
@@ -14,7 +16,10 @@ const App = () => {
         <ThemeProvider>
           <UserStorageProvider>
             <AuthProvider>
-              <AppNavigator />
+              <UserRoleProvider>
+                <AuthRoleBridge />
+                <AppNavigator />
+              </UserRoleProvider>
             </AuthProvider>
           </UserStorageProvider>
         </ThemeProvider>

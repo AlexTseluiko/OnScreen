@@ -1,3 +1,107 @@
+/**
+ * Основные константы приложения
+ *
+ * Этот файл собирает и реэкспортирует все константы приложения.
+ */
+
+// Реэкспорт констант из отдельных файлов
+export * from './api';
+export * from './user';
+export * from './content';
+export * from './map';
+
+// API статусы
+export const API_STATUS = {
+  IDLE: 'idle',
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  ERROR: 'error',
+} as const;
+
+// Роли пользователей
+export const USER_ROLES = {
+  ADMIN: 'admin',
+  DOCTOR: 'doctor',
+  PATIENT: 'patient',
+  CLINIC_ADMIN: 'clinic_admin',
+  GUEST: 'guest',
+} as const;
+
+// Типы контента
+export const CONTENT_TYPES = {
+  ARTICLE: 'article',
+  NEWS: 'news',
+  VIDEO: 'video',
+  PODCAST: 'podcast',
+} as const;
+
+// Статусы запросов
+export const REQUEST_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  CANCELLED: 'cancelled',
+} as const;
+
+// Типы уведомлений
+export const NOTIFICATION_TYPES = {
+  APPOINTMENT: 'appointment',
+  MESSAGE: 'message',
+  REMINDER: 'reminder',
+  SYSTEM: 'system',
+  ALERT: 'alert',
+} as const;
+
+// Категории медицинских услуг
+export const MEDICAL_CATEGORIES = {
+  GENERAL: 'general',
+  CARDIOLOGY: 'cardiology',
+  DERMATOLOGY: 'dermatology',
+  NEUROLOGY: 'neurology',
+  PEDIATRICS: 'pediatrics',
+  GYNECOLOGY: 'gynecology',
+  OPHTHALMOLOGY: 'ophthalmology',
+  ORTHOPEDICS: 'orthopedics',
+  DENTISTRY: 'dentistry',
+  PSYCHIATRY: 'psychiatry',
+  ENDOCRINOLOGY: 'endocrinology',
+  UROLOGY: 'urology',
+  ONCOLOGY: 'oncology',
+} as const;
+
+// Приоритеты срочности
+export const PRIORITY_LEVELS = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  URGENT: 'urgent',
+  EMERGENCY: 'emergency',
+} as const;
+
+// Экранные размеры для адаптивного дизайна
+export const SCREEN_SIZES = {
+  XS: 320,
+  SM: 375,
+  MD: 768,
+  LG: 1024,
+  XL: 1280,
+} as const;
+
+// Константы для анимаций
+export const ANIMATION = {
+  DURATION: {
+    FAST: 200,
+    NORMAL: 300,
+    SLOW: 500,
+  },
+  EASING: {
+    EASE_IN: 'easeIn',
+    EASE_OUT: 'easeOut',
+    EASE_IN_OUT: 'easeInOut',
+    LINEAR: 'linear',
+  },
+} as const;
+
 interface ColorTheme {
   primary: string;
   background: string;

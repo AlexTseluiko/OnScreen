@@ -4,17 +4,33 @@ const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'user_data';
 const AUTH_TOKEN_KEY = 'token'; // Ключ, используемый в AuthContext
 
+export interface TokenData {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface UserData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  [key: string]: unknown;
+}
+
 // Функция для сохранения токена авторизации
-export const storeToken = async (token: string): Promise<void> => {
+export const storeToken = async (tokenData: TokenData): Promise<void> => {
   try {
     console.log(
       `storeToken: Сохраняем токен в ${TOKEN_KEY}:`,
-      token ? `${token.substring(0, 10)}...` : 'отсутствует'
+      tokenData ? `${tokenData.accessToken.substring(0, 10)}...` : 'отсутствует'
     );
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await AsyncStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
 
     // Также сохраняем токен в AUTH_TOKEN_KEY для совместимости с AuthContext
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, tokenData.accessToken);
     console.log('storeToken: Токен также сохранен в', AUTH_TOKEN_KEY);
   } catch (error) {
     console.error('Ошибка при сохранении токена:', error);
@@ -22,14 +38,14 @@ export const storeToken = async (token: string): Promise<void> => {
 };
 
 // Функция для получения токена авторизации
-export const getToken = async (): Promise<string | null> => {
+export const getToken = async (): Promise<TokenData | null> => {
   try {
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    const tokenData = await AsyncStorage.getItem(TOKEN_KEY);
     console.log(
       `getToken: Получен токен из ${TOKEN_KEY}:`,
-      token ? `${token.substring(0, 10)}...` : 'отсутствует'
+      tokenData ? `${tokenData.substring(0, 10)}...` : 'отсутствует'
     );
-    return token;
+    return tokenData ? JSON.parse(tokenData) : null;
   } catch (error) {
     console.error('Ошибка при получении токена:', error);
     return null;
@@ -46,7 +62,7 @@ export const removeToken = async (): Promise<void> => {
 };
 
 // Функция для сохранения данных пользователя
-export const storeUserData = async (userData: any): Promise<void> => {
+export const storeUserData = async (userData: UserData): Promise<void> => {
   try {
     const jsonValue = JSON.stringify(userData);
     await AsyncStorage.setItem(USER_KEY, jsonValue);
@@ -56,7 +72,7 @@ export const storeUserData = async (userData: any): Promise<void> => {
 };
 
 // Функция для получения данных пользователя
-export const getUserData = async (): Promise<any | null> => {
+export const getUserData = async (): Promise<UserData | null> => {
   try {
     const jsonValue = await AsyncStorage.getItem(USER_KEY);
     return jsonValue != null ? JSON.parse(jsonValue) : null;

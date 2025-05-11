@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeContext';
+import styles from './EmergencyAIAssistantScreen.styles';
 
 const OPENAI_API_KEY =
   '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';
@@ -99,7 +99,7 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -113,46 +113,57 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
                 item.role === 'user' ? styles.userMessage : styles.aiMessage,
                 {
                   backgroundColor:
-                    item.role === 'user' ? theme.colors.primary + '20' : theme.colors.card,
+                    item.role === 'user' ? theme.colors.primary + '20' : theme.colors.surface,
                 },
               ]}
             >
-              <Text style={[styles.messageText, { color: theme.colors.text }]}>{item.content}</Text>
+              <Text style={[styles.messageText, { color: theme.colors.text.primary }]}>
+                {item.content}
+              </Text>
             </View>
           )}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={styles.listContent}
         />
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleCall}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
+            onPress={handleCall}
+          >
             <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
               {t('emergencyAI.call103')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleShowHospitals}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
+            onPress={handleShowHospitals}
+          >
             <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
               {t('emergencyAI.showHospitals')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleSendLocation}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
+            onPress={handleSendLocation}
+          >
             <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
               {t('emergencyAI.sendLocation')}
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.colors.background }]}>
           <TextInput
             style={[
               styles.input,
               {
-                color: theme.colors.text,
-                backgroundColor: theme.colors.card,
+                color: theme.colors.text.primary,
+                backgroundColor: theme.colors.surface,
                 borderColor: theme.colors.border,
               },
             ]}
             value={input}
             onChangeText={setInput}
             placeholder={t('emergencyAI.inputPlaceholder')}
-            placeholderTextColor={theme.colors.textSecondary}
+            placeholderTextColor={theme.colors.text.secondary}
             editable={!loading}
             onSubmitEditing={sendMessage}
             returnKeyType="send"
@@ -162,73 +173,12 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
             onPress={sendMessage}
             disabled={loading}
           >
-            <Text style={styles.sendButtonText}>{loading ? '...' : t('common.submit')}</Text>
+            <Text style={[styles.sendButtonText, { color: theme.colors.text.inverse }]}>
+              {loading ? '...' : t('common.submit')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  actionButton: {
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    marginHorizontal: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  actionButtonText: {
-    fontWeight: 'bold',
-  },
-  aiMessage: {
-    alignSelf: 'flex-start',
-  },
-  container: {
-    flex: 1,
-  },
-  input: {
-    borderRadius: 8,
-    borderWidth: 1,
-    flex: 1,
-    fontSize: 16,
-    marginRight: 8,
-    padding: 10,
-  },
-  inputContainer: {
-    backgroundColor: 'transparent',
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    padding: 8,
-  },
-  message: {
-    borderRadius: 10,
-    marginBottom: 12,
-    maxWidth: '85%',
-    padding: 12,
-  },
-  messageText: {
-    fontSize: 16,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-    paddingHorizontal: 8,
-  },
-  sendButton: {
-    alignItems: 'center',
-    borderRadius: 8,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-  },
-});

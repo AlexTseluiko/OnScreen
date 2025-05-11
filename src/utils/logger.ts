@@ -112,7 +112,7 @@ export class Logger {
   }
 
   private async writeToFile(entry: LogEntry): Promise<void> {
-    if (!this.config.enableFile) return;
+    if (!this.config.enableFile || this.isWeb) return;
 
     try {
       const logDir = this.config.logFilePath.substring(0, this.config.logFilePath.lastIndexOf('/'));
@@ -225,6 +225,22 @@ export class Logger {
     } catch (error) {
       console.error('Failed to clear logs:', error);
     }
+  }
+
+  public error(message: LogMessage, data?: LogData): void {
+    this.log('error', message, data);
+  }
+
+  public warn(message: LogMessage, data?: LogData): void {
+    this.log('warn', message, data);
+  }
+
+  public info(message: LogMessage, data?: LogData): void {
+    this.log('info', message, data);
+  }
+
+  public debug(message: LogMessage, data?: LogData): void {
+    this.log('debug', message, data);
   }
 }
 

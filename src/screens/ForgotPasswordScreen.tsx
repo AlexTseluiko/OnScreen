@@ -17,9 +17,14 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { authApi } from '../api/auth';
 
 type ForgotPasswordScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ForgotPassword'>;
+
+interface ApiResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
 
 export const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
@@ -28,7 +33,7 @@ export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted] = useState(false);
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,124 +45,165 @@ export const ForgotPasswordScreen: React.FC = () => {
     setIsEmailValid(text === '' || validateEmail(text));
   };
 
-  const handleSendResetLink = async () => {
-    if (!email) {
-      Alert.alert(t('common.error'), t('auth.fillAllFields'), [{ text: t('common.ok') }]);
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setIsEmailValid(false);
-      return;
-    }
-
-    setIsLoading(true);
+  const handleSubmit = async () => {
+    if (!email || !isEmailValid) return;
 
     try {
-      const response = await authApi.forgotPassword(email);
-      setIsSubmitted(true);
-      Alert.alert(t('common.success'), t('auth.resetLinkSent'), [{ text: t('common.ok') }]);
-    } catch (error: any) {
-      console.error('Ошибка восстановления пароля:', error);
+      setIsLoading(true);
+      const response: ApiResponse = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      }).then(res => res.json());
 
-      let errorMessage = 'Не удалось отправить инструкции для сброса пароля';
-
-      if (error.message) {
-        errorMessage = error.message;
+      if (response.success) {
+        Alert.alert('Успех', 'Инструкции по сбросу пароля отправлены на ваш email');
+      } else {
+        Alert.alert('Ошибка', response.error || 'Произошла ошибка при отправке запроса');
       }
-
-      Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+    } catch (error) {
+      Alert.alert('Ошибка', 'Произошла ошибка при отправке запроса');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBackToLogin = () => {
-    navigation.goBack();
-  };
+  const styles = StyleSheet.create({
+    button: {
+      alignItems: 'center',
+      backgroundColor: theme.colors.primary,
+      borderRadius: 8,
+      marginTop: 20,
+      padding: 16,
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    buttonMarginTop: {
+      marginTop: 30,
+    },
+    buttonText: {
+      color: theme.colors.text.inverse,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    form: {
+      flex: 1,
+      padding: 20,
+    },
+    header: {
+      marginBottom: 30,
+    },
+    input: {
+      backgroundColor: theme.colors.inputBackground,
+      borderColor: theme.colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      color: theme.colors.text.primary,
+      fontSize: 16,
+      padding: 12,
+    },
+    inputContainer: {
+      marginBottom: 20,
+    },
+    inputError: {
+      borderColor: theme.colors.error,
+    },
+    inputWrapper: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    label: {
+      color: theme.colors.text.primary,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    subtitle: {
+      color: theme.colors.text.secondary,
+      fontSize: 16,
+    },
+    title: {
+      color: theme.colors.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+  });
 
   return (
     <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackToLogin} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            {t('auth.forgotPasswordTitle')}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            {t('auth.forgotPasswordSubtitle')}
-          </Text>
-        </View>
-
+      <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
         {!isSubmitted ? (
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.email')}</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: theme.colors.inputBackground },
-                  !isEmailValid ? styles.inputWrapperError : {},
-                ]}
-              >
-                <Ionicons name="mail-outline" size={20} color={theme.colors.text} />
-                <TextInput
-                  style={[styles.input, { color: theme.colors.text }]}
-                  value={email}
-                  onChangeText={handleEmailChange}
-                  placeholder={t('auth.emailPlaceholder')}
-                  placeholderTextColor={theme.colors.placeholder}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                />
-              </View>
-              {!isEmailValid && email && (
-                <Text style={styles.errorText}>{t('auth.invalidEmail')}</Text>
-              )}
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>{t('auth.forgotPassword')}</Text>
+              <Text style={styles.subtitle}>{t('auth.forgotPasswordDescription')}</Text>
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                {
-                  backgroundColor: theme.colors.primary,
-                  opacity: !email || !isEmailValid || isLoading ? 0.6 : 1,
-                },
-              ]}
-              onPress={handleSendResetLink}
-              disabled={!email || !isEmailValid || isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.sendButtonText}>{t('auth.sendResetLink')}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.successContainer}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>{t('auth.email')}</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={24} color={theme.colors.text.secondary} />
+                  <TextInput
+                    style={[styles.input, !isEmailValid ? styles.inputError : null]}
+                    value={email}
+                    onChangeText={handleEmailChange}
+                    placeholder={t('auth.enterEmail')}
+                    placeholderTextColor={theme.colors.text.hint}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                  />
+                </View>
+                {!isEmailValid && <Text style={styles.errorText}>{t('auth.invalidEmail')}</Text>}
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  (!email || !isEmailValid || isLoading) && styles.buttonDisabled,
+                ]}
+                onPress={handleSubmit}
+                disabled={!email || !isEmailValid || isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color={theme.colors.text.inverse} />
+                ) : (
+                  <Text style={styles.buttonText}>{t('auth.sendResetLink')}</Text>
+                )}
+              </TouchableOpacity>
             </View>
-            <Text style={[styles.successTitle, { color: theme.colors.text }]}>
-              {t('common.success')}
-            </Text>
-            <Text style={[styles.successText, { color: theme.colors.textSecondary }]}>
-              {t('auth.resetLinkSent')}
-            </Text>
+          </>
+        ) : (
+          <View style={styles.form}>
+            <Text style={styles.title}>{t('auth.checkEmail')}</Text>
+            <Text style={styles.subtitle}>{t('auth.resetPasswordEmailSent')}</Text>
             <TouchableOpacity
-              style={[styles.backToLoginButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleBackToLogin}
+              style={[styles.button, styles.buttonMarginTop]}
+              onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.backToLoginText}>{t('auth.goBackToLogin')}</Text>
+              <Text style={styles.buttonText}>{t('auth.backToLogin')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -165,118 +211,5 @@ export const ForgotPasswordScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  backButton: {
-    marginBottom: 16,
-  },
-  backToLoginButton: {
-    borderRadius: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  backToLoginText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  container: {
-    flex: 1,
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  header: {
-    marginBottom: 30,
-  },
-  iconContainer: {
-    marginBottom: 24,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  inputContainer: {
-    marginBottom: 24,
-  },
-  inputWrapper: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    flexDirection: 'row',
-    height: 54,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  inputWrapperError: {
-    borderColor: '#FF3B30',
-    borderWidth: 1,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  sendButton: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    height: 54,
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  sendButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  successContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  successText: {
-    fontSize: 16,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-});
 
 export default ForgotPasswordScreen;

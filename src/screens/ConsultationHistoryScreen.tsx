@@ -135,7 +135,7 @@ const ConsultationHistoryScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   consultationCard: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     borderRadius: 12,
     marginBottom: 12,
     padding: 16,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateTime: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.text.secondary,
     fontSize: 14,
     marginTop: 2,
   },
@@ -166,16 +166,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   detailText: {
-    color: COLORS.light.text,
+    color: COLORS.light.text.primary,
     flex: 1,
     fontSize: 14,
   },
   header: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     padding: 20,
   },
   patientName: {
-    color: COLORS.light.text,
+    color: COLORS.light.text.primary,
     fontSize: 16,
     fontWeight: '500',
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statLabel: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.text.secondary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -206,12 +206,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   statusText: {
-    color: COLORS.light.whiteBackground,
+    color: COLORS.light.white,
     fontSize: 12,
     fontWeight: '500',
   },
   title: {
-    color: COLORS.light.text,
+    color: COLORS.light.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
   },

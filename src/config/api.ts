@@ -1,3 +1,9 @@
+/**
+ * Конфигурация API
+ *
+ * Содержит настройки для работы с API сервера.
+ */
+
 // Определяем базовый URL API в зависимости от окружения и платформы
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
@@ -51,15 +57,83 @@ const getBaseUrl = () => {
   return 'https://api.onscreen.com/api';
 };
 
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+// URL API-сервера
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
+// Базовый URL API
+export const BASE_URL = 'https://api.onscreen.com/v1';
+export const API_BASE_URL = 'https://api.onscreen.com';
+
+// Общие настройки API
 export const API_CONFIG = {
-  TIMEOUT: 10000,
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000,
-  CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
-  MAX_CACHE_SIZE: 50 * 1024 * 1024, // 50MB
+  // Таймаут для запросов в миллисекундах
+  TIMEOUT: 30000, // 30 секунд
+
+  // Настройки повторных попыток
+  RETRY: {
+    MAX_ATTEMPTS: 3,
+    BASE_DELAY: 1000, // 1 секунда
+    MAX_DELAY: 10000, // 10 секунд
+  },
+
+  // Настройки кэширования
+  CACHE: {
+    DEFAULT_DURATION: 5 * 60 * 1000, // 5 минут
+    LONG_DURATION: 60 * 60 * 1000, // 1 час
+    MAX_SIZE: 50 * 1024 * 1024, // 50MB
+    PREFIX: 'api_cache_',
+  },
+
+  // Заголовки по умолчанию
+  DEFAULT_HEADERS: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'Accept-Language': 'ru-RU',
+  },
+
+  // Настройки авторизации
+  AUTH: {
+    TOKEN_KEY: '@authToken',
+    REFRESH_TOKEN_KEY: '@refreshToken',
+    TOKEN_EXPIRY_BUFFER: 5 * 60, // 5 минут до истечения токена
+  },
+
+  // Коды ошибок
+  ERROR_CODES: {
+    UNAUTHORIZED: 'UNAUTHORIZED',
+    FORBIDDEN: 'FORBIDDEN',
+    NETWORK_ERROR: 'NETWORK_ERROR',
+    TIMEOUT: 'TIMEOUT',
+    SERVER_ERROR: 'SERVER_ERROR',
+    INVALID_REQUEST: 'INVALID_REQUEST',
+  },
 };
+
+// Экспортируем API_TIMEOUT для удобства доступа
+export const API_TIMEOUT = API_CONFIG.TIMEOUT;
+
+// Максимальное количество попыток повторного запроса
+export const MAX_RETRY_ATTEMPTS = 3;
+
+// Задержка между попытками повторного запроса (в миллисекундах)
+export const RETRY_DELAY = 1000;
+
+// HTTP Методы
+export const HTTP_METHODS = {
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  PATCH: 'PATCH',
+  DELETE: 'DELETE',
+} as const;
+
+// Заголовки запросов
+export const HEADERS = {
+  CONTENT_TYPE: 'Content-Type',
+  AUTHORIZATION: 'Authorization',
+  ACCEPT: 'Accept',
+  ACCEPT_LANGUAGE: 'Accept-Language',
+} as const;
 
 export const API_ENDPOINTS = {
   AUTH: {

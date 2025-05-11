@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,12 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { adminApi } from '../api/admin';
 import { useNavigation } from '@react-navigation/native';
-import { User } from '../types/user';
+import { User } from '../types/models';
 import { ApiResponse, PaginationData } from '../types/api';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { themes } from '../theme/theme';
+import { COLORS } from '../theme/colors';
 
 type AdminUsersScreenNavigationProp = StackNavigationProp<RootStackParamList, 'AdminUsers'>;
 
@@ -28,7 +30,8 @@ interface UsersResponse {
 }
 
 export const AdminUsersScreen: React.FC = () => {
-  const { theme } = useTheme();
+  const { isDark } = useTheme();
+  const theme = isDark ? themes.dark : themes.light;
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -44,11 +47,7 @@ export const AdminUsersScreen: React.FC = () => {
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const navigation = useNavigation<AdminUsersScreenNavigationProp>();
 
-  useEffect(() => {
-    loadUsers();
-  }, [pagination.page, roleFilter]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = (await adminApi.getUsers({
@@ -79,7 +78,11 @@ export const AdminUsersScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, searchTerm, roleFilter, t]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleSearch = () => {
     // Сбрасываем страницу на первую при новом поиске
@@ -146,12 +149,12 @@ export const AdminUsersScreen: React.FC = () => {
   };
 
   const renderUserItem = ({ item }: { item: User }) => (
-    <View style={[styles.userCard, { backgroundColor: theme.colors.card }]}>
+    <View style={[styles.userCard, item.isBlocked && styles.disabledButton]}>
       <View style={styles.userInfo}>
-        <Text style={[styles.userName, { color: theme.colors.text }]}>
+        <Text style={[styles.userName, { color: theme.colors.text.primary }]}>
           {item.firstName} {item.lastName}
         </Text>
-        <Text style={[styles.userEmail, { color: theme.colors.textSecondary }]}>{item.email}</Text>
+        <Text style={[styles.userEmail, { color: theme.colors.text.secondary }]}>{item.email}</Text>
         <View style={styles.userMeta}>
           <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
             <Text style={[styles.badgeText, { color: theme.colors.white }]}>{item.role}</Text>
@@ -217,8 +220,8 @@ export const AdminUsersScreen: React.FC = () => {
       onRequestClose={() => setIsRoleModalVisible(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-          <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+        <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>
             {t('admin.selectRole')}
           </Text>
 
@@ -262,63 +265,63 @@ export const AdminUsersScreen: React.FC = () => {
       onRequestClose={() => setIsDetailsModalVisible(false)}
     >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
+        <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
           {selectedUser && (
             <>
-              <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
+              <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>
                 {t('admin.userDetails')}
               </Text>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.id')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser._id}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.name')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser.firstName} {selectedUser.lastName}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.email')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser.email}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.role')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser.role}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.status')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser.isBlocked ? t('admin.blocked') : t('admin.active')}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.detailLabel, { color: theme.colors.text.secondary }]}>
                   {t('admin.verification')}:
                 </Text>
-                <Text style={[styles.detailValue, { color: theme.colors.text }]}>
+                <Text style={[styles.detailValue, { color: theme.colors.text.primary }]}>
                   {selectedUser.isVerified ? t('admin.verified') : t('admin.notVerified')}
                 </Text>
               </View>
@@ -336,20 +339,67 @@ export const AdminUsersScreen: React.FC = () => {
     </Modal>
   );
 
+  const LoadingIndicator = () => (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
+
+  const Pagination = () => (
+    <View style={styles.paginationContainer}>
+      <TouchableOpacity
+        style={[styles.paginationButton, pagination.page <= 1 ? { opacity: 0.5 } : { opacity: 1 }]}
+        onPress={() => {
+          if (pagination.page > 1) {
+            setPagination({
+              ...pagination,
+              page: pagination.page - 1,
+            });
+          }
+        }}
+        disabled={pagination.page <= 1}
+      >
+        <Ionicons name="chevron-back" size={20} color={theme.colors.text.primary} />
+      </TouchableOpacity>
+
+      <Text style={[styles.paginationText, { color: theme.colors.text.primary }]}>
+        {t('admin.page')} {pagination.page} {t('admin.of')} {pagination.pages}
+      </Text>
+
+      <TouchableOpacity
+        style={[
+          styles.paginationButton,
+          pagination.page >= pagination.pages ? { opacity: 0.5 } : { opacity: 1 },
+        ]}
+        onPress={() => {
+          if (pagination.page < pagination.pages) {
+            setPagination({
+              ...pagination,
+              page: pagination.page + 1,
+            });
+          }
+        }}
+        disabled={pagination.page >= pagination.pages}
+      >
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.text.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>{t('admin.users')}</Text>
+        <Text style={[styles.title, { color: theme.colors.text.primary }]}>{t('admin.users')}</Text>
       </View>
 
       <View style={styles.searchContainer}>
         <TextInput
           style={[
             styles.searchInput,
-            { backgroundColor: theme.colors.card, color: theme.colors.text },
+            { backgroundColor: theme.colors.surface, color: theme.colors.text.primary },
           ]}
           placeholder={t('admin.searchUsers')}
-          placeholderTextColor={theme.colors.textSecondary}
+          placeholderTextColor={theme.colors.text.secondary}
           value={searchTerm}
           onChangeText={setSearchTerm}
         />
@@ -369,14 +419,16 @@ export const AdminUsersScreen: React.FC = () => {
               styles.filterButton,
               roleFilter === role
                 ? { backgroundColor: theme.colors.primary }
-                : { backgroundColor: theme.colors.card },
+                : { backgroundColor: theme.colors.surface },
             ]}
             onPress={() => setRoleFilter(role)}
           >
             <Text
               style={[
                 styles.filterButtonText,
-                roleFilter === role ? { color: theme.colors.white } : { color: theme.colors.text },
+                roleFilter === role
+                  ? { color: COLORS.palette.white }
+                  : { color: theme.colors.text.primary },
               ]}
             >
               {role ? t(`admin.roles.${role}`) : t('admin.allUsers')}
@@ -393,72 +445,21 @@ export const AdminUsersScreen: React.FC = () => {
         <Text style={styles.doctorRequestsButtonText}>{t('admin.doctorRequests')}</Text>
       </TouchableOpacity>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} style={styles.loader} />
-      ) : (
-        <>
-          {users.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="alert-circle-outline" size={48} color={theme.colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
-                {t('admin.noUsersFound')}
-              </Text>
-            </View>
-          ) : (
-            <>
-              <FlatList
-                data={users}
-                keyExtractor={item => item._id}
-                renderItem={renderUserItem}
-                contentContainerStyle={styles.listContainer}
-                showsVerticalScrollIndicator={false}
-              />
-
-              <View style={styles.pagination}>
-                <TouchableOpacity
-                  style={[
-                    styles.paginationButton,
-                    pagination.page <= 1 ? { opacity: 0.5 } : { opacity: 1 },
-                  ]}
-                  onPress={() => {
-                    if (pagination.page > 1) {
-                      setPagination({
-                        ...pagination,
-                        page: pagination.page - 1,
-                      });
-                    }
-                  }}
-                  disabled={pagination.page <= 1}
-                >
-                  <Ionicons name="chevron-back" size={20} color={theme.colors.text} />
-                </TouchableOpacity>
-
-                <Text style={[styles.paginationText, { color: theme.colors.text }]}>
-                  {t('admin.page')} {pagination.page} {t('admin.of')} {pagination.pages}
-                </Text>
-
-                <TouchableOpacity
-                  style={[
-                    styles.paginationButton,
-                    pagination.page >= pagination.pages ? { opacity: 0.5 } : { opacity: 1 },
-                  ]}
-                  onPress={() => {
-                    if (pagination.page < pagination.pages) {
-                      setPagination({
-                        ...pagination,
-                        page: pagination.page + 1,
-                      });
-                    }
-                  }}
-                  disabled={pagination.page >= pagination.pages}
-                >
-                  <Ionicons name="chevron-forward" size={20} color={theme.colors.text} />
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-        </>
-      )}
+      <FlatList
+        data={users}
+        renderItem={renderUserItem}
+        keyExtractor={item => item._id}
+        contentContainerStyle={styles.usersList}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color={theme.colors.text.secondary} />
+            <Text style={[styles.emptyText, { color: theme.colors.text.secondary }]}>
+              {t('admin.noUsersFound')}
+            </Text>
+          </View>
+        }
+        ListFooterComponent={loading ? <LoadingIndicator /> : pagination && <Pagination />}
+      />
 
       <RoleModal />
       <UserDetailsModal />
@@ -475,7 +476,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   actionButtonText: {
-    color: '#fff',
+    color: COLORS.palette.white,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   cancelButtonText: {
-    color: '#fff',
+    color: COLORS.palette.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -566,12 +567,6 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 16,
   },
-  listContainer: {
-    flexGrow: 1,
-  },
-  loader: {
-    marginTop: 20,
-  },
   loadingContainer: {
     alignItems: 'center',
     flex: 1,
@@ -603,12 +598,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  pagination: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
   paginationButton: {
     alignItems: 'center',
     borderRadius: 16,
@@ -633,7 +622,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   roleOptionText: {
-    color: '#fff',
+    color: COLORS.palette.white,
     fontSize: 16,
     fontWeight: 'bold',
   },

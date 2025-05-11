@@ -2,8 +2,19 @@ import React, { createContext, useContext } from 'react';
 import { userStorage } from '../utils/userStorage';
 import { User } from '../types/user';
 
+// Импорт интерфейса ApiUser из AuthContext (или добавление его здесь)
+interface ApiUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role?: string;
+  [key: string]: unknown; // Для других возможных полей
+}
+
 interface UserData {
-  user: User;
+  user: User | ApiUser;
   token: string;
   refreshToken: string;
 }

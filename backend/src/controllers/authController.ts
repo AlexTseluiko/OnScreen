@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-import { User, UserRole } from '../models/User';
+import { User } from '../models/User';
+import { UserRole } from '../types/user';
 import { createNotification, NotificationType } from '../utils/notifications';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import { JWT_SECRET, JWT_EXPIRY } from '../config';
+import { AuthRequest } from '../middleware/auth';
 
 // Логирование переменных окружения SMTP без конфиденциальных данных
 console.log('SMTP Configuration:', {
@@ -38,7 +40,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Проверка соединения с SMTP сервером при запуске
-transporter.verify(function (error, success) {
+transporter.verify(function (error, _success) {
   if (error) {
     console.error('Ошибка соединения с почтовым сервером:', error);
   } else {
@@ -47,11 +49,16 @@ transporter.verify(function (error, success) {
 });
 
 // Генерация JWT токена
-const generateToken = (userId: string, email: string, role: string = UserRole.PATIENT) => {
+const generateToken = (
+  userId: string,
+  email: string,
+  role: string = UserRole.PATIENT,
+  expiresIn: string | number = JWT_EXPIRY
+) => {
   console.log('Генерация токена для пользователя:', userId, 'с ролью:', role);
 
   // Создаем токен с id, email и role
-  const options: SignOptions = { expiresIn: JWT_EXPIRY as any };
+  const options: SignOptions = { expiresIn: expiresIn as any };
   const token = jwt.sign(
     {
       id: userId,
@@ -64,6 +71,12 @@ const generateToken = (userId: string, email: string, role: string = UserRole.PA
 
   console.log('Токен успешно создан, длина:', token.length);
   return token;
+};
+
+// Генерация refresh token с более длительным сроком действия
+const generateRefreshToken = (userId: string) => {
+  // Refresh token действует 30 дней
+  return generateToken(userId, '', '', '30d');
 };
 
 // Регистрация пользователя
@@ -164,7 +177,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Проверяем, существует ли пользователь
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).exec();
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -181,7 +194,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Проверяем правильность пароля
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({
         success: false,
@@ -191,6 +204,9 @@ export const login = async (req: Request, res: Response) => {
 
     // Генерируем JWT токен
     const token = generateToken(user._id, user.email, user.role);
+
+    // Генерируем refresh token
+    const refreshToken = generateRefreshToken(user._id);
 
     // Добавляем дополнительную информацию о пользователе
     const userData = {
@@ -202,18 +218,18 @@ export const login = async (req: Request, res: Response) => {
       isVerified: user.isVerified,
     };
 
-    // Отправляем успешный ответ с токеном и данными пользователя
-    res.status(200).json({
+    // Отправляем ответ
+    return res.status(200).json({
       success: true,
       token,
+      refreshToken,
       user: userData,
-      message: 'Вход выполнен успешно',
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
+    console.error('Ошибка при входе:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Ошибка сервера при входе в систему',
+      message: 'Ошибка сервера при аутентификации',
     });
   }
 };
@@ -407,7 +423,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 };
 
 // Контроллер для смены пароля авторизованного пользователя
-export const changePassword = async (req: Request, res: Response) => {
+export const changePassword = async (req: AuthRequest, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.id;
@@ -455,50 +471,71 @@ export const changePassword = async (req: Request, res: Response) => {
 // Обновление JWT токена
 export const refreshToken = async (req: Request, res: Response) => {
   try {
-    // Получаем текущий токен из заголовка авторизации
-    const token = req.headers.authorization?.split(' ')[1];
+    const { refreshToken } = req.body;
 
-    if (!token) {
-      return res.status(401).json({ error: 'Требуется авторизация' });
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Отсутствует refresh token',
+        code: 'missing_refresh_token',
+      });
     }
 
     try {
-      // Проверяем текущий токен
-      const decoded = jwt.verify(token, JWT_SECRET as Secret) as {
+      // Проверяем валидность refresh token
+      const decoded = jwt.verify(refreshToken, JWT_SECRET as Secret) as {
         id: string;
-        email: string;
-        role: string;
       };
 
       // Находим пользователя в БД
       const user = await User.findById(decoded.id);
 
       if (!user) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
+        return res.status(404).json({
+          success: false,
+          message: 'Пользователь не найден',
+          code: 'user_not_found',
+        });
       }
 
       if (user.isBlocked) {
-        return res.status(403).json({ error: 'Пользователь заблокирован' });
+        return res.status(403).json({
+          success: false,
+          message: 'Пользователь заблокирован',
+          code: 'user_blocked',
+        });
       }
 
-      // Генерируем новый токен с обновленным временем истечения
+      // Генерируем новые токены
       const newToken = generateToken(user._id, user.email, user.role);
+      const newRefreshToken = generateRefreshToken(user._id);
 
-      // Отправляем новый токен клиенту
-      res.json({ token: newToken });
+      // Возвращаем новые токены
+      return res.status(200).json({
+        success: true,
+        token: newToken,
+        refreshToken: newRefreshToken,
+      });
     } catch (jwtError) {
-      // Если проверка токена не прошла, отправляем ошибку
-      console.error('Ошибка проверки токена при обновлении:', jwtError);
-      return res.status(401).json({ error: 'Недействительный токен' });
+      console.error('Ошибка проверки refresh token:', jwtError);
+      return res.status(401).json({
+        success: false,
+        message: 'Недействительный refresh token',
+        code: 'invalid_refresh_token',
+      });
     }
   } catch (error) {
     console.error('Ошибка обновления токена:', error);
-    res.status(500).json({ error: 'Ошибка при обновлении токена' });
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при обновлении токена',
+      code: 'server_error',
+    });
   }
 };
 
 // Выход пользователя
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (req: AuthRequest, res: Response) => {
   try {
     // В JWT аутентификации на стороне сервера нет необходимости
     // хранить токены, так как они хранятся на клиенте
@@ -515,6 +552,28 @@ export const logout = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Ошибка при выходе из системы',
+    });
+  }
+};
+
+// Проверка валидности токена
+export const verifyToken = async (req: AuthRequest, res: Response) => {
+  try {
+    // Если мы дошли до этой точки в коде, значит миддлвэр auth успешно проверил токен
+    // и добавил данные пользователя в req.user
+    res.status(200).json({
+      success: true,
+      message: 'Токен действителен',
+      data: {
+        valid: true,
+        user: req.user,
+      },
+    });
+  } catch (error) {
+    console.error('Ошибка при проверке токена:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при проверке токена',
     });
   }
 };

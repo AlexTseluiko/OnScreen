@@ -1,37 +1,42 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
   Animated,
   Alert,
+  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme/ThemeContext';
-import { useTranslation } from 'react-i18next';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { AuthStackParamList } from '../navigation/AppNavigation';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { LoginCredentials } from '../types/user';
-import { ErrorMessage } from '../components/ErrorMessage';
-import { COLORS } from '../constants';
 import { showPlatformToast, vibrate } from '../utils/platform';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+// Импортируем компоненты из атомарной дизайн-системы
+import { Text } from '../components/ui/atoms/Text';
+import { Button } from '../components/ui/atoms/Button';
+import { Input } from '../components/ui/atoms/Input';
+import { Checkbox } from '../components/ui/atoms/Checkbox';
+import { Card } from '../components/ui/atoms/Card';
+import { Divider } from '../components/ui/atoms/Divider';
+import { Icon } from '../components/ui/atoms/Icon';
+
+type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const { login } = useAuth();
+
+  // Состояния
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -44,9 +49,25 @@ export const LoginScreen: React.FC = () => {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const [isEmailValid, setIsEmailValid] = useState(true);
-  const loginButtonRef = useRef<TouchableOpacity>(null);
-  const timerRef = useRef<NodeJS.Timeout>();
   const [error, setError] = useState<string | null>(null);
+
+  // Состояние для хранения динамических стилей
+  const [dynamicStyles, setDynamicStyles] = useState({
+    errorCard: {
+      backgroundColor: theme.colors.error,
+      marginTop: 16,
+      padding: 16,
+    },
+    errorText: {
+      color: theme.colors.surface,
+    },
+    dynamicLink: {
+      color: theme.colors.primary,
+    },
+  });
+
+  // Ссылки
+  const timerRef = useRef<NodeJS.Timeout>();
 
   // Очистка таймеров при размонтировании компонента
   useEffect(() => {
@@ -56,6 +77,23 @@ export const LoginScreen: React.FC = () => {
       }
     };
   }, []);
+
+  // Обновляем динамические стили при изменении темы
+  useEffect(() => {
+    setDynamicStyles({
+      errorCard: {
+        backgroundColor: theme.colors.error,
+        marginTop: 16,
+        padding: 16,
+      },
+      errorText: {
+        color: theme.colors.surface,
+      },
+      dynamicLink: {
+        color: theme.colors.primary,
+      },
+    });
+  }, [theme]);
 
   useEffect(() => {
     checkBiometricAvailability();
@@ -112,7 +150,7 @@ export const LoginScreen: React.FC = () => {
       case 5:
         return '#34C759';
       default:
-        return theme.colors.textSecondary;
+        return theme.colors.text.secondary;
     }
   };
 
@@ -163,7 +201,9 @@ export const LoginScreen: React.FC = () => {
         showPlatformToast(t('biometricSuccess') || 'Аутентификация успешна');
 
         timerRef.current = setTimeout(() => {
-          navigation.replace('Home');
+          // Биометрическая аутентификация успешна
+          // После успешной авторизации в системе будет автоматическое перенаправление
+          // на MainNavigator через AppNavigation
         }, 800);
       }
     } catch (error) {
@@ -195,7 +235,10 @@ export const LoginScreen: React.FC = () => {
       console.log('Вход выполнен успешно');
 
       showPlatformToast(t('auth.loginSuccess') || 'Вход выполнен успешно');
-      navigation.replace('Home');
+      // Для навигации в MainNavigator нельзя использовать reset напрямую
+      // После успешной авторизации будет автоматическое перенаправление
+      // на MainNavigator через AppNavigation
+      // navigation.replace('Login'); // Не нужно, т.к. переключение произойдет автоматически
     } catch (error) {
       console.error('Ошибка входа:', error);
       setError(error instanceof Error ? error.message : t('auth.loginError'));
@@ -213,79 +256,59 @@ export const LoginScreen: React.FC = () => {
     );
   };
 
+  // Получаем сообщение об ошибке для email
+  const emailErrorText = !isEmailValid && credentials.email ? t('auth.invalidEmail') : undefined;
+
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={styles.keyboardAvoidingView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>{t('auth.welcome')}</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+        <View style={styles.welcomeContainer}>
+          <Text variant="title" style={styles.welcomeTitle}>
+            {t('auth.welcome')}
+          </Text>
+          <Text variant="subtitle" color="secondary">
             {t('auth.loginPrompt')}
           </Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.email')}</Text>
-            <View
-              style={[
-                styles.inputWrapper,
-                { backgroundColor: theme.colors.card },
-                !isEmailValid && credentials.email ? styles.inputWrapperError : {},
-              ]}
-            >
-              <Ionicons name="mail-outline" size={20} color={theme.colors.text} />
-              <TextInput
-                style={[styles.input, { color: theme.colors.text }]}
-                value={credentials.email}
-                onChangeText={text => setCredentials({ ...credentials, email: text })}
-                placeholder={t('auth.emailPlaceholder')}
-                placeholderTextColor={theme.colors.textSecondary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-            {!isEmailValid && credentials.email && (
-              <Text style={styles.errorText}>{t('auth.invalidEmail')}</Text>
-            )}
+        <Card style={styles.loginCard}>
+          <View style={styles.inputGroup}>
+            <Input
+              label={t('auth.email')}
+              value={credentials.email}
+              onChangeText={text => setCredentials({ ...credentials, email: text })}
+              placeholder={t('auth.emailPlaceholder')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={!isEmailValid && credentials.email ? true : false}
+              helperText={emailErrorText}
+              leftIcon={<Icon family="ionicons" name="mail-outline" size={20} color={theme.colors.text.secondary} />}
+            />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>{t('auth.password')}</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: theme.colors.card }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text} />
-              <TextInput
-                style={[styles.input, { color: theme.colors.text }]}
-                value={credentials.password}
-                onChangeText={text => setCredentials({ ...credentials, password: text })}
-                placeholder={t('auth.passwordPlaceholder')}
-                placeholderTextColor={theme.colors.textSecondary}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={20}
-                  color={theme.colors.text}
-                />
-              </TouchableOpacity>
-            </View>
+          <View style={styles.inputGroup}>
+            <Input
+              label={t('auth.password')}
+              value={credentials.password}
+              onChangeText={text => setCredentials({ ...credentials, password: text })}
+              placeholder={t('auth.passwordPlaceholder')}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              leftIcon={<Icon family="ionicons" name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />}
+              rightIcon={<Icon family="ionicons" name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={theme.colors.text.secondary} />}
+              onRightIconPress={() => setShowPassword(!showPassword)}
+            />
 
             {showPasswordStrength && (
-              <View style={styles.passwordStrengthContainer}>
-                <View style={styles.passwordStrengthBar}>
+              <View style={styles.strengthContainer}>
+                <View style={styles.strengthBar}>
                   <View
                     style={[
-                      styles.passwordStrengthFill,
+                      styles.strengthIndicator,
                       {
                         width: `${(passwordStrength / 5) * 100}%`,
                         backgroundColor: getPasswordStrengthColor(passwordStrength),
@@ -294,10 +317,8 @@ export const LoginScreen: React.FC = () => {
                   />
                 </View>
                 <Text
-                  style={[
-                    styles.passwordStrengthText,
-                    { color: getPasswordStrengthColor(passwordStrength) },
-                  ]}
+                  variant="caption"
+                  style={{ color: getPasswordStrengthColor(passwordStrength) }}
                 >
                   {getPasswordStrengthText(passwordStrength)}
                 </Text>
@@ -305,328 +326,198 @@ export const LoginScreen: React.FC = () => {
             )}
           </View>
 
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              style={styles.rememberMeContainer}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  rememberMe && {
-                    backgroundColor: theme.colors.primary,
-                    borderColor: theme.colors.primary,
-                  },
-                ]}
-              >
-                {rememberMe && <Ionicons name="checkmark" size={14} color="#FFF" />}
-              </View>
-              <Text style={[styles.rememberMeText, { color: theme.colors.text }]}>
-                {t('auth.rememberMe')}
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.rememberContainer}>
+            <View style={styles.checkboxContainer}>
+              <Checkbox
+                checked={rememberMe}
+                onPress={() => setRememberMe(!rememberMe)}
+                label={t('auth.rememberMe')}
+              />
+            </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text style={[styles.forgotPassword, { color: theme.colors.primary }]}>
+              <Text variant="caption" style={dynamicStyles.dynamicLink}>
                 {t('auth.forgotPassword')}
               </Text>
             </TouchableOpacity>
           </View>
 
           <Animated.View
-            style={[
-              styles.loginButtonContainer,
-              {
-                transform: [{ scale: scaleAnim }],
-              },
-              loading ? styles.buttonOpacity : null,
-            ]}
+            style={[styles.loginButtonContainer, { transform: [{ scale: scaleAnim }] }]}
           >
-            <TouchableOpacity
-              ref={loginButtonRef}
-              style={[
-                styles.loginButton,
-                {
-                  backgroundColor: theme.colors.primary,
-                },
-                !credentials.email || !credentials.password || !isEmailValid
-                  ? styles.buttonOpacityDisabled
-                  : null,
-              ]}
+            <Button
+              title={t('auth.login')}
               onPress={handleLogin}
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
+              variant="primary"
+              size="large"
+              loading={loading}
               disabled={loading || !credentials.email || !credentials.password || !isEmailValid}
-            >
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                <Text style={styles.loginButtonText}>{t('auth.login')}</Text>
-              )}
-            </TouchableOpacity>
+              fullWidth
+            />
           </Animated.View>
 
           {isBiometricAvailable && (
-            <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricAuth}>
-              <Ionicons name="finger-print-outline" size={24} color={theme.colors.primary} />
-              <Text style={[styles.biometricText, { color: theme.colors.text }]}>
-                {t('auth.loginWithBiometric')}
-              </Text>
-            </TouchableOpacity>
+            <Button
+              title={t('auth.loginWithBiometric')}
+              onPress={handleBiometricAuth}
+              leftIcon="finger-print-outline"
+              variant="outline"
+              size="medium"
+              fullWidth
+              style={styles.biometricButton}
+            />
           )}
+        </Card>
 
-          <View style={styles.dividerContainer}>
-            <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-            <Text style={[styles.dividerText, { color: theme.colors.textSecondary }]}>
-              {t('auth.orContinueWith')}
-            </Text>
-            <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-          </View>
-
-          <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: theme.colors.cardBackground }]}
-              onPress={() => handleSocialLogin('Google')}
-            >
-              <Ionicons name="logo-google" size={20} color="#DB4437" />
-              <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Google</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: theme.colors.cardBackground }]}
-              onPress={() => handleSocialLogin('Facebook')}
-            >
-              <Ionicons name="logo-facebook" size={20} color="#4267B2" />
-              <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Facebook</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.socialButton, { backgroundColor: theme.colors.cardBackground }]}
-              onPress={() => handleSocialLogin('Apple')}
-            >
-              <Ionicons name="logo-apple" size={20} color={theme.colors.text} />
-              <Text style={[styles.socialButtonText, { color: theme.colors.text }]}>Apple</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.dividerContainer}>
+          <Divider style={styles.divider} />
+          <Text variant="bodySmall" color="secondary" style={styles.orText}>
+            {t('auth.orContinueWith')}
+          </Text>
+          <Divider style={styles.divider} />
         </View>
 
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
-            {t('auth.dontHaveAccount')}
+        <View style={styles.socialButtonsContainer}>
+          <Button
+            title="Google"
+            onPress={() => handleSocialLogin('Google')}
+            leftIcon={<Icon family="ionicons" name="logo-google" size={20} color="#DB4437" />}
+            variant="outline"
+            style={styles.googleButton}
+          />
+
+          <Button
+            title="Facebook"
+            onPress={() => handleSocialLogin('Facebook')}
+            leftIcon={<Icon family="ionicons" name="logo-facebook" size={20} color="#4267B2" />}
+            variant="outline"
+            style={styles.facebookButton}
+          />
+
+          <Button
+            title="Apple"
+            onPress={() => handleSocialLogin('Apple')}
+            leftIcon={
+              <Icon
+                family="ionicons"
+                name="logo-apple"
+                size={20}
+                color={String(theme.colors.text.primary)}
+              />
+            }
+            variant="outline"
+            style={styles.appleButton}
+          />
+        </View>
+
+        <View style={styles.registerContainer}>
+          <Text variant="body" color="secondary">
+            {t('auth.dontHaveAccount')}{' '}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
+            <Text variant="caption" style={dynamicStyles.dynamicLink}>
               {t('auth.register')}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {error && <ErrorMessage message={error} />}
+        {error && (
+          <Card style={dynamicStyles.errorCard}>
+            <Text variant="body" style={dynamicStyles.errorText}>
+              {error}
+            </Text>
+          </Card>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  biometricButton: {
-    alignItems: 'center',
-    borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginVertical: 8,
-    padding: 12,
-  },
-  biometricText: {
-    fontSize: 16,
-    fontWeight: '600',
+  appleButton: {
+    flex: 1,
     marginLeft: 8,
   },
-  buttonOpacity: {
-    opacity: 0.8,
+  biometricButton: {
+    marginBottom: 16,
   },
-  buttonOpacityDisabled: {
-    opacity: 0.6,
-  },
-  checkbox: {
+  checkboxContainer: {
     alignItems: 'center',
-    borderRadius: 4,
-    borderWidth: 1,
-    height: 20,
-    justifyContent: 'center',
-    marginRight: 8,
-    width: 20,
-  },
-  container: {
-    flex: 1,
+    flexDirection: 'row',
   },
   divider: {
     flex: 1,
-    height: 1,
   },
   dividerContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginVertical: 24,
-  },
-  dividerText: {
-    fontSize: 14,
-    marginHorizontal: 16,
-  },
-  errorText: {
-    color: COLORS.danger,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  footerLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  footerText: {
-    fontSize: 14,
-  },
-  forgotPassword: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  form: {
     marginBottom: 24,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  input: {
+  facebookButton: {
     flex: 1,
-    fontSize: 16,
-    marginLeft: 10,
+    marginHorizontal: 8,
   },
-  inputContainer: {
-    gap: 8,
-    marginBottom: 20,
+  googleButton: {
+    flex: 1,
+    marginRight: 8,
   },
-  inputWrapper: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    flexDirection: 'row',
-    height: 54,
-    paddingHorizontal: 16,
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  inputWrapperError: {
-    borderColor: COLORS.danger,
-    borderWidth: 1,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  loginButton: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    height: 54,
-    justifyContent: 'center',
+  inputGroup: {
     marginBottom: 16,
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   loginButtonContainer: {
-    alignItems: 'center',
     marginBottom: 16,
   },
-  loginButtonText: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: 'bold',
+  loginCard: {
+    marginBottom: 24,
+    padding: 24,
   },
-  optionsContainer: {
+  orText: {
+    marginHorizontal: 16,
+  },
+  registerContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  rememberContainer: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
   },
-  passwordStrengthBar: {
-    backgroundColor: COLORS.gray5,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 32,
+  },
+  socialButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+  },
+  strengthBar: {
     borderRadius: 2,
     height: 4,
     marginBottom: 4,
     overflow: 'hidden',
   },
-  passwordStrengthContainer: {
+  strengthContainer: {
     marginTop: 8,
   },
-  passwordStrengthFill: {
-    height: 4,
+  strengthIndicator: {
+    height: '100%',
   },
-  passwordStrengthText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  rememberMeContainer: {
+  welcomeContainer: {
     alignItems: 'center',
-    flexDirection: 'row',
+    marginBottom: 32,
   },
-  rememberMeText: {
-    fontSize: 14,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  socialButton: {
-    alignItems: 'center',
-    borderRadius: 16,
-    elevation: 3,
-    height: 80,
-    justifyContent: 'center',
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    width: 80,
-  },
-  socialButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 8,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 24,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  welcomeTitle: {
     marginBottom: 8,
-    textAlign: 'center',
   },
 });

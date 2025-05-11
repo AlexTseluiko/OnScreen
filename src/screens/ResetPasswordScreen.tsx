@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -19,296 +19,313 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../api/auth';
+import { validatePassword } from '../utils/validation';
 
 type ResetPasswordScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ResetPassword'>;
-type ResetPasswordScreenRouteProp = RouteProp<RootStackParamList, 'ResetPassword'>;
 
 export const ResetPasswordScreen: React.FC = () => {
-  const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
-  const route = useRoute<ResetPasswordScreenRouteProp>();
   const { theme } = useTheme();
+  const navigation = useNavigation<ResetPasswordScreenNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'ResetPassword'>>();
+  const { token } = route.params;
   const { t } = useTranslation();
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [newPasswordError, setNewPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [token, setToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Получаем токен из параметров маршрута
-  useEffect(() => {
-    if (route.params?.token) {
-      setToken(route.params.token);
-    }
-  }, [route.params]);
-
-  // Проверка совпадения паролей
-  useEffect(() => {
-    if (confirmPassword) {
-      setPasswordsMatch(newPassword === confirmPassword);
-    } else {
-      setPasswordsMatch(true);
-    }
-  }, [newPassword, confirmPassword]);
-
-  // Расчет силы пароля
-  useEffect(() => {
-    if (newPassword) {
-      const strength = calculatePasswordStrength(newPassword);
-      setPasswordStrength(strength);
-    } else {
-      setPasswordStrength(0);
-    }
-  }, [newPassword]);
-
-  const calculatePasswordStrength = (pass: string): number => {
-    let strength = 0;
-    if (pass.length >= 8) strength += 1;
-    if (/[A-Z]/.test(pass)) strength += 1;
-    if (/[a-z]/.test(pass)) strength += 1;
-    if (/[0-9]/.test(pass)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(pass)) strength += 1;
-    return strength;
+  const handleNewPasswordChange = (text: string) => {
+    setNewPassword(text);
+    setNewPasswordError(null);
+    const strength = validatePassword(text);
+    setPasswordStrength(typeof strength === 'number' ? strength : 0);
   };
 
-  const getPasswordStrengthColor = (strength: number): string => {
-    switch (strength) {
-      case 0:
-      case 1:
-        return '#FF3B30'; // Красный
-      case 2:
-      case 3:
-        return '#FF9500'; // Оранжевый
-      case 4:
-      case 5:
-        return '#34C759'; // Зеленый
-      default:
-        return '#999999'; // Серый
-    }
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    setConfirmPasswordError(null);
   };
 
-  const getPasswordStrengthText = (strength: number): string => {
-    switch (strength) {
-      case 0:
-      case 1:
-        return t('veryWeak');
-      case 2:
-      case 3:
-        return t('medium');
-      case 4:
-      case 5:
-        return t('strong');
-      default:
-        return '';
-    }
-  };
+  const passwordsMatch = newPassword === confirmPassword;
 
-  const handleSavePassword = async () => {
+  const requirements = [
+    {
+      text: t('auth.passwordRequirements.length'),
+      met: newPassword.length >= 8,
+    },
+    {
+      text: t('auth.passwordRequirements.uppercase'),
+      met: /[A-Z]/.test(newPassword),
+    },
+    {
+      text: t('auth.passwordRequirements.lowercase'),
+      met: /[a-z]/.test(newPassword),
+    },
+    {
+      text: t('auth.passwordRequirements.number'),
+      met: /[0-9]/.test(newPassword),
+    },
+    {
+      text: t('auth.passwordRequirements.special'),
+      met: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
+    },
+  ];
+
+  const handleResetPassword = async () => {
     if (!newPassword || !confirmPassword) {
-      Alert.alert(t('common.error'), t('auth.fillAllFields'), [{ text: t('common.ok') }]);
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      Alert.alert(t('common.error'), t('auth.passwordTooShort'), [{ text: t('common.ok') }]);
+      setNewPasswordError(t('auth.passwordRequired'));
+      setConfirmPasswordError(t('auth.confirmPasswordRequired'));
       return;
     }
 
     if (!passwordsMatch) {
-      Alert.alert(t('common.error'), t('auth.passwordsDoNotMatch'), [{ text: t('common.ok') }]);
+      setConfirmPasswordError(t('auth.passwordsDoNotMatch'));
       return;
     }
 
-    setIsLoading(true);
+    if (passwordStrength < 2) {
+      setNewPasswordError(t('auth.passwordTooWeak'));
+      return;
+    }
 
     try {
-      const response = await authApi.resetPassword(token, newPassword);
+      setIsLoading(true);
+      await authApi.resetPassword(token, newPassword);
       setIsSuccess(true);
-      Alert.alert(t('common.success'), t('auth.passwordChanged'), [{ text: t('common.ok') }]);
-    } catch (error: any) {
-      console.error('Ошибка сброса пароля:', error);
-
-      let errorMessage = 'Не удалось сбросить пароль';
-
-      if (error.message) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      Alert.alert(t('common.error'), t('auth.resetPasswordError'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoToLogin = () => {
-    navigation.navigate('Login');
-  };
+  const isButtonDisabled =
+    !newPassword || !confirmPassword || !passwordsMatch || passwordStrength < 2 || isLoading;
+  const buttonOpacity = isButtonDisabled ? 0.6 : 1;
+
+  const styles = StyleSheet.create({
+    button: {
+      alignItems: 'center',
+      backgroundColor: theme.colors.primary,
+      borderRadius: 8,
+      marginTop: 20,
+      padding: 16,
+    },
+    buttonMarginTop: {
+      marginTop: 30,
+    },
+    buttonText: {
+      color: theme.colors.text.inverse,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 14,
+      marginTop: 4,
+    },
+    eyeIcon: {
+      padding: 10,
+    },
+    form: {
+      flex: 1,
+      padding: 20,
+    },
+    header: {
+      marginBottom: 30,
+    },
+    input: {
+      backgroundColor: theme.colors.inputBackground,
+      borderColor: theme.colors.border,
+      borderRadius: 8,
+      borderWidth: 1,
+      color: theme.colors.text.primary,
+      fontSize: 16,
+      padding: 12,
+    },
+    inputContainer: {
+      marginBottom: 20,
+    },
+    inputError: {
+      borderColor: theme.colors.error,
+    },
+    inputWrapper: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    label: {
+      color: theme.colors.text.primary,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    requirement: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      marginBottom: 4,
+    },
+    requirementMet: {
+      color: theme.colors.success,
+    },
+    requirementUnmet: {
+      color: theme.colors.error,
+    },
+    requirements: {
+      marginTop: 12,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    subtitle: {
+      color: theme.colors.text.secondary,
+      fontSize: 16,
+    },
+    successContainer: {
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+      padding: 20,
+    },
+    successMessage: {
+      color: theme.colors.text.secondary,
+      fontSize: 16,
+      marginBottom: 30,
+      textAlign: 'center',
+    },
+    successTitle: {
+      color: theme.colors.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    title: {
+      color: theme.colors.text.primary,
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+  });
 
   return (
     <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
         {!isSuccess ? (
           <>
             <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.colors.text }]}>
-                {t('auth.resetPasswordTitle')}
-              </Text>
-              <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-                {t('auth.resetPasswordSubtitle')}
-              </Text>
+              <Text style={styles.title}>{t('auth.resetPassword')}</Text>
+              <Text style={styles.subtitle}>{t('auth.enterNewPassword')}</Text>
             </View>
 
             <View style={styles.form}>
               <View style={styles.inputContainer}>
-                <Text style={[styles.label, { color: theme.colors.text }]}>
-                  {t('auth.newPassword')}
-                </Text>
-                <View
-                  style={[styles.inputWrapper, { backgroundColor: theme.colors.inputBackground }]}
-                >
-                  <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text} />
+                <Text style={styles.label}>{t('auth.newPassword')}</Text>
+                <View style={styles.inputWrapper}>
                   <TextInput
-                    style={[styles.input, { color: theme.colors.text }]}
+                    style={[styles.input, newPasswordError ? styles.inputError : null]}
                     value={newPassword}
-                    onChangeText={setNewPassword}
-                    placeholder={t('auth.passwordPlaceholder')}
-                    placeholderTextColor={theme.colors.placeholder}
-                    secureTextEntry={!showPassword}
+                    onChangeText={handleNewPasswordChange}
+                    placeholder={t('auth.enterNewPassword')}
+                    placeholderTextColor={theme.colors.text.secondary}
+                    secureTextEntry={!showNewPassword}
                     autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
                   />
                   <TouchableOpacity
                     style={styles.eyeIcon}
-                    onPress={() => setShowPassword(!showPassword)}
+                    onPress={() => setShowNewPassword(!showNewPassword)}
                   >
                     <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color={theme.colors.text}
+                      name={showNewPassword ? 'eye-off' : 'eye'}
+                      size={24}
+                      color={theme.colors.text.secondary}
                     />
                   </TouchableOpacity>
                 </View>
-
-                {newPassword && (
-                  <View style={styles.passwordStrengthContainer}>
-                    <View style={styles.passwordStrengthBar}>
-                      <View
-                        style={[
-                          styles.passwordStrengthFill,
-                          {
-                            width: `${(passwordStrength / 5) * 100}%`,
-                            backgroundColor: getPasswordStrengthColor(passwordStrength),
-                          },
-                        ]}
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        styles.passwordStrengthText,
-                        { color: getPasswordStrengthColor(passwordStrength) },
-                      ]}
-                    >
-                      {getPasswordStrengthText(passwordStrength)}
-                    </Text>
-                  </View>
-                )}
+                {newPasswordError ? <Text style={styles.errorText}>{newPasswordError}</Text> : null}
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={[styles.label, { color: theme.colors.text }]}>
-                  {t('auth.confirmNewPassword')}
-                </Text>
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { backgroundColor: theme.colors.inputBackground },
-                    !passwordsMatch && confirmPassword ? styles.inputWrapperError : {},
-                  ]}
-                >
-                  <Ionicons name="lock-closed-outline" size={20} color={theme.colors.text} />
+                <Text style={styles.label}>{t('auth.confirmPassword')}</Text>
+                <View style={styles.inputWrapper}>
                   <TextInput
-                    style={[styles.input, { color: theme.colors.text }]}
+                    style={[styles.input, confirmPasswordError ? styles.inputError : null]}
                     value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder={t('auth.passwordPlaceholder')}
-                    placeholderTextColor={theme.colors.placeholder}
+                    onChangeText={handleConfirmPasswordChange}
+                    placeholder={t('auth.confirmNewPassword')}
+                    placeholderTextColor={theme.colors.text.secondary}
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
                   />
                   <TouchableOpacity
                     style={styles.eyeIcon}
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     <Ionicons
-                      name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={20}
-                      color={theme.colors.text}
+                      name={showConfirmPassword ? 'eye-off' : 'eye'}
+                      size={24}
+                      color={theme.colors.text.secondary}
                     />
                   </TouchableOpacity>
                 </View>
-                {!passwordsMatch && confirmPassword && (
-                  <Text style={styles.errorText}>{t('auth.passwordsDoNotMatch')}</Text>
-                )}
+                {confirmPasswordError ? (
+                  <Text style={styles.errorText}>{confirmPasswordError}</Text>
+                ) : null}
+              </View>
+
+              <View style={styles.requirements}>
+                <Text style={styles.label}>{t('auth.passwordRequirements')}</Text>
+                {requirements.map((req, index) => (
+                  <Text
+                    key={index}
+                    style={[
+                      styles.requirement,
+                      req.met ? styles.requirementMet : styles.requirementUnmet,
+                    ]}
+                  >
+                    {req.text}
+                  </Text>
+                ))}
               </View>
 
               <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  {
-                    backgroundColor: theme.colors.primary,
-                    opacity:
-                      !newPassword ||
-                      !confirmPassword ||
-                      !passwordsMatch ||
-                      passwordStrength < 2 ||
-                      isLoading
-                        ? 0.6
-                        : 1,
-                  },
-                ]}
-                onPress={handleSavePassword}
-                disabled={
-                  !newPassword ||
-                  !confirmPassword ||
-                  !passwordsMatch ||
-                  passwordStrength < 2 ||
-                  isLoading
-                }
+                style={[styles.button, { opacity: buttonOpacity }]}
+                onPress={handleResetPassword}
+                disabled={isButtonDisabled}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.colors.text.inverse} />
                 ) : (
-                  <Text style={styles.saveButtonText}>{t('auth.saveNewPassword')}</Text>
+                  <Text style={styles.buttonText}>{t('auth.saveNewPassword')}</Text>
                 )}
               </TouchableOpacity>
             </View>
           </>
         ) : (
           <View style={styles.successContainer}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
-            </View>
-            <Text style={[styles.successTitle, { color: theme.colors.text }]}>
-              {t('common.success')}
-            </Text>
-            <Text style={[styles.successText, { color: theme.colors.textSecondary }]}>
-              {t('auth.passwordChanged')}
-            </Text>
+            <Ionicons name="checkmark-circle" size={80} color={theme.colors.success} />
+            <Text style={styles.successTitle}>{t('auth.passwordResetSuccess')}</Text>
+            <Text style={styles.successMessage}>{t('auth.passwordResetSuccessMessage')}</Text>
             <TouchableOpacity
-              style={[styles.goToLoginButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleGoToLogin}
+              style={[styles.button, styles.buttonMarginTop]}
+              onPress={() => navigation.navigate('Login')}
             >
-              <Text style={styles.goToLoginText}>{t('auth.goBackToLogin')}</Text>
+              <Text style={styles.buttonText}>{t('auth.backToLogin')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -316,135 +333,5 @@ export const ResetPasswordScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  errorText: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  goToLoginButton: {
-    borderRadius: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  goToLoginText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  header: {
-    marginBottom: 30,
-  },
-  iconContainer: {
-    marginBottom: 24,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  inputContainer: {
-    marginBottom: 24,
-  },
-  inputWrapper: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    flexDirection: 'row',
-    height: 54,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  inputWrapperError: {
-    borderColor: '#FF3B30',
-    borderWidth: 1,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  passwordStrengthBar: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 4,
-    overflow: 'hidden',
-  },
-  passwordStrengthContainer: {
-    marginTop: 8,
-  },
-  passwordStrengthFill: {
-    height: 4,
-  },
-  passwordStrengthText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  saveButton: {
-    alignItems: 'center',
-    borderRadius: 12,
-    elevation: 3,
-    height: 54,
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 24,
-  },
-  successContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  successText: {
-    fontSize: 16,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-});
 
 export default ResetPasswordScreen;
