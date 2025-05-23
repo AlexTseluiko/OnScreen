@@ -16,8 +16,15 @@ import { Clinic } from '../types/clinic';
 import { performanceMonitor } from '../utils/performance';
 import { logger } from '../utils/logger';
 import { networkManager } from '../utils/network';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Используем API_URL из импортированного конфига вместо повторного определения
+// const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const BASE_URL = API_URL;
+console.log('apiClient использует BASE_URL:', BASE_URL);
+
+// Токен для AsyncStorage
+const TOKEN_KEY = '@token';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -25,6 +32,30 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Добавляем интерцептор для добавления токена к запросам
+apiClient.interceptors.request.use(
+  async config => {
+    try {
+      // Получаем токен из AsyncStorage
+      const token = await AsyncStorage.getItem(TOKEN_KEY);
+
+      // Если токен существует, добавляем его в заголовок Authorization
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log('Токен добавлен к запросу:', config.url);
+      } else {
+        console.log('Токен не найден для запроса:', config.url);
+      }
+    } catch (error) {
+      console.error('Ошибка при получении токена из AsyncStorage:', error);
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
 
 // Константы для настройки повторных попыток
 const RETRY_DELAY = 1000; // Задержка между повторными попытками (1 секунда)

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { appointmentsApi, Appointment, AppointmentStatus } from '../api/appointments';
 import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 // Импорт атомарных компонентов
 import { Text } from '../components/ui/atoms/Text';
@@ -13,15 +14,12 @@ import { Spinner } from '../components/ui/atoms/Spinner';
 
 const UpcomingAppointmentsScreen: React.FC = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -34,17 +32,21 @@ const UpcomingAppointmentsScreen: React.FC = () => {
       setAppointments(upcomingAppointments);
     } catch (err) {
       console.error('Ошибка при загрузке записей на прием:', err);
-      setError('Не удалось загрузить записи на прием. Пожалуйста, попробуйте позже.');
+      setError(t('upcomingAppointments.error'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   const handleCancelAppointment = async (id: string) => {
-    Alert.alert('Отмена приема', 'Вы уверены, что хотите отменить запись на прием?', [
-      { text: 'Нет', style: 'cancel' },
+    Alert.alert(t('upcomingAppointments.cancelTitle'), t('upcomingAppointments.cancelConfirm'), [
+      { text: t('upcomingAppointments.no'), style: 'cancel' },
       {
-        text: 'Да, отменить',
+        text: t('upcomingAppointments.yesCancel'),
         style: 'destructive',
         onPress: async () => {
           try {
@@ -52,10 +54,10 @@ const UpcomingAppointmentsScreen: React.FC = () => {
             await appointmentsApi.cancelAppointment(id);
             // Обновляем список после отмены
             await fetchAppointments();
-            Alert.alert('Успешно', 'Запись на прием успешно отменена');
+            Alert.alert(t('success'), t('upcomingAppointments.canceled'));
           } catch (err) {
             console.error('Ошибка при отмене приема:', err);
-            Alert.alert('Ошибка', 'Не удалось отменить запись. Пожалуйста, попробуйте позже.');
+            Alert.alert(t('error'), t('upcomingAppointments.cancelError'));
           } finally {
             setLoading(false);
           }
@@ -67,7 +69,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
   const handleRescheduleAppointment = (_id: string) => {
     // Здесь будет логика переноса приема
     // В дальнейшем реализации потребуется навигация на экран выбора нового времени
-    Alert.alert('Информация', 'Функция переноса приема пока не реализована');
+    Alert.alert(t('upcomingAppointments.info'), t('upcomingAppointments.rescheduleInfo'));
   };
 
   const styles = StyleSheet.create({
@@ -157,7 +159,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
       <View style={styles.centeredContainer}>
         <Spinner size="large" />
         <Text variant="body" style={styles.loadingText}>
-          Загрузка записей...
+          {t('upcomingAppointments.loading')}
         </Text>
       </View>
     );
@@ -171,7 +173,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
           {error}
         </Text>
         <Button
-          title="Повторить"
+          title={t('upcomingAppointments.retry')}
           onPress={fetchAppointments}
           variant="primary"
           style={styles.retryButton}
@@ -183,14 +185,14 @@ const UpcomingAppointmentsScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <Card elevated={false} containerStyle={styles.headerCard}>
-        <Text variant="heading">Предстоящие приемы</Text>
+        <Text variant="heading">{t('upcomingAppointments.title')}</Text>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text variant="heading" style={styles.primaryText}>
               {appointments.length}
             </Text>
             <Text variant="bodySmall" style={styles.secondaryText}>
-              Запланировано
+              {t('upcomingAppointments.planned')}
             </Text>
           </View>
           <View style={styles.statItem}>
@@ -198,7 +200,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
               {appointments.filter(a => a.type === 'online').length}
             </Text>
             <Text variant="bodySmall" style={styles.secondaryText}>
-              Онлайн
+              {t('upcomingAppointments.online')}
             </Text>
           </View>
         </View>
@@ -215,7 +217,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
                 color={theme.colors.text.secondary}
               />
               <Text variant="body" style={styles.emptyText}>
-                У вас нет запланированных приемов
+                {t('upcomingAppointments.empty')}
               </Text>
             </View>
           </Card>
@@ -232,7 +234,11 @@ const UpcomingAppointmentsScreen: React.FC = () => {
                   </Text>
                 </View>
                 <Badge
-                  label={appointment.type === 'online' ? 'Онлайн' : 'В клинике'}
+                  label={
+                    appointment.type === 'online'
+                      ? t('upcomingAppointments.online')
+                      : t('upcomingAppointments.offline')
+                  }
                   variant={appointment.type === 'online' ? 'primary' : 'secondary'}
                 />
               </View>
@@ -246,7 +252,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
                     color={theme.colors.text.secondary}
                   />
                   <Text variant="body" style={styles.infoText}>
-                    {appointment.date} в {appointment.time}
+                    {appointment.date} {t('upcomingAppointments.atTime')} {appointment.time}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
@@ -277,7 +283,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
 
               <View style={styles.actionsContainer}>
                 <Button
-                  title="Перенести"
+                  title={t('upcomingAppointments.reschedule')}
                   variant="outline"
                   size="small"
                   leftIcon={
@@ -292,7 +298,7 @@ const UpcomingAppointmentsScreen: React.FC = () => {
                   onPress={() => handleRescheduleAppointment(appointment._id)}
                 />
                 <Button
-                  title="Отменить"
+                  title={t('upcomingAppointments.cancel')}
                   variant="outline"
                   size="small"
                   leftIcon={

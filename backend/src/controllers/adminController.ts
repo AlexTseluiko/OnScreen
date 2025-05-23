@@ -382,15 +382,21 @@ export const getArticles = async (
       : {};
 
     const articles = await Article.find(query)
-      .populate('author', 'name')
+      .populate('author', 'firstName lastName')
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
 
     const total = await Article.countDocuments(query);
 
+    // Преобразуем статьи для фронтенда
+    const formattedArticles = articles.map(article => ({
+      ...article.toObject(),
+      published: !!article.publishedAt,
+    }));
+
     res.json({
-      articles,
+      articles: formattedArticles,
       total,
       pages: Math.ceil(total / Number(limit)),
       currentPage: Number(page),
@@ -551,5 +557,63 @@ export const updateUser = async (req: AuthRequest & { params: { id: string } }, 
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({ error: 'Ошибка при обновлении пользователя' });
+  }
+};
+
+// Получение всех уведомлений для админ-панели
+export const getNotifications = async (req: AuthRequest, res: Response) => {
+  try {
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 })
+      .populate('user', 'name email');
+
+    res.json(notifications);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Ошибка при получении уведомлений' });
+  }
+};
+
+// Пометка уведомления как прочитанного
+export const markNotificationAsRead = async (
+  req: AuthRequest & { params: { notificationId: string } },
+  res: Response
+) => {
+  try {
+    const { notificationId } = req.params;
+
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      { isRead: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Уведомление не найдено' });
+    }
+
+    res.json(notification);
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Ошибка при обновлении уведомления' });
+  }
+};
+
+// Получение запросов на роль врача
+export const getDoctorRequests = async (req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find({
+      'doctorRequest.status': 'pending',
+    }).select('firstName lastName email doctorRequest');
+
+    res.json({
+      doctorRequests: users,
+      page: 1,
+      totalPages: 1,
+      totalCount: users.length,
+    });
+  } catch (error) {
+    console.error('Error fetching doctor requests:', error);
+    res.status(500).json({ error: 'Ошибка при получении запросов врачей' });
   }
 };

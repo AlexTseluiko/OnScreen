@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { COLORS } from '../theme/colors';
 
 export default StyleSheet.create({
   actionButton: {
@@ -17,6 +16,10 @@ export default StyleSheet.create({
   container: {
     flex: 1,
   },
+  contentContainer: {
+    flex: 1,
+    paddingBottom: 8,
+  },
   input: {
     borderRadius: 8,
     borderWidth: 1,
@@ -31,6 +34,7 @@ export default StyleSheet.create({
     padding: 8,
   },
   listContent: {
+    flexGrow: 1,
     padding: 16,
   },
   message: {
@@ -45,8 +49,8 @@ export default StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
-    paddingHorizontal: 8,
+    marginBottom: 8,
+    paddingHorizontal: 16,
   },
   sendButton: {
     alignItems: 'center',

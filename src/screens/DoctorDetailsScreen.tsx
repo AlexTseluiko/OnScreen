@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { MainStackParamList } from '../navigation/AppNavigation';
+import { RootStackParamList } from '../navigation/types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 // Импорт компонентов из атомарной дизайн-системы
 import { Text } from '../components/ui/atoms/Text';
@@ -36,9 +37,9 @@ interface Doctor {
   services: string[];
 }
 
-type DoctorDetailsScreenRouteProp = RouteProp<MainStackParamList, 'DoctorDetails'>;
+type DoctorDetailsScreenRouteProp = RouteProp<RootStackParamList, 'DoctorDetails'>;
 type DoctorDetailsScreenNavigationProp = NativeStackNavigationProp<
-  MainStackParamList,
+  RootStackParamList,
   'DoctorDetails'
 >;
 
@@ -48,6 +49,7 @@ const DoctorDetailsScreen: React.FC = () => {
   const { doctorId } = route.params;
   const { isDark } = useTheme();
   const theme = isDark ? COLORS.dark : COLORS.light;
+  const { t } = useTranslation();
 
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,7 +121,7 @@ const DoctorDetailsScreen: React.FC = () => {
     return (
       <View style={styles.centeredContainer}>
         <Spinner size="large" />
-        <Text style={styles.loadingText}>Загрузка информации...</Text>
+        <Text style={styles.loadingText}>{t('doctorDetails.loading')}</Text>
       </View>
     );
   }
@@ -128,11 +130,9 @@ const DoctorDetailsScreen: React.FC = () => {
     return (
       <Card style={styles.errorCard}>
         <Icon name="alert-circle" family="ionicons" size={64} color={theme.danger} />
-        <Text style={[styles.errorText, { color: theme.danger }]}>
-          Не удалось загрузить информацию о враче
-        </Text>
+        <Text style={[styles.errorText, { color: theme.danger }]}>{t('doctorDetails.error')}</Text>
         <Button
-          title="Вернуться назад"
+          title={t('doctorDetails.goBack')}
           onPress={() => navigation.goBack()}
           variant="primary"
           style={styles.backButton}
@@ -173,7 +173,7 @@ const DoctorDetailsScreen: React.FC = () => {
                 <Icon name="star" family="ionicons" size={16} color={theme.warning} />
                 <Text style={styles.ratingText}>{doctor.rating}</Text>
                 <Text style={[styles.experienceText, { color: theme.text.secondary }]}>
-                  • Опыт {doctor.experience} лет
+                  • {t('doctorDetails.experience', { years: doctor.experience })}
                 </Text>
               </View>
             </View>
@@ -183,7 +183,7 @@ const DoctorDetailsScreen: React.FC = () => {
         <Card style={styles.infoCard}>
           <View style={styles.sectionContent}>
             <Text variant="subheading" style={styles.sectionTitle}>
-              О враче
+              {t('doctorDetails.about')}
             </Text>
             <Text style={styles.sectionText}>{doctor.about}</Text>
           </View>
@@ -192,7 +192,7 @@ const DoctorDetailsScreen: React.FC = () => {
         <Card style={styles.infoCard}>
           <View style={styles.sectionContent}>
             <Text variant="subheading" style={styles.sectionTitle}>
-              Образование
+              {t('doctorDetails.education')}
             </Text>
             <Text style={styles.sectionText}>{doctor.education}</Text>
           </View>
@@ -201,7 +201,7 @@ const DoctorDetailsScreen: React.FC = () => {
         <Card style={styles.infoCard}>
           <View style={styles.sectionContent}>
             <Text variant="subheading" style={styles.sectionTitle}>
-              Сертификаты
+              {t('doctorDetails.certificates')}
             </Text>
             {doctor.certifications.map((cert, index) => (
               <ListItem
@@ -224,7 +224,7 @@ const DoctorDetailsScreen: React.FC = () => {
         <Card style={styles.infoCard}>
           <View style={styles.sectionContent}>
             <Text variant="subheading" style={styles.sectionTitle}>
-              Клиника
+              {t('doctorDetails.clinic')}
             </Text>
             <ListItem
               title={doctor.clinic.name}
@@ -235,7 +235,6 @@ const DoctorDetailsScreen: React.FC = () => {
               onPress={() =>
                 navigation.navigate('ClinicDetails', {
                   clinicId: doctor.clinic._id,
-                  clinicName: doctor.clinic.name,
                 })
               }
             />
@@ -245,7 +244,7 @@ const DoctorDetailsScreen: React.FC = () => {
         <Card style={styles.lastCard}>
           <View style={styles.sectionContent}>
             <Text variant="subheading" style={styles.sectionTitle}>
-              Услуги
+              {t('doctorDetails.services')}
             </Text>
             {doctor.services.map((service, index) => (
               <ListItem
@@ -271,7 +270,7 @@ const DoctorDetailsScreen: React.FC = () => {
         ]}
       >
         <Button
-          title="Записаться на прием"
+          title={t('doctorDetails.bookAppointment')}
           leftIcon={<Icon name="calendar-outline" family="ionicons" size={20} color="white" />}
           onPress={handleBookAppointment}
           variant="primary"

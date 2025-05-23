@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,7 +17,7 @@ import { RootStackParamList } from '../../navigation/AppNavigator';
 import { RegisterData } from '../../types/user';
 import { Text } from '../atoms/Text';
 import { Input } from '../atoms/Input';
-import { Button } from '../atoms/Button';
+import { Button } from '../ui/atoms/Button';
 import { Card } from '../molecules/Card';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -47,10 +46,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
-  const [emailExists, setEmailExists] = useState(false);
-  const [isEmailValid, setIsEmailValid] = useState(true);
-  const [emailChecked, setEmailChecked] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -66,9 +61,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
   // Очистка таймера при размонтировании компонента
   useEffect(() => {
+    const currentTimer = timerRef.current;
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
+      if (currentTimer) {
+        clearTimeout(currentTimer);
       }
     };
   }, []);
@@ -86,10 +82,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       const strength = calculatePasswordStrength(formData.password);
       setPasswordStrength(strength);
       setShowPasswordStrength(true);
-      setPasswordsMatch(formData.password === confirmPassword);
     } else {
       setShowPasswordStrength(false);
-      setPasswordsMatch(true);
     }
   }, [formData.password, confirmPassword]);
 
@@ -123,13 +117,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     switch (strength) {
       case 0:
       case 1:
-        return t('auth.veryWeak');
+        return t('auth.passwordStrength.veryWeak');
       case 2:
       case 3:
-        return t('auth.medium');
+        return t('auth.passwordStrength.medium');
       case 4:
       case 5:
-        return t('auth.strong');
+        return t('auth.passwordStrength.strong');
       default:
         return '';
     }
@@ -144,43 +138,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const handleEmailChange = (text: string) => {
     setFormData({ ...formData, email: text });
     const isValid = validateEmail(text);
-    setIsEmailValid(isValid);
     if (isValid) {
-      setEmailChecked(false);
-      setEmailExists(false);
-    }
-
-    if (!isValid && text) {
-      setFormErrors(prev => ({ ...prev, email: t('auth.invalidEmail') }));
-    } else {
       setFormErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.email;
         return newErrors;
       });
-    }
-  };
-
-  // Проверка, существует ли email
-  const checkEmailExists = async () => {
-    if (!formData.email || !validateEmail(formData.email)) {
-      setIsEmailValid(false);
-      return;
-    }
-
-    try {
-      // В реальном приложении здесь будет запрос к API
-      const exists = false; // Заглушка
-      setEmailExists(exists);
-      setEmailChecked(true);
-
-      if (exists) {
-        setFormErrors(prev => ({ ...prev, email: t('auth.emailExists') }));
-      }
-    } catch (error) {
-      console.error('Error checking email:', error);
-      setEmailExists(false);
-      setEmailChecked(false);
+    } else {
+      setFormErrors(prev => ({ ...prev, email: t('auth.invalidEmail') }));
     }
   };
 
@@ -265,7 +230,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
-            onBlur={checkEmailExists}
             error={formErrors.email}
             style={styles.input}
           />
@@ -422,7 +386,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             title={t('auth.register')}
             onPress={handleRegister}
             disabled={isLoading}
-            isLoading={isLoading}
+            loading={isLoading}
             style={styles.button}
           />
 

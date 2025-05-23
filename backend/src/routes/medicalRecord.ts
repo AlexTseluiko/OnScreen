@@ -1,48 +1,24 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import {
+  getMedicalRecords,
   createMedicalRecord,
-  getPatientMedicalRecords,
-  getMedicalRecordById,
   updateMedicalRecord,
   deleteMedicalRecord,
 } from '../controllers/medicalRecordController';
-import { auth, AuthRequest } from '../middleware/auth';
+import { auth, isAdmin } from '../middleware/auth';
 
 const router = Router();
 
-// Создание медицинской карты
-router.post('/', auth, (req: AuthRequest, res: Response) => createMedicalRecord(req, res));
+// Получение медицинских записей пациента
+router.get('/', auth, getMedicalRecords);
 
-// Получение медицинских карт пациента
-router.get(
-  '/patient/:patientId',
-  auth,
-  (req: AuthRequest & { params: { patientId: string } }, res: Response) =>
-    getPatientMedicalRecords(req, res)
-);
+// Создание новой медицинской записи
+router.post('/', auth, createMedicalRecord);
 
-// Получение медицинской карты по ID
-router.get(
-  '/:recordId',
-  auth,
-  (req: AuthRequest & { params: { recordId: string } }, res: Response) =>
-    getMedicalRecordById(req, res)
-);
+// Обновление медицинской записи
+router.put('/:recordId', auth, updateMedicalRecord);
 
-// Обновление медицинской карты
-router.put(
-  '/:recordId',
-  auth,
-  (req: AuthRequest & { params: { recordId: string } }, res: Response) =>
-    updateMedicalRecord(req, res)
-);
-
-// Удаление медицинской карты
-router.delete(
-  '/:recordId',
-  auth,
-  (req: AuthRequest & { params: { recordId: string } }, res: Response) =>
-    deleteMedicalRecord(req, res)
-);
+// Удаление медицинской записи
+router.delete('/:recordId', auth, isAdmin, deleteMedicalRecord);
 
 export default router;

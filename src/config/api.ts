@@ -47,18 +47,10 @@ const getDevServerHost = () => {
   return DEV_SERVER_IP;
 };
 
-const getBaseUrl = () => {
-  if (process.env.NODE_ENV === 'development' || __DEV__) {
-    const host = getDevServerHost();
-    console.log('API хост:', host);
-    return `http://${host}:5000/api`;
-  }
-  // В продакшене используем реальный URL
-  return 'https://api.onscreen.com/api';
-};
-
-// URL API-сервера
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+// URL API-сервера - устанавливаем localhost:5000
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Сообщаем о текущем API URL в консоль для диагностики
+console.log('API URL установлен на:', API_URL);
 
 // Базовый URL API
 export const BASE_URL = 'https://api.onscreen.com/v1';
@@ -66,48 +58,13 @@ export const API_BASE_URL = 'https://api.onscreen.com';
 
 // Общие настройки API
 export const API_CONFIG = {
-  // Таймаут для запросов в миллисекундах
-  TIMEOUT: 30000, // 30 секунд
-
-  // Настройки повторных попыток
-  RETRY: {
-    MAX_ATTEMPTS: 3,
-    BASE_DELAY: 1000, // 1 секунда
-    MAX_DELAY: 10000, // 10 секунд
-  },
-
-  // Настройки кэширования
-  CACHE: {
-    DEFAULT_DURATION: 5 * 60 * 1000, // 5 минут
-    LONG_DURATION: 60 * 60 * 1000, // 1 час
-    MAX_SIZE: 50 * 1024 * 1024, // 50MB
-    PREFIX: 'api_cache_',
-  },
-
-  // Заголовки по умолчанию
-  DEFAULT_HEADERS: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    'Accept-Language': 'ru-RU',
-  },
-
-  // Настройки авторизации
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  TIMEOUT: 10000,
   AUTH: {
-    TOKEN_KEY: '@authToken',
-    REFRESH_TOKEN_KEY: '@refreshToken',
-    TOKEN_EXPIRY_BUFFER: 5 * 60, // 5 минут до истечения токена
+    TOKEN_KEY: 'auth_token',
+    REFRESH_TOKEN_KEY: 'refresh_token',
   },
-
-  // Коды ошибок
-  ERROR_CODES: {
-    UNAUTHORIZED: 'UNAUTHORIZED',
-    FORBIDDEN: 'FORBIDDEN',
-    NETWORK_ERROR: 'NETWORK_ERROR',
-    TIMEOUT: 'TIMEOUT',
-    SERVER_ERROR: 'SERVER_ERROR',
-    INVALID_REQUEST: 'INVALID_REQUEST',
-  },
-};
+} as const;
 
 // Экспортируем API_TIMEOUT для удобства доступа
 export const API_TIMEOUT = API_CONFIG.TIMEOUT;
@@ -149,6 +106,7 @@ export const API_ENDPOINTS = {
     UPDATE_PROFILE: '/user/profile',
     CHANGE_PASSWORD: '/user/change-password',
     FAVORITES: '/user/favorites',
+    UPDATE: '/user/update',
   },
   CLINICS: {
     LIST: '/clinics',
@@ -159,6 +117,9 @@ export const API_ENDPOINTS = {
   ARTICLES: {
     LIST: '/articles',
     DETAILS: (id: string) => `/articles/${id}`,
+    CREATE: '/articles',
+    UPDATE: (id: string) => `/articles/${id}`,
+    DELETE: (id: string) => `/articles/${id}`,
   },
   SCREENING: {
     PROGRAMS: '/screening/programs',

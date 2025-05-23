@@ -90,10 +90,6 @@ export const getClinics = async (req: AuthRequest, res: Response) => {
       location,
     } = req.query;
 
-    // Проверяем, запрос от админки или от клиента
-    const isAdmin = req.originalUrl.includes('/admin') || req.headers['x-is-admin'];
-    console.log('Получение клиник. isAdmin:', isAdmin, 'URL:', req.originalUrl);
-
     const query: Record<string, unknown> = {};
 
     // Поиск по названию и описанию
@@ -135,7 +131,7 @@ export const getClinics = async (req: AuthRequest, res: Response) => {
     const total = await Clinic.countDocuments(query);
 
     // Если запрос от админки, отправляем только массив клиник
-    if (isAdmin) {
+    if (req.originalUrl.includes('/admin')) {
       console.log('Возвращаем массив клиник для админки, найдено:', clinics.length);
       return res.json(clinics);
     }

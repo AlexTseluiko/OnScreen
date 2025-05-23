@@ -66,6 +66,21 @@ export default StyleSheet.create({
   cardContainer: {
     marginBottom: 16,
   },
+  clinicsPanel: {
+    backgroundColor: COLORS.palette.white,
+    borderColor: COLORS.light.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 24,
+    marginHorizontal: 16,
+    minHeight: 100,
+    padding: 20,
+  },
+  clinicsPanelText: {
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
   },
@@ -92,6 +107,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 18,

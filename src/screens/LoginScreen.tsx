@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { AuthStackParamList } from '../navigation/AppNavigation';
+import { RootStackParamList } from '../navigation/types';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { LoginCredentials } from '../types/user';
 import { showPlatformToast, vibrate } from '../utils/platform';
@@ -28,7 +28,11 @@ import { Card } from '../components/ui/atoms/Card';
 import { Divider } from '../components/ui/atoms/Divider';
 import { Icon } from '../components/ui/atoms/Icon';
 
-type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
+// Импортируем наш новый компонент логотипа
+import { LogoWithoutBackground } from '../components/ui/atoms/LogoWithoutBackground';
+import { SOCIAL_COLORS } from '../constants/socialColors';
+
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -69,11 +73,108 @@ export const LoginScreen: React.FC = () => {
   // Ссылки
   const timerRef = useRef<NodeJS.Timeout>();
 
+  // Стили компонента
+  const styles = StyleSheet.create({
+    appName: {
+      marginTop: 8,
+    },
+    appleButton: {
+      backgroundColor: SOCIAL_COLORS.APPLE,
+    },
+    biometricButton: {
+      marginBottom: 16,
+    },
+    container: {
+      flex: 1,
+    },
+    dividerStyle: {
+      marginVertical: 16,
+    },
+    facebookButton: {
+      backgroundColor: SOCIAL_COLORS.FACEBOOK,
+    },
+    formCard: {
+      marginBottom: 24,
+      padding: 24,
+    },
+    formContainer: {
+      marginBottom: 24,
+    },
+    googleButton: {
+      backgroundColor: SOCIAL_COLORS.GOOGLE,
+    },
+    headerContainer: {
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    loginButton: {
+      marginBottom: 16,
+    },
+    loginPromptText: {
+      color: theme.colors.text.secondary,
+    },
+    logoContainer: {
+      alignItems: 'center',
+      marginBottom: 32,
+    },
+    passwordStrengthBar: {
+      borderRadius: 2,
+      height: 4,
+      marginBottom: 4,
+      overflow: 'hidden',
+    },
+    passwordStrengthContainer: {
+      marginBottom: 16,
+    },
+    registerContainer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    rememberContainer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    rememberForgotContainer: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: 16,
+      paddingVertical: 32,
+    },
+    socialButton: {
+      borderRadius: 20,
+      padding: 12,
+    },
+    socialButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    socialLoginContainer: {
+      marginBottom: 24,
+    },
+    socialText: {
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    welcomeText: {
+      marginBottom: 8,
+    },
+  });
+
   // Очистка таймеров при размонтировании компонента
   useEffect(() => {
+    const currentTimerRef = timerRef.current;
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
+      if (currentTimerRef) {
+        clearTimeout(currentTimerRef);
       }
     };
   }, []);
@@ -158,13 +259,13 @@ export const LoginScreen: React.FC = () => {
     switch (strength) {
       case 0:
       case 1:
-        return t('veryWeak');
+        return t('auth.passwordStrength.veryWeak');
       case 2:
       case 3:
-        return t('medium');
+        return t('auth.passwordStrength.medium');
       case 4:
       case 5:
-        return t('strong');
+        return t('auth.passwordStrength.strong');
       default:
         return '';
     }
@@ -193,129 +294,152 @@ export const LoginScreen: React.FC = () => {
   const handleBiometricAuth = async () => {
     try {
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: t('authenticateToLogin'),
-        fallbackLabel: t('usePassword'),
+        promptMessage: t('auth.authenticateToLogin'),
+        fallbackLabel: t('auth.usePassword'),
       });
 
       if (result.success) {
-        showPlatformToast(t('biometricSuccess') || 'Аутентификация успешна');
-
-        timerRef.current = setTimeout(() => {
-          // Биометрическая аутентификация успешна
-          // После успешной авторизации в системе будет автоматическое перенаправление
-          // на MainNavigator через AppNavigation
-        }, 800);
+        // Предполагаем, что у нас есть сохраненные данные для входа
+        if (credentials.email && credentials.password) {
+          handleLogin();
+        } else {
+          showPlatformToast('Необходимо ввести логин и пароль хотя бы один раз');
+        }
       }
     } catch (error) {
       console.error('Ошибка биометрической аутентификации:', error);
-      Alert.alert(
-        t('common.error'),
-        t('biometricError') || 'Произошла ошибка при биометрической аутентификации'
-      );
+      Alert.alert('Ошибка', 'Не удалось выполнить биометрическую аутентификацию');
     }
   };
 
   const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleLogin = async () => {
     if (!credentials.email || !credentials.password) {
-      Alert.alert(t('error'), t('auth.fillAllFields'));
+      setError(t('auth.fillAllFields'));
+      return;
+    }
+
+    if (!isEmailValid) {
+      setError(t('auth.invalidEmail'));
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
-      console.log('Отправка запроса на вход...');
 
       await login(credentials.email, credentials.password);
-      console.log('Вход выполнен успешно');
-
-      showPlatformToast(t('auth.loginSuccess') || 'Вход выполнен успешно');
-      // Для навигации в MainNavigator нельзя использовать reset напрямую
-      // После успешной авторизации будет автоматическое перенаправление
-      // на MainNavigator через AppNavigation
-      // navigation.replace('Login'); // Не нужно, т.к. переключение произойдет автоматически
-    } catch (error) {
-      console.error('Ошибка входа:', error);
-      setError(error instanceof Error ? error.message : t('auth.loginError'));
-    } finally {
       setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError(t('auth.loginFailed'));
+      }
     }
   };
 
   const handleSocialLogin = (provider: string) => {
-    // Социальные сети временно недоступны
-    Alert.alert(
-      t('common.info'),
-      t('socialLoginNotAvailable') || `Вход через ${provider} временно недоступен.`,
-      [{ text: t('common.ok') }]
-    );
+    // Заглушка для демонстрации. В реальном приложении тут будет интеграция с социальными сетями
+    showPlatformToast(`Вход через ${provider} будет доступен позже`);
   };
 
-  // Получаем сообщение об ошибке для email
-  const emailErrorText = !isEmailValid && credentials.email ? t('auth.invalidEmail') : undefined;
+  const navigateToForgotPassword = () => {
+    navigation.navigate('ForgotPassword');
+  };
+
+  const navigateToRegister = () => {
+    navigation.navigate('Register');
+  };
 
   return (
     <KeyboardAvoidingView
-      style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.welcomeContainer}>
-          <Text variant="title" style={styles.welcomeTitle}>
-            {t('auth.welcome')}
-          </Text>
-          <Text variant="subtitle" color="secondary">
-            {t('auth.loginPrompt')}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        style={{ backgroundColor: theme.colors.background }}
+      >
+        <View style={styles.logoContainer}>
+          <LogoWithoutBackground size={100} color={theme.colors.primary} />
+          <Text variant="heading" style={styles.appName}>
+            OnScreen
           </Text>
         </View>
 
-        <Card style={styles.loginCard}>
-          <View style={styles.inputGroup}>
+        <Card containerStyle={styles.formCard}>
+          <View style={styles.headerContainer}>
+            <Text variant="heading" style={styles.welcomeText}>
+              {t('auth.welcome')}
+            </Text>
+            <Text variant="bodySmall" style={styles.loginPromptText}>
+              {t('auth.loginPrompt')}
+            </Text>
+          </View>
+
+          {error && (
+            <Card containerStyle={dynamicStyles.errorCard}>
+              <Text variant="body" style={dynamicStyles.errorText}>
+                {error}
+              </Text>
+            </Card>
+          )}
+
+          <View style={styles.formContainer}>
             <Input
               label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={credentials.email}
               onChangeText={text => setCredentials({ ...credentials, email: text })}
-              placeholder={t('auth.emailPlaceholder')}
               keyboardType="email-address"
               autoCapitalize="none"
               error={!isEmailValid && credentials.email ? true : false}
-              helperText={emailErrorText}
-              leftIcon={<Icon family="ionicons" name="mail-outline" size={20} color={theme.colors.text.secondary} />}
+              helperText={!isEmailValid && credentials.email ? t('auth.invalidEmail') : undefined}
+              leftIcon={
+                <Icon name="mail" family="ionicons" size={20} color={theme.colors.primary} />
+              }
             />
-          </View>
 
-          <View style={styles.inputGroup}>
             <Input
               label={t('auth.password')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={credentials.password}
               onChangeText={text => setCredentials({ ...credentials, password: text })}
-              placeholder={t('auth.passwordPlaceholder')}
               secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              leftIcon={<Icon family="ionicons" name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />}
-              rightIcon={<Icon family="ionicons" name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={theme.colors.text.secondary} />}
-              onRightIconPress={() => setShowPassword(!showPassword)}
+              leftIcon={
+                <Icon name="lock-closed" family="ionicons" size={20} color={theme.colors.primary} />
+              }
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Icon
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    family="ionicons"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
+                </TouchableOpacity>
+              }
             />
 
             {showPasswordStrength && (
-              <View style={styles.strengthContainer}>
-                <View style={styles.strengthBar}>
-                  <View
-                    style={[
-                      styles.strengthIndicator,
-                      {
-                        width: `${(passwordStrength / 5) * 100}%`,
-                        backgroundColor: getPasswordStrengthColor(passwordStrength),
-                      },
-                    ]}
-                  />
-                </View>
+              <View style={styles.passwordStrengthContainer}>
+                <View
+                  style={[
+                    styles.passwordStrengthBar,
+                    {
+                      width: `${(passwordStrength / 5) * 100}%`,
+                      backgroundColor: getPasswordStrengthColor(passwordStrength),
+                    },
+                  ]}
+                />
                 <Text
                   variant="caption"
                   style={{ color: getPasswordStrengthColor(passwordStrength) }}
@@ -324,200 +448,97 @@ export const LoginScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-          </View>
 
-          <View style={styles.rememberContainer}>
-            <View style={styles.checkboxContainer}>
-              <Checkbox
-                checked={rememberMe}
-                onPress={() => setRememberMe(!rememberMe)}
-                label={t('auth.rememberMe')}
-              />
+            <View style={styles.rememberForgotContainer}>
+              <View style={styles.rememberContainer}>
+                <Checkbox
+                  checked={rememberMe}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  label={t('auth.rememberMe')}
+                />
+              </View>
+
+              <TouchableOpacity onPress={navigateToForgotPassword}>
+                <Text variant="bodySmall" style={dynamicStyles.dynamicLink}>
+                  {t('auth.forgotPassword')}
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-              <Text variant="caption" style={dynamicStyles.dynamicLink}>
-                {t('auth.forgotPassword')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <Animated.View
-            style={[styles.loginButtonContainer, { transform: [{ scale: scaleAnim }] }]}
-          >
-            <Button
-              title={t('auth.login')}
-              onPress={handleLogin}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              variant="primary"
-              size="large"
-              loading={loading}
-              disabled={loading || !credentials.email || !credentials.password || !isEmailValid}
-              fullWidth
-            />
-          </Animated.View>
-
-          {isBiometricAvailable && (
-            <Button
-              title={t('auth.loginWithBiometric')}
-              onPress={handleBiometricAuth}
-              leftIcon="finger-print-outline"
-              variant="outline"
-              size="medium"
-              fullWidth
-              style={styles.biometricButton}
-            />
-          )}
-        </Card>
-
-        <View style={styles.dividerContainer}>
-          <Divider style={styles.divider} />
-          <Text variant="bodySmall" color="secondary" style={styles.orText}>
-            {t('auth.orContinueWith')}
-          </Text>
-          <Divider style={styles.divider} />
-        </View>
-
-        <View style={styles.socialButtonsContainer}>
-          <Button
-            title="Google"
-            onPress={() => handleSocialLogin('Google')}
-            leftIcon={<Icon family="ionicons" name="logo-google" size={20} color="#DB4437" />}
-            variant="outline"
-            style={styles.googleButton}
-          />
-
-          <Button
-            title="Facebook"
-            onPress={() => handleSocialLogin('Facebook')}
-            leftIcon={<Icon family="ionicons" name="logo-facebook" size={20} color="#4267B2" />}
-            variant="outline"
-            style={styles.facebookButton}
-          />
-
-          <Button
-            title="Apple"
-            onPress={() => handleSocialLogin('Apple')}
-            leftIcon={
-              <Icon
-                family="ionicons"
-                name="logo-apple"
-                size={20}
-                color={String(theme.colors.text.primary)}
+            <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+              <Button
+                title={t('auth.login')}
+                onPress={handleLogin}
+                loading={loading}
+                disabled={loading}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                style={styles.loginButton}
               />
-            }
-            variant="outline"
-            style={styles.appleButton}
-          />
-        </View>
+            </Animated.View>
 
-        <View style={styles.registerContainer}>
-          <Text variant="body" color="secondary">
-            {t('auth.dontHaveAccount')}{' '}
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text variant="caption" style={dynamicStyles.dynamicLink}>
-              {t('auth.register')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {isBiometricAvailable && (
+              <TouchableOpacity onPress={handleBiometricAuth} style={styles.biometricButton}>
+                <Icon
+                  name="finger-print"
+                  family="ionicons"
+                  size={32}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            )}
 
-        {error && (
-          <Card style={dynamicStyles.errorCard}>
-            <Text variant="body" style={dynamicStyles.errorText}>
-              {error}
-            </Text>
-          </Card>
-        )}
+            <View style={styles.registerContainer}>
+              <Text variant="body">{t('auth.noAccount')}</Text>
+              <TouchableOpacity onPress={navigateToRegister}>
+                <Text variant="bodySmall" style={dynamicStyles.dynamicLink}>
+                  {t('auth.register')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.socialLoginContainer}>
+              <Divider style={styles.dividerStyle} />
+              <Text variant="bodySmall" style={styles.socialText}>
+                {t('auth.loginWithSocial')}
+              </Text>
+
+              <View style={styles.socialButtons}>
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.googleButton]}
+                  onPress={() => handleSocialLogin(t('auth.socialLogin.google'))}
+                >
+                  <Icon
+                    name="logo-google"
+                    family="ionicons"
+                    size={24}
+                    color={SOCIAL_COLORS.WHITE}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.appleButton]}
+                  onPress={() => handleSocialLogin(t('auth.socialLogin.apple'))}
+                >
+                  <Icon name="logo-apple" family="ionicons" size={24} color={SOCIAL_COLORS.WHITE} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.facebookButton]}
+                  onPress={() => handleSocialLogin(t('auth.socialLogin.facebook'))}
+                >
+                  <Icon
+                    name="logo-facebook"
+                    family="ionicons"
+                    size={24}
+                    color={SOCIAL_COLORS.WHITE}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Card>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  appleButton: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  biometricButton: {
-    marginBottom: 16,
-  },
-  checkboxContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  divider: {
-    flex: 1,
-  },
-  dividerContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: 24,
-  },
-  facebookButton: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  googleButton: {
-    flex: 1,
-    marginRight: 8,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  loginButtonContainer: {
-    marginBottom: 16,
-  },
-  loginCard: {
-    marginBottom: 24,
-    padding: 24,
-  },
-  orText: {
-    marginHorizontal: 16,
-  },
-  registerContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  rememberContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 32,
-  },
-  socialButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-  },
-  strengthBar: {
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 4,
-    overflow: 'hidden',
-  },
-  strengthContainer: {
-    marginTop: 8,
-  },
-  strengthIndicator: {
-    height: '100%',
-  },
-  welcomeContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  welcomeTitle: {
-    marginBottom: 8,
-  },
-});

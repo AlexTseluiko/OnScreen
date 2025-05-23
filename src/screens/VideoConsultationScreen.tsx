@@ -14,9 +14,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { appointmentsApi } from '../api/appointments';
+import { useTranslation } from 'react-i18next';
+
+// Определение типа для AgoraUIKit
+interface AgoraUIKitProps {
+  rtcProps: {
+    appId: string;
+    channel: string;
+    token: string | null;
+  };
+  callbacks?: {
+    EndCall?: () => void;
+  };
+  styleProps?: {
+    UIKitContainer?: React.CSSProperties;
+    localBtnStyles?: Record<string, React.CSSProperties>;
+    [key: string]: unknown;
+  };
+}
 
 // Условный импорт AgoraUIKit
-let AgoraUIKit: React.ComponentType<any> | null = null;
+let AgoraUIKit: React.ComponentType<AgoraUIKitProps> | null = null;
 
 // В web версии будем использовать заглушку
 if (Platform.OS !== 'web') {
@@ -54,6 +72,7 @@ const VideoConsultationScreen: React.FC = () => {
   const route = useRoute<VideoConsultationScreenRouteProp>();
   const navigation = useNavigation();
   const { appointmentId } = route.params;
+  const { t } = useTranslation();
 
   // Состояния
   const [appointment, setAppointment] = useState<Appointment | null>(null);
@@ -72,11 +91,11 @@ const VideoConsultationScreen: React.FC = () => {
       setAppointment(response);
     } catch (err) {
       console.error('Ошибка при загрузке деталей приема:', err);
-      setError('Не удалось загрузить информацию о приеме');
+      setError(t('videoConsultation.error'));
     } finally {
       setLoading(false);
     }
-  }, [appointmentId]);
+  }, [appointmentId, t]);
 
   // Инициализация при входе на экран
   useEffect(() => {
@@ -116,15 +135,15 @@ const VideoConsultationScreen: React.FC = () => {
         notes,
       });
 
-      Alert.alert('Успешно', 'Консультация завершена', [
+      Alert.alert(t('videoConsultation.success'), t('videoConsultation.consultationCompleted'), [
         {
-          text: 'ОК',
+          text: t('videoConsultation.ok'),
           onPress: () => navigation.navigate('DoctorSchedule' as never),
         },
       ]);
     } catch (err) {
       console.error('Ошибка при завершении консультации:', err);
-      Alert.alert('Ошибка', 'Не удалось завершить консультацию');
+      Alert.alert(t('error'), t('videoConsultation.completionError'));
     }
   };
 
@@ -133,7 +152,7 @@ const VideoConsultationScreen: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.light.primary} />
-        <Text style={styles.loadingText}>Загрузка данных...</Text>
+        <Text style={styles.loadingText}>{t('videoConsultation.loading')}</Text>
       </View>
     );
   }
@@ -145,7 +164,7 @@ const VideoConsultationScreen: React.FC = () => {
         <Ionicons name="alert-circle" size={48} color={COLORS.light.error} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchAppointmentDetails}>
-          <Text style={styles.retryButtonText}>Повторить</Text>
+          <Text style={styles.retryButtonText}>{t('videoConsultation.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -159,7 +178,7 @@ const VideoConsultationScreen: React.FC = () => {
           {appointment?.patient?.firstName} {appointment?.patient?.lastName}
         </Text>
         <Text style={styles.appointmentInfo}>
-          Консультация: {appointment?.date}, {appointment?.time}
+          {t('videoConsultation.consultation')}: {appointment?.date}, {appointment?.time}
         </Text>
       </View>
 
@@ -179,8 +198,8 @@ const VideoConsultationScreen: React.FC = () => {
             <ActivityIndicator size="large" color={COLORS.light.primary} />
             <Text style={styles.connectingText}>
               {Platform.OS === 'web'
-                ? 'Видеозвонки не поддерживаются в веб-версии'
-                : 'Подключение...'}
+                ? t('videoConsultation.webNotSupported')
+                : t('videoConsultation.connecting')}
             </Text>
           </View>
         )}
@@ -190,23 +209,23 @@ const VideoConsultationScreen: React.FC = () => {
       <Modal visible={isEndModalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Завершение консультации</Text>
+            <Text style={styles.modalTitle}>{t('videoConsultation.endConsultation')}</Text>
 
-            <Text style={styles.inputLabel}>Диагноз:</Text>
+            <Text style={styles.inputLabel}>{t('videoConsultation.diagnosis')}</Text>
             <TextInput
               style={styles.textInput}
               value={diagnosis}
               onChangeText={setDiagnosis}
-              placeholder="Введите диагноз"
+              placeholder={t('videoConsultation.diagnosisPlaceholder')}
               multiline
             />
 
-            <Text style={styles.inputLabel}>Рекомендации:</Text>
+            <Text style={styles.inputLabel}>{t('videoConsultation.recommendations')}</Text>
             <TextInput
               style={[styles.textInput, styles.textAreaInput]}
               value={notes}
               onChangeText={setNotes}
-              placeholder="Введите рекомендации для пациента"
+              placeholder={t('videoConsultation.recommendationsPlaceholder')}
               multiline
               numberOfLines={4}
             />
@@ -219,14 +238,14 @@ const VideoConsultationScreen: React.FC = () => {
                   setVideoCall(true);
                 }}
               >
-                <Text style={styles.modalCancelButtonText}>Отмена</Text>
+                <Text style={styles.modalCancelButtonText}>{t('videoConsultation.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalConfirmButton]}
                 onPress={completeConsultation}
               >
-                <Text style={styles.modalConfirmButtonText}>Завершить</Text>
+                <Text style={styles.modalConfirmButtonText}>{t('videoConsultation.complete')}</Text>
               </TouchableOpacity>
             </View>
           </View>

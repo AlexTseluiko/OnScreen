@@ -158,6 +158,15 @@ export interface Colors {
   light: ColorTheme;
   dark: ColorTheme;
   semantic: typeof semanticColors;
+  primary: string;
+  background: string;
+  border: string;
+  white: string;
+  shadow: string;
+  text: string;
+  textSecondary: string;
+  error: string;
+  overlay: string;
 }
 
 // Экспортируем всё для использования в приложении
@@ -166,4 +175,13 @@ export const COLORS: Colors = {
   light: lightTheme,
   dark: darkTheme,
   semantic: semanticColors,
+  primary: '#007AFF',
+  background: '#FFFFFF',
+  border: '#E5E5E5',
+  white: '#FFFFFF',
+  shadow: '#000000',
+  text: '#000000',
+  textSecondary: '#666666',
+  error: '#FF3B30',
+  overlay: 'rgba(0, 0, 0, 0.5)',
 } as const;

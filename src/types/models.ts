@@ -108,12 +108,53 @@ export interface Review {
 export interface ScreeningProgram {
   id: string;
   title: string;
+  titleRu: string;
+  titleUk: string;
   description: string;
-  ageRange: string;
-  frequency: string;
-  riskFactors: string[];
+  descriptionRu: string;
+  descriptionUk: string;
+  category: string;
+  categoryRu: string;
+  categoryUk: string;
   details: string;
-  price?: number;
-  duration?: string;
-  requirements?: string[];
+  detailsRu: string;
+  detailsUk: string;
+  riskFactors: string[];
+  riskFactorsRu: string[];
+  riskFactorsUk: string[];
+  frequency: string;
+  frequencyRu: string;
+  frequencyUk: string;
+  recommendedFor: string[];
+  recommendedForRu: string[];
+  recommendedForUk: string[];
+  benefits: string[];
+  benefitsRu: string[];
+  benefitsUk: string[];
+  preparation: string;
+  preparationRu: string;
+  preparationUk: string;
+  aftercare: string;
+  aftercareRu: string;
+  aftercareUk: string;
+  tests: ScreeningTest[];
+  nextScreening?: string;
+}
+
+export interface ScreeningTest {
+  id: string;
+  name: string;
+  nameRu: string;
+  nameUk: string;
+  description: string;
+  descriptionRu: string;
+  descriptionUk: string;
+  price: number;
+  duration: number;
+  preparation: string;
+  preparationRu: string;
+  preparationUk: string;
+  results: string;
+  resultsRu: string;
+  resultsUk: string;
 }

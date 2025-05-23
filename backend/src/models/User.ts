@@ -2,6 +2,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '../types/user';
 
+// Интерфейс для doctorRequest
+interface IDoctorRequest {
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: Date;
+  processedAt?: Date;
+}
+
 export interface IUserDocument extends Document {
   firstName: string;
   lastName: string;
@@ -18,6 +25,7 @@ export interface IUserDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
+  doctorRequest?: IDoctorRequest;
 }
 
 const userSchema = new Schema<IUserDocument>(
@@ -76,6 +84,20 @@ const userSchema = new Schema<IUserDocument>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    doctorRequest: {
+      type: {
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+        },
+        requestedAt: {
+          type: Date,
+        },
+        processedAt: {
+          type: Date,
+        },
+      },
     },
   },
   {

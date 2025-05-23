@@ -11,6 +11,7 @@ import { RegisterForm } from '../components/organisms/RegisterForm';
 import { ErrorMessage } from '../components/atoms/ErrorMessage';
 import { LoadingSpinner } from '../components/atoms/LoadingSpinner';
 import { useTheme } from '../theme';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,6 +21,7 @@ export const RegisterScreen: React.FC = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   const handleRegister = async (data: RegisterData) => {
     try {
@@ -31,7 +33,7 @@ export const RegisterScreen: React.FC = () => {
       dispatch(loginSuccess(response.data));
       navigation.navigate('Home');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка регистрации');
+      setError(err instanceof Error ? err.message : t('auth.registrationFailed'));
     } finally {
       setIsLoading(false);
     }

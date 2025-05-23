@@ -3,13 +3,16 @@ import { Appointment, AppointmentStatus } from '../models/Appointment';
 import { Doctor } from '../models/Doctor';
 import { createNotification, NotificationType } from '../utils/notifications';
 import { Clinic } from '../models/Clinic';
+import { AuthRequest, getUser } from '../middleware/auth';
+import { User } from '../models/User';
+import { UserRole } from '../types/user';
 
 // Создание записи
-export const createAppointment = async (req: Request, res: Response) => {
+export const createAppointment = async (req: AuthRequest, res: Response) => {
   try {
     const { doctorId, clinicId, date, time, type, notes, symptoms } = req.body;
 
-    const patientId = req.user.id;
+    const patientId = getUser(req).id;
 
     // Проверяем доступность врача
     const doctor = await Doctor.findById(doctorId);
@@ -79,12 +82,12 @@ export const createAppointment = async (req: Request, res: Response) => {
 };
 
 // Получение записей пользователя
-export const getUserAppointments = async (req: Request, res: Response) => {
+export const getUserAppointments = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user.id;
+    const userId = getUser(req).id;
     const { status, startDate, endDate } = req.query;
 
-    const query: any = {
+    const query: Record<string, unknown> = {
       $or: [{ patient: userId }, { doctor: userId }],
     };
 
@@ -113,7 +116,7 @@ export const getUserAppointments = async (req: Request, res: Response) => {
 };
 
 // Обновление статуса записи
-export const updateAppointmentStatus = async (req: Request, res: Response) => {
+export const updateAppointmentStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { appointmentId } = req.params;
     const { status } = req.body;
@@ -123,15 +126,18 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Запись не найдена' });
     }
 
-    // Проверяем права доступа
+    // Проверка прав доступа
+    // Только врач, к которому запись, или админ может менять статус
+    const user = getUser(req);
     if (
-      req.user.id !== appointment.patient.toString() &&
-      req.user.id !== appointment.doctor.toString()
+      user.id !== appointment.patient.toString() &&
+      user.id !== appointment.doctor.toString() &&
+      user.role !== UserRole.ADMIN
     ) {
-      return res.status(403).json({ error: 'Нет прав для изменения статуса записи' });
+      return res.status(403).json({ error: 'Доступ запрещен' });
     }
 
-    appointment.status = status as AppointmentStatus;
+    appointment.status = status;
     await appointment.save();
 
     // Отправляем уведомление о изменении статуса
@@ -144,16 +150,16 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
 
     res.json(appointment);
   } catch (error) {
-    console.error('Update appointment status error:', error);
-    res.status(500).json({ error: 'Ошибка при обновлении статуса записи' });
+    console.error('Ошибка при обновлении статуса записи:', error);
+    res.status(500).json({ error: 'Ошибка сервера при обновлении статуса' });
   }
 };
 
 // Отмена записи
-export const cancelAppointment = async (req: Request, res: Response) => {
+export const cancelAppointment = async (req: AuthRequest, res: Response) => {
   try {
     const { appointmentId } = req.params;
-    const userId = req.user.id;
+    const userId = getUser(req).id;
 
     const appointment = await Appointment.findOne({
       _id: appointmentId,
@@ -191,7 +197,7 @@ export const getClinicAppointments = async (req: Request, res: Response) => {
     const { clinicId } = req.params;
     const { date } = req.query;
 
-    const query: any = { clinic: clinicId };
+    const query: Record<string, unknown> = { clinic: clinicId };
     if (date) {
       query.date = date;
     }
@@ -205,5 +211,44 @@ export const getClinicAppointments = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Get clinic appointments error:', error);
     res.status(500).json({ error: 'Ошибка при получении записей' });
+  }
+};
+
+// Получение подробной информации о записи
+export const getAppointmentDetails = async (req: AuthRequest, res: Response) => {
+  try {
+    const { appointmentId } = req.params;
+
+    // Использование функции getUser для безопасного доступа к user
+    const userId = getUser(req).id;
+
+    const appointment = await Appointment.findById(appointmentId)
+      .populate('patient', 'name email phone')
+      .populate('doctor', 'name specialization')
+      .exec();
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Запись не найдена' });
+    }
+
+    // Проверка прав доступа
+    // Только пациент, врач или админ могут просматривать детали записи
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    if (
+      userId !== appointment.patient._id.toString() &&
+      userId !== appointment.doctor._id.toString() &&
+      user.role !== UserRole.ADMIN
+    ) {
+      return res.status(403).json({ error: 'Доступ запрещен' });
+    }
+
+    res.json(appointment);
+  } catch (error) {
+    console.error('Ошибка при получении деталей записи:', error);
+    res.status(500).json({ error: 'Ошибка сервера при получении деталей' });
   }
 };

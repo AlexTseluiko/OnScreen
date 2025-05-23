@@ -13,8 +13,10 @@ import { COLORS } from '../theme/colors';
 import { TYPOGRAPHY } from '../theme/typography';
 import { useUserStorage } from '../contexts/UserStorageContext';
 import { API_URL } from '../config/api';
+import { useTranslation } from 'react-i18next';
 
 export const NotificationsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { getToken } = useUserStorage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,15 +38,15 @@ export const NotificationsScreen: React.FC = () => {
       if (data.success) {
         setNotifications(data.data);
       } else {
-        setError(data.message || 'Ошибка при загрузке уведомлений');
+        setError(data.message || t('notifications.errors.loadFailed'));
       }
     } catch (err) {
-      setError('Ошибка при загрузке уведомлений');
-      console.error('Ошибка при загрузке уведомлений:', err);
+      setError(t('notifications.errors.loadFailed'));
+      console.error(t('notifications.errors.loadFailed'), err);
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, t]);
 
   useEffect(() => {
     fetchNotifications();
@@ -73,7 +75,7 @@ export const NotificationsScreen: React.FC = () => {
         );
       }
     } catch (err) {
-      console.error('Ошибка при отметке уведомления как прочитанного:', err);
+      console.error(t('notifications.errors.markReadFailed'), err);
     }
   };
 
@@ -89,7 +91,7 @@ export const NotificationsScreen: React.FC = () => {
       });
       setNotifications(notifications.map(notification => ({ ...notification, isRead: true })));
     } catch (error) {
-      console.error('Ошибка при отметке всех уведомлений как прочитанных:', error);
+      console.error(t('notifications.errors.markAllReadFailed'), error);
     }
   };
 
@@ -107,7 +109,7 @@ export const NotificationsScreen: React.FC = () => {
         setNotifications(notifications.filter(notification => notification._id !== notificationId));
       }
     } catch (err) {
-      console.error('Ошибка при удалении уведомления:', err);
+      console.error(t('notifications.errors.deleteFailed'), err);
     }
   };
 
@@ -121,14 +123,14 @@ export const NotificationsScreen: React.FC = () => {
       <View style={styles.notificationActions}>
         {!item.isRead && (
           <TouchableOpacity style={styles.actionButton} onPress={() => handleMarkAsRead(item._id)}>
-            <Text style={styles.actionButtonText}>Отметить как прочитанное</Text>
+            <Text style={styles.actionButtonText}>{t('notifications.actions.markAsRead')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
           onPress={() => handleDeleteNotification(item._id)}
         >
-          <Text style={styles.actionButtonText}>Удалить</Text>
+          <Text style={styles.actionButtonText}>{t('notifications.actions.delete')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -147,7 +149,7 @@ export const NotificationsScreen: React.FC = () => {
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchNotifications}>
-          <Text style={styles.retryButtonText}>Повторить</Text>
+          <Text style={styles.retryButtonText}>{t('notifications.actions.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -156,10 +158,10 @@ export const NotificationsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Уведомления</Text>
+        <Text style={styles.title}>{t('notifications.title')}</Text>
         {notifications.length > 0 && (
           <TouchableOpacity onPress={handleMarkAllAsRead}>
-            <Text style={styles.markAllButton}>Отметить все как прочитанные</Text>
+            <Text style={styles.markAllButton}>{t('notifications.actions.markAllAsRead')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -171,7 +173,7 @@ export const NotificationsScreen: React.FC = () => {
         onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Нет уведомлений</Text>
+            <Text style={styles.emptyText}>{t('notifications.empty')}</Text>
           </View>
         }
       />
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   actionButtonText: {
-    color: COLORS.light.whiteText,
+    color: COLORS.light.white,
     fontSize: 14,
   },
   container: {
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...TYPOGRAPHY.body1,
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.text.secondary,
   },
   errorContainer: {
     alignItems: 'center',
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
   },
   notificationDate: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.text.secondary,
   },
   notificationItem: {
     borderBottomColor: COLORS.light.border,
@@ -255,12 +257,12 @@ const styles = StyleSheet.create({
   },
   notificationMessage: {
     ...TYPOGRAPHY.body1,
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.text.secondary,
     marginBottom: 8,
   },
   notificationTitle: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.light.text,
+    color: COLORS.light.text.primary,
     marginBottom: 4,
   },
   retryButton: {
@@ -270,13 +272,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   retryButtonText: {
-    color: COLORS.light.whiteText,
+    color: COLORS.light.white,
     fontSize: 16,
     fontWeight: '500',
   },
   title: {
     ...TYPOGRAPHY.h1,
-    color: COLORS.light.text,
+    color: COLORS.light.text.primary,
   },
   unreadNotification: {
     backgroundColor: COLORS.light.background,

@@ -23,7 +23,7 @@ export type RootStackParamList = {
 
   // Экраны клиник и докторов
   Facilities: undefined;
-  FacilitiesMap: undefined;
+  FacilitiesMap: { filter?: 'all' | 'hospital' | 'clinic' | 'pharmacy' };
   FacilityDetails: { facilityId: string };
   ClinicDetails: { clinicId: string } | { clinic: Clinic };
   DoctorDetails: { doctorId: string; doctorName: string };
@@ -75,6 +75,7 @@ export type RootStackParamList = {
   Reports: undefined;
   ActionLogs: undefined;
   DoctorRequests: undefined;
+  AdminScreening: undefined;
 
   // Дополнительные экраны
   Articles: undefined;
@@ -91,6 +92,9 @@ export type RootStackParamList = {
   PatientTabs: undefined;
   DoctorTabs: undefined;
   AdminTabs: undefined;
+
+  ScreeningDetails: { programId: string };
+  ScreeningSchedule: { programId: string };
 };
 
 // Типы для навигации (для useNavigation)
@@ -99,7 +103,7 @@ export type RootStackNavigationProp = StackNavigationProp<RootStackParamList>;
 // Типизация для вкладок пациента
 export type PatientTabParamList = {
   Home: undefined;
-  Facilities: undefined;
+  FacilitiesMap: { filter?: 'all' | 'hospital' | 'clinic' | 'pharmacy' };
   EmergencyAIAssistant: undefined;
   ScreeningPrograms: undefined;
   Settings: undefined;

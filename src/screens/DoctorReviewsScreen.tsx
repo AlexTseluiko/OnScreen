@@ -19,7 +19,7 @@ const DoctorReviewsScreen: React.FC = () => {
     {
       id: '1',
       patientName: 'Иван Петров',
-      patientAvatar: 'https://via.placeholder.com/50',
+      patientAvatar: 'https://placehold.co/50/gray/white',
       rating: 5,
       date: '15.03.2024',
       comment: 'Отличный врач! Очень внимательный и профессиональный подход к лечению.',
@@ -27,7 +27,7 @@ const DoctorReviewsScreen: React.FC = () => {
     {
       id: '2',
       patientName: 'Мария Иванова',
-      patientAvatar: 'https://via.placeholder.com/50',
+      patientAvatar: 'https://placehold.co/50/gray/white',
       rating: 4,
       date: '10.03.2024',
       comment: 'Хороший специалист, но приём немного задержался.',
@@ -70,7 +70,7 @@ const DoctorReviewsScreen: React.FC = () => {
         {reviews.map(review => (
           <View key={review.id} style={styles.reviewCard}>
             <View style={styles.reviewHeader}>
-              <Image source={{ uri: review.patientAvatar }} style={styles.avatar} />
+              <Image source={{ uri: review.patientAvatar }} style={styles.avatarImage} />
               <View style={styles.reviewInfo}>
                 <Text style={styles.patientName}>{review.patientName}</Text>
                 <Text style={styles.reviewDate}>{review.date}</Text>
@@ -86,7 +86,7 @@ const DoctorReviewsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  avatar: {
+  avatarImage: {
     borderRadius: 25,
     height: 50,
     width: 50,
@@ -96,27 +96,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     padding: 20,
   },
   patientName: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[900],
     fontSize: 16,
     fontWeight: '500',
   },
   reviewCard: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     borderRadius: 12,
     marginBottom: 12,
     padding: 16,
   },
   reviewComment: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[800],
     fontSize: 14,
     marginTop: 12,
   },
   reviewDate: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
     fontSize: 14,
   },
   reviewHeader: {
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statLabel: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   title: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[900],
     fontSize: 24,
     fontWeight: 'bold',
   },

@@ -9,26 +9,20 @@ import { auth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+interface AppointmentParams {
+  appointmentId: string;
+}
+
 // Создание записи
-router.post('/', auth, (req: AuthRequest, res: Response) => createAppointment(req, res));
+router.post('/', auth, createAppointment);
 
 // Получение записей пользователя
-router.get('/', auth, (req: AuthRequest, res: Response) => getUserAppointments(req, res));
+router.get('/', auth, getUserAppointments);
 
 // Обновление статуса записи
-router.put(
-  '/:appointmentId/status',
-  auth,
-  (req: AuthRequest & { params: { appointmentId: string } }, res: Response) =>
-    updateAppointmentStatus(req, res)
-);
+router.put('/:appointmentId/status', auth, updateAppointmentStatus);
 
 // Отмена записи
-router.put(
-  '/:appointmentId/cancel',
-  auth,
-  (req: AuthRequest & { params: { appointmentId: string } }, res: Response) =>
-    cancelAppointment(req, res)
-);
+router.put('/:appointmentId/cancel', auth, cancelAppointment);
 
 export default router;

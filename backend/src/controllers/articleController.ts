@@ -1,199 +1,199 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Article } from '../models/Article';
-import mongoose from 'mongoose';
-import { UserRole } from '../types/user';
+import { handleError } from '../utils/errorHandler';
 import { AuthRequest } from '../middleware/auth';
 
-// Получение списка статей
-export const getArticles = async (req: AuthRequest, res: Response) => {
-  try {
-    const { page = 1, limit = 10, category, search } = req.query;
-    const query: Record<string, unknown> = {};
+export const articleController = {
+  // Получение всех статей с пагинацией
+  async getArticles(req: Request, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const skip = (page - 1) * limit;
 
-    if (category) {
-      query.category = category;
-    }
+      console.log('Запрос статей с параметрами:', req.query); // Лог для отладки
 
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-      ];
-    }
+      const query: Record<string, unknown> = {};
 
-    const articles = await Article.find(query)
-      .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit))
-      .populate('author', 'firstName lastName avatar');
-
-    const total = await Article.countDocuments(query);
-
-    res.json({
-      articles,
-      total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-    });
-  } catch (error) {
-    console.error('Ошибка при получении статей:', error);
-    res.status(500).json({
-      error:
-        'Ошибка при получении статей: ' +
-        (error instanceof Error ? error.message : 'неизвестная ошибка'),
-    });
-  }
-};
-
-// Получение статьи по ID
-export const getArticleById = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Некорректный ID статьи' });
-    }
-
-    const article = await Article.findById(id).populate('author', 'firstName lastName avatar');
-
-    if (!article) {
-      return res.status(404).json({ message: 'Статья не найдена' });
-    }
-
-    // Проверка доступа к неопубликованным статьям
-    if (
-      !article.published &&
-      req.user &&
-      req.user.role !== UserRole.ADMIN &&
-      req.user.role !== UserRole.DOCTOR
-    ) {
-      return res.status(403).json({ message: 'У вас нет доступа к этой статье' });
-    }
-
-    res.status(200).json(article);
-  } catch (error) {
-    console.error('Error getting article:', error);
-    res.status(500).json({ message: 'Ошибка при получении статьи' });
-  }
-};
-
-// Создание новой статьи
-export const createArticle = async (req: AuthRequest, res: Response) => {
-  try {
-    const { title, content, category, tags, imageUrl, published } = req.body;
-
-    if (!title || !content || !category) {
-      return res.status(400).json({ message: 'Пожалуйста, заполните все обязательные поля' });
-    }
-
-    if (!req.user) {
-      return res.status(401).json({ message: 'Пользователь не авторизован' });
-    }
-
-    const newArticle = new Article({
-      title,
-      content,
-      author: req.user.id,
-      category,
-      tags: tags || [],
-      imageUrl,
-      published: published || false,
-      publishedAt: published ? new Date() : null,
-    });
-
-    const savedArticle = await newArticle.save();
-
-    res.status(201).json(savedArticle);
-  } catch (error) {
-    console.error('Error creating article:', error);
-    res.status(500).json({ message: 'Ошибка при создании статьи' });
-  }
-};
-
-// Обновление статьи
-export const updateArticle = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { title, content, category, tags, imageUrl, published } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Некорректный ID статьи' });
-    }
-
-    if (!req.user) {
-      return res.status(401).json({ message: 'Пользователь не авторизован' });
-    }
-
-    const article = await Article.findById(id);
-
-    if (!article) {
-      return res.status(404).json({ message: 'Статья не найдена' });
-    }
-
-    // Проверка прав на редактирование
-    if (req.user.role !== UserRole.ADMIN && article.author.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'У вас нет прав на редактирование этой статьи' });
-    }
-
-    const updateData: Record<string, unknown> = {
-      title: title || article.title,
-      content: content || article.content,
-      category: category || article.category,
-      tags: tags || article.tags,
-      imageUrl: imageUrl !== undefined ? imageUrl : article.imageUrl,
-    };
-
-    // Обновление статуса публикации
-    if (published !== undefined && published !== article.published) {
-      updateData.published = published;
-
-      // Если статья публикуется, установить дату публикации
-      if (published && !article.publishedAt) {
-        updateData.publishedAt = new Date();
+      // Фильтрация по статусу - работаем с обоими вариантами параметров для совместимости
+      if (req.query.status) {
+        query.status = req.query.status;
+      } else if (req.query.published === 'true') {
+        query.status = 'published';
+      } else if (req.query.published === 'false') {
+        query.status = 'draft';
+      } else if (!req.query.status && !req.query.published) {
+        // По умолчанию показываем только опубликованные на фронте
+        if (req.headers['x-admin'] !== 'true') {
+          query.status = 'published';
+        }
       }
+
+      // Фильтрация по категории
+      if (req.query.category) {
+        query.category = req.query.category;
+      }
+
+      // Поиск по заголовку
+      if (req.query.search) {
+        query.title = { $regex: req.query.search, $options: 'i' };
+      }
+
+      console.log('Итоговый запрос к MongoDB:', query); // Лог для отладки
+
+      const [articles, total] = await Promise.all([
+        Article.find(query)
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .populate('author', 'firstName lastName')
+          .lean(),
+        Article.countDocuments(query),
+      ]);
+
+      console.log(`Найдено ${articles.length} статей из ${total}`); // Лог для отладки
+
+      res.json({
+        articles,
+        currentPage: page,
+        pages: Math.ceil(total / limit),
+        total,
+      });
+    } catch (error) {
+      handleError(res, 'Error fetching articles', error);
     }
+  },
 
-    const updatedArticle = await Article.findByIdAndUpdate(id, updateData, { new: true }).populate(
-      'author',
-      'firstName lastName avatar'
-    );
+  // Получение статьи по ID
+  async getArticleById(req: Request, res: Response) {
+    try {
+      const article = await Article.findById(req.params.id)
+        .populate('author', 'firstName lastName')
+        .lean();
 
-    res.status(200).json(updatedArticle);
-  } catch (error) {
-    console.error('Error updating article:', error);
-    res.status(500).json({ message: 'Ошибка при обновлении статьи' });
-  }
-};
+      if (!article) {
+        return res.status(404).json({ error: 'Article not found' });
+      }
 
-// Удаление статьи
-export const deleteArticle = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'Некорректный ID статьи' });
+      res.json(article);
+    } catch (error) {
+      handleError(res, 'Error fetching article', error);
     }
+  },
 
-    if (!req.user) {
-      return res.status(401).json({ message: 'Пользователь не авторизован' });
+  // Создание новой статьи
+  async createArticle(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      // Проверяем обязательные поля
+      const { title, content, category } = req.body;
+      if (!title || !content || !category) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          details: 'Title, content and category are required',
+        });
+      }
+
+      const article = new Article({
+        title,
+        content,
+        category,
+        tags: req.body.tags || [],
+        author: req.user.id,
+        status: 'published',
+      });
+
+      const savedArticle = await article.save();
+      console.log('Saved article:', savedArticle); // Добавляем лог для отладки
+
+      // Возвращаем статью с данными автора
+      const populatedArticle = await Article.findById(savedArticle._id)
+        .populate('author', 'firstName lastName')
+        .lean();
+
+      res.status(201).json(populatedArticle);
+    } catch (error) {
+      console.error('Error creating article:', error); // Добавляем лог для отладки
+      handleError(res, 'Error creating article', error);
     }
+  },
 
-    const article = await Article.findById(id);
+  // Обновление статьи
+  async updateArticle(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
 
-    if (!article) {
-      return res.status(404).json({ message: 'Статья не найдена' });
+      const article = await Article.findById(req.params.id);
+
+      if (!article) {
+        return res.status(404).json({ error: 'Article not found' });
+      }
+
+      // Проверка прав доступа
+      if (article.author.toString() !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+
+      // Обновляем только разрешенные поля
+      const { title, content, category, tags, status } = req.body;
+      if (title) article.title = title;
+      if (content) article.content = content;
+      if (category) article.category = category;
+      if (tags) article.tags = tags;
+      if (status) article.status = status;
+
+      const updatedArticle = await article.save();
+      console.log('Updated article:', updatedArticle); // Добавляем лог для отладки
+
+      // Возвращаем обновленную статью с данными автора
+      const populatedArticle = await Article.findById(updatedArticle._id)
+        .populate('author', 'firstName lastName')
+        .lean();
+
+      res.json(populatedArticle);
+    } catch (error) {
+      console.error('Error updating article:', error); // Добавляем лог для отладки
+      handleError(res, 'Error updating article', error);
     }
+  },
 
-    // Проверка прав на удаление
-    if (req.user.role !== UserRole.ADMIN && article.author.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'У вас нет прав на удаление этой статьи' });
+  // Удаление статьи
+  async deleteArticle(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const article = await Article.findById(req.params.id);
+
+      if (!article) {
+        return res.status(404).json({ error: 'Article not found' });
+      }
+
+      // Проверка прав доступа
+      if (article.author.toString() !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+
+      await article.deleteOne();
+      res.json({ message: 'Article deleted successfully' });
+    } catch (error) {
+      handleError(res, 'Error deleting article', error);
     }
+  },
 
-    await Article.findByIdAndDelete(id);
-
-    res.status(200).json({ message: 'Статья успешно удалена' });
-  } catch (error) {
-    console.error('Error deleting article:', error);
-    res.status(500).json({ message: 'Ошибка при удалении статьи' });
-  }
+  // Получение категорий статей
+  async getCategories(req: Request, res: Response) {
+    try {
+      const categories = await Article.distinct('category');
+      res.json(categories);
+    } catch (error) {
+      handleError(res, 'Error fetching categories', error);
+    }
+  },
 };

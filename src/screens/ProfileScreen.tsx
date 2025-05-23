@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 // Импортируем компоненты из нашей системы атомарного дизайна
 import { Text } from '../components/ui/atoms/Text';
@@ -21,8 +22,8 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 const ProfileScreen: React.FC = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
-  const [, setIsEditing] = useState(false);
 
   const handleEditProfile = () => {
     navigation.navigate('EditProfile');
@@ -54,48 +55,48 @@ const ProfileScreen: React.FC = () => {
   const getRoleTitle = (): string => {
     switch (user?.role) {
       case 'doctor':
-        return 'Врач';
+        return t('profile.roles.doctor');
       case 'admin':
-        return 'Администратор';
+        return t('profile.roles.admin');
       default:
-        return 'Пациент';
+        return t('profile.roles.patient');
     }
   };
 
   // Генерация элементов меню для врача
   const doctorMenuItems = [
     {
-      title: 'Расписание приёмов',
+      title: t('profile.menu.doctor.schedule'),
       icon: <Icon name="calendar" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: handleViewSchedule,
     },
     {
-      title: 'Мои пациенты',
+      title: t('profile.menu.doctor.patients'),
       icon: <Icon name="people" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: handleViewPatients,
     },
     {
-      title: 'Статистика',
+      title: t('profile.menu.doctor.statistics'),
       icon: <Icon name="stats-chart" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: handleViewStatistics,
     },
     {
-      title: 'График работы',
+      title: t('profile.menu.doctor.workingHours'),
       icon: <Icon name="time" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Отзывы пациентов',
+      title: t('profile.menu.doctor.reviews'),
       icon: <Icon name="star" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'История консультаций',
+      title: t('profile.menu.doctor.consultationHistory'),
       icon: <Icon name="document-text" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Документы и сертификаты',
+      title: t('profile.menu.doctor.documents'),
       icon: <Icon name="folder" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
@@ -104,27 +105,27 @@ const ProfileScreen: React.FC = () => {
   // Генерация элементов меню для пациента
   const patientMenuItems = [
     {
-      title: 'Медицинская карта',
+      title: t('profile.menu.patient.medicalCard'),
       icon: <Icon name="medical" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: handleViewMedicalCard,
     },
     {
-      title: 'История посещений',
+      title: t('profile.menu.patient.visitHistory'),
       icon: <Icon name="time" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Предстоящие записи',
+      title: t('profile.menu.patient.upcomingAppointments'),
       icon: <Icon name="calendar" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Избранные врачи',
+      title: t('profile.menu.patient.favoriteDoctors'),
       icon: <Icon name="heart" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Уведомления о приёмах',
+      title: t('profile.menu.patient.appointmentReminders'),
       icon: <Icon name="notifications" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
@@ -133,37 +134,37 @@ const ProfileScreen: React.FC = () => {
   // Генерация элементов меню для администратора
   const adminMenuItems = [
     {
-      title: 'Статистика системы',
+      title: t('profile.menu.admin.systemStatistics'),
       icon: <Icon name="stats-chart" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: handleViewStatistics,
     },
     {
-      title: 'Управление пользователями',
+      title: t('profile.menu.admin.userManagement'),
       icon: <Icon name="people" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('AdminUsers'),
     },
     {
-      title: 'Заявки врачей',
+      title: t('profile.menu.admin.doctorRequests'),
       icon: <Icon name="document-text" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('DoctorRequests'),
     },
     {
-      title: 'Управление клиниками',
+      title: t('profile.menu.admin.clinicManagement'),
       icon: <Icon name="business" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Настройка системы',
+      title: t('profile.menu.admin.systemSettings'),
       icon: <Icon name="settings" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Settings'),
     },
     {
-      title: 'Логи действий',
+      title: t('profile.menu.admin.actionLogs'),
       icon: <Icon name="list" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
     {
-      title: 'Отчеты',
+      title: t('profile.menu.admin.reports'),
       icon: <Icon name="bar-chart" family="ionicons" size={24} color={theme.colors.primary} />,
       onPress: () => navigation.navigate('Home'),
     },
@@ -198,60 +199,77 @@ const ProfileScreen: React.FC = () => {
               family="ionicons"
               size="small"
               variant="primary"
+              style={styles.editAvatarButton}
               onPress={handleEditProfile}
-              containerStyle={styles.editAvatarButton}
             />
           </View>
           <View style={styles.profileInfo}>
-            <Text variant="title">{`${user?.firstName} ${user?.lastName}`}</Text>
-            <Text variant="subtitle" color={theme.colors.primary}>
+            <Text variant="heading" style={styles.userName}>
+              {user?.firstName} {user?.lastName}
+            </Text>
+            <Text variant="body" style={styles.userEmail}>
+              {user?.email}
+            </Text>
+            <Text variant="caption" style={styles.userRole}>
               {getRoleTitle()}
             </Text>
-            {user?.role === 'doctor' && (
-              <Text variant="bodySmall" color={theme.colors.text.secondary}>
-                Специальность не указана
-              </Text>
-            )}
           </View>
+          <IconButton
+            name="pencil"
+            family="ionicons"
+            size="medium"
+            variant="secondary"
+            style={styles.editButton}
+            onPress={handleEditProfile}
+          />
         </View>
       </Card>
 
-      <Card title="Действия" containerStyle={styles.actionsCard}>
-        <ListItem
-          title="Редактировать профиль"
-          leftContent={
-            <Icon name="create" family="ionicons" size={24} color={theme.colors.primary} />
-          }
-          onPress={handleEditProfile}
-          showDivider
-        />
-
-        {menuItems.map((item, index) => (
-          <ListItem
-            key={index}
-            title={item.title}
-            leftContent={item.icon}
-            onPress={item.onPress}
-            showDivider={index !== menuItems.length - 1}
-          />
-        ))}
-
-        <ListItem
-          title="Сменить пароль"
-          leftContent={<Icon name="key" family="ionicons" size={24} color={theme.colors.primary} />}
-          onPress={handleChangePassword}
-        />
+      <Card containerStyle={styles.menuCard}>
+        <Text variant="subheading" style={styles.menuTitle}>
+          {t('profile.title')}
+        </Text>
+        <View style={styles.menuItems}>
+          {menuItems.map((item, index) => (
+            <ListItem
+              key={index}
+              title={item.title}
+              leftContent={item.icon}
+              rightContent={
+                <Icon
+                  name="chevron-forward"
+                  family="ionicons"
+                  size={18}
+                  color={theme.colors.text.secondary}
+                />
+              }
+              onPress={item.onPress}
+              containerStyle={styles.menuItem}
+            />
+          ))}
+        </View>
       </Card>
 
-      <View style={styles.editButtonContainer}>
+      <Card containerStyle={styles.actionsCard}>
         <Button
-          title="Редактировать профиль"
-          onPress={handleEditProfile}
-          variant="primary"
-          size="large"
-          fullWidth
+          title={t('profile.changePassword')}
+          onPress={handleChangePassword}
+          variant="outline"
+          leftIcon={
+            <Icon name="lock-closed" family="ionicons" size={18} color={theme.colors.primary} />
+          }
+          style={styles.actionButton}
         />
-      </View>
+        <Button
+          title={t('profile.settings')}
+          onPress={() => navigation.navigate('Settings')}
+          variant="outline"
+          leftIcon={
+            <Icon name="settings" family="ionicons" size={18} color={theme.colors.primary} />
+          }
+          style={styles.actionButton}
+        />
+      </Card>
     </ScrollView>
   );
 };

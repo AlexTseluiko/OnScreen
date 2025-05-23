@@ -1,48 +1,30 @@
-import express from 'express';
-import authRoutes from './auth';
-import clinicRoutes from './clinic';
-import doctorRoutes from './doctor';
-import appointmentRoutes from './appointment';
-import reviewRoutes from './review';
-import profileRoutes from './profile';
-import feedbackRoutes from './feedback';
-import notificationRoutes from './notification';
-import adminRoutes from './admin';
-import medicalRecordRoutes from './medicalRecord';
-import facilityRoutes from './facilityRoutes';
-import { auth, checkRole } from '../middleware/auth';
-import { UserRole } from '../types/user';
-import messageRoutes from './message';
-import articleRoutes from './article';
-import doctorProfileRoutes from './doctorProfile';
-import patientProfileRoutes from './patientProfile';
+import { Router } from 'express';
 import userRoutes from './userRoutes';
+import screeningRoutes from './screeningRoutes';
+import facilityRoutes from './facilityRoutes';
+import adminRoutes from './admin';
+import authRoutes from './auth';
+import notificationRoutes from './notificationRoutes';
+import articleRoutes from './article';
+import clinicRoutes from './clinic';
+import feedbackRoutes from './feedback';
 
-const router = express.Router();
+const router = Router();
 
-// Эндпоинт проверки здоровья сервера
-router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'API работает' });
-});
-
-// Публичные маршруты
-router.use('/auth', authRoutes);
+// Подключаем имеющиеся маршруты
+router.use('/users', userRoutes);
+router.use('/screening', screeningRoutes);
 router.use('/facilities', facilityRoutes);
+router.use('/admin', adminRoutes);
+router.use('/auth', authRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/articles', articleRoutes);
+router.use('/clinics', clinicRoutes);
 router.use('/feedback', feedbackRoutes);
 
-// Защищенные маршруты
-router.use('/profile', auth, profileRoutes);
-router.use('/messages', auth, messageRoutes);
-router.use('/articles', auth, articleRoutes);
-router.use('/reviews', auth, reviewRoutes);
-router.use('/notifications', auth, notificationRoutes);
-router.use('/admin', auth, checkRole([UserRole.ADMIN]), adminRoutes);
-router.use('/appointments', auth, appointmentRoutes);
-router.use('/doctors', auth, doctorRoutes);
-router.use('/clinics', auth, clinicRoutes);
-router.use('/medical-records', auth, medicalRecordRoutes);
-router.use('/doctor-profiles', auth, doctorProfileRoutes);
-router.use('/patient-profiles', auth, patientProfileRoutes);
-router.use('/users', auth, userRoutes);
+// Маршрут для проверки работы API
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'API is working' });
+});
 
 export default router;

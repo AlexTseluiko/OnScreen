@@ -39,6 +39,8 @@ export interface Clinic {
   email: string;
   website?: string;
   photos?: string[];
+  type?: 'clinic' | 'hospital' | 'pharmacy';
+  imageUrl?: string;
   rating: number;
   reviewsCount: number;
   services: string[];

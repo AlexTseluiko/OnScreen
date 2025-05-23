@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import { createServer } from 'http';
@@ -7,8 +7,13 @@ import dotenv from 'dotenv';
 import path from 'path';
 import routes from './routes';
 import { initializeSocket } from './utils/socket';
+import userRoutes from './routes/userRoutes';
+import facilityRoutes from './routes/facilityRoutes';
+import screeningRoutes from './routes/screeningRoutes';
+import authRoutes from './routes/auth';
 import notificationRoutes from './routes/notificationRoutes';
-import reviewRoutes from './routes/reviewRoutes';
+import adminRoutes from './routes/admin';
+import articleRoutes from './routes/article';
 
 // Загрузка переменных окружения
 dotenv.config();
@@ -103,11 +108,41 @@ app.get('/', (req, res) => {
 // Используем все маршруты через единый роутер
 app.use('/api', routes);
 
-// Обработка ошибок
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Что-то пошло не так!' });
+// Подключение маршрутов API
+app.use('/api/users', userRoutes);
+app.use('/api/facilities', facilityRoutes);
+app.use('/api/screening', screeningRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Алиасы маршрутов для совместимости с клиентским кодом
+app.use('/api/clinics', facilityRoutes);
+app.use('/api/screening-programs', screeningRoutes);
+app.use(
+  '/api/feedback',
+  express
+    .Router()
+    .get('/', (req, res) =>
+      res.status(200).json({ feedback: [], page: 1, totalPages: 1, totalCount: 0 })
+    )
+    .patch('/:id/read', (req, res) => res.status(200).json({ success: true }))
+    .patch('/:id/note', (req, res) => res.status(200).json({ success: true }))
+);
+app.use('/api/articles', articleRoutes);
+
+// Обработка маршрутов, которые не существуют
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Маршрут не найден' });
 });
+
+// Обработка ошибок - используем тип ErrorRequestHandler из Express
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  console.error('Ошибка сервера:', err);
+  res.status(500).json({ error: 'Что-то пошло не так!' });
+};
+
+app.use(errorHandler);
 
 // Подключение к MongoDB
 mongoose
@@ -119,20 +154,22 @@ mongoose
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on all interfaces, port ${PORT}`);
       // Показываем все доступные адреса для подключения
-      const os = require('os');
-      const networkInterfaces = os.networkInterfaces();
-      console.log('Доступные адреса для подключения:');
-      for (const interfaceName in networkInterfaces) {
-        const interfaces = networkInterfaces[interfaceName];
-        if (interfaces) {
-          interfaces.forEach(iface => {
-            if (iface.family === 'IPv4' && !iface.internal) {
-              console.log(`http://${iface.address}:${PORT}`);
-            }
-          });
+      // Импортируем os через import
+      import('os').then(os => {
+        const networkInterfaces = os.networkInterfaces();
+        console.log('Доступные адреса для подключения:');
+        for (const interfaceName in networkInterfaces) {
+          const interfaces = networkInterfaces[interfaceName];
+          if (interfaces) {
+            interfaces.forEach((iface: { family: string; internal: boolean; address: string }) => {
+              if (iface.family === 'IPv4' && !iface.internal) {
+                console.log(`http://${iface.address}:${PORT}`);
+              }
+            });
+          }
         }
-      }
-      console.log(`Access via http://localhost:${PORT} or http://<your-ip-address>:${PORT}`);
+        console.log(`Access via http://localhost:${PORT} or http://<your-ip-address>:${PORT}`);
+      });
     });
   })
   .catch(error => {

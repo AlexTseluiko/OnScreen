@@ -33,17 +33,73 @@ export const clinicsApi = {
     const endpoint = queryString ? `/clinics?${queryString}` : '/clinics';
 
     try {
-      const response = await apiClient.get<ApiResponse<GetClinicsResponse>>(endpoint);
-      return response.data.clinics || [];
+      const response = await apiClient.get<ApiResponse<GetClinicsResponse> | { clinics: Clinic[] }>(
+        endpoint
+      );
+
+      // Логируем структуру ответа для отладки
+      console.log('Клиники API ответ:', JSON.stringify(response.data, null, 2));
+
+      // Проверяем различные возможные структуры ответа
+      if (response.data && 'data' in response.data && response.data.data) {
+        // Если структура { success: true, data: { clinics: [...], total: number } }
+        if ('clinics' in response.data.data) {
+          return response.data.data.clinics || [];
+        }
+        // Если структура { success: true, data: [...клиники] }
+        else if (Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+      }
+      // Если структура { clinics: [...] }
+      else if (response.data && 'clinics' in response.data) {
+        return response.data.clinics;
+      }
+
+      console.error('Неожиданная структура ответа API:', response.data);
+      return [];
     } catch (error) {
-      console.error('Error fetching clinics:', error);
+      console.error('Ошибка при получении клиник:', error);
       return [];
     }
   },
 
-  async getById(id: string): Promise<Clinic> {
-    const response = await apiClient.get<ApiResponse<{ clinic: Clinic }>>(`/clinics/${id}`);
-    return response.data.clinic;
+  async getById(id: string): Promise<Clinic | null> {
+    try {
+      // Проверяем валидность ID
+      if (!id || id.trim() === '') {
+        console.error('Invalid clinic ID');
+        return null;
+      }
+
+      // Получаем данные клиники без добавления X-API-Key, так как это вызывает ошибку CORS
+      const response = await apiClient.get<ApiResponse<{ clinic: Clinic }> | { clinic: Clinic }>(
+        `/clinics/${id}`
+      );
+
+      // Логируем структуру ответа для отладки
+      console.log('Ответ API для клиники:', JSON.stringify(response.data, null, 2));
+
+      // Проверяем различные возможные структуры ответа
+      if (response.data) {
+        // Если структура { success: true, data: { clinic: {...} } }
+        if ('data' in response.data && response.data.data && 'clinic' in response.data.data) {
+          console.log('Клиника получена (структура 1):', response.data.data.clinic._id);
+          return response.data.data.clinic;
+        }
+        // Если структура { clinic: {...} }
+        else if ('clinic' in response.data) {
+          console.log('Клиника получена (структура 2):', response.data.clinic._id);
+          return response.data.clinic;
+        }
+      }
+
+      console.error('Нет данных клиники в ответе');
+      return null;
+    } catch (error) {
+      console.error(`Ошибка при получении клиники с ID ${id}:`, error);
+      return null;
+    }
   },
 
   async createReview(

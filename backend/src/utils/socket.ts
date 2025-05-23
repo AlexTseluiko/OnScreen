@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { Server as HttpServer } from 'http';
+import { createServer } from 'http';
 import { UserRole } from '../types/user';
 import { INotification } from '../models/Notification';
 
@@ -13,14 +13,8 @@ class SocketManager {
   private io: Server;
   private connectedUsers: Map<string, SocketUser>;
 
-  constructor(server: HttpServer) {
-    this.io = new Server(server, {
-      cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
-        methods: ['GET', 'POST'],
-        credentials: true,
-      },
-    });
+  constructor(server: ReturnType<typeof createServer>) {
+    this.io = new Server(server);
 
     this.connectedUsers = new Map();
 
@@ -29,7 +23,7 @@ class SocketManager {
 
   private setupSocketHandlers(): void {
     this.io.on('connection', socket => {
-      console.log('New client connected:', socket.id);
+      console.log('Socket connected:', socket.id);
 
       socket.on('authenticate', (data: { userId: string; role: UserRole }) => {
         this.connectedUsers.set(socket.id, {
@@ -40,9 +34,19 @@ class SocketManager {
         console.log('User authenticated:', data.userId);
       });
 
+      socket.on('subscribe', (userId: string) => {
+        socket.join(`user:${userId}`);
+        console.log(`User ${userId} subscribed to notifications`);
+      });
+
+      socket.on('unsubscribe', (userId: string) => {
+        socket.leave(`user:${userId}`);
+        console.log(`User ${userId} unsubscribed from notifications`);
+      });
+
       socket.on('disconnect', () => {
         this.connectedUsers.delete(socket.id);
-        console.log('Client disconnected:', socket.id);
+        console.log('Socket disconnected:', socket.id);
       });
     });
   }
@@ -73,8 +77,8 @@ class SocketManager {
 
 let socketManager: SocketManager;
 
-export const initializeSocket = (server: HttpServer): void => {
-  socketManager = new SocketManager(server);
+export const initializeSocket = (httpServer: ReturnType<typeof createServer>): void => {
+  socketManager = new SocketManager(httpServer);
 };
 
 export const getSocketManager = (): SocketManager => {

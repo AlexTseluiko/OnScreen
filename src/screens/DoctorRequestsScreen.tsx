@@ -10,11 +10,13 @@ import {
   Alert,
   ViewStyle,
   TextStyle,
+  RefreshControl,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { COLORS } from '../constants/colors';
-import { apiClient } from '../api/apiClient';
+import { apiClient } from '../services/apiClient';
+import { API_ENDPOINTS } from '../config/api';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -22,7 +24,14 @@ import { useUserStorage } from '../contexts/UserStorageContext';
 import { DoctorRequest } from '../types/doctor';
 import { ApiResponse } from '../types/api';
 
-interface DoctorRequestsResponse extends ApiResponse<{ requests: DoctorRequest[] }> {}
+interface DoctorRequestsResponse {
+  data: DoctorRequest[];
+  pagination: {
+    total: number;
+    pages: number;
+    page: number;
+  };
+}
 
 type DoctorRequestsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'DoctorRequests'>;
 
@@ -32,23 +41,21 @@ interface Styles {
   headerTitle: TextStyle;
   backButton: ViewStyle;
   listContent: ViewStyle;
-  requestItem: ViewStyle;
+  requestCard: ViewStyle;
   requestHeader: ViewStyle;
   requestTitle: TextStyle;
-  statusBadge: ViewStyle;
-  statusText: TextStyle;
-  infoRow: ViewStyle;
-  label: TextStyle;
-  value: TextStyle;
-  aboutSection: ViewStyle;
-  aboutTitle: TextStyle;
-  aboutText: TextStyle;
-  actionsContainer: ViewStyle;
+  requestDate: TextStyle;
+  requestInfo: ViewStyle;
+  infoLabel: TextStyle;
+  infoValue: TextStyle;
+  requestActions: ViewStyle;
   actionButton: ViewStyle;
   actionButtonText: TextStyle;
   approveButton: ViewStyle;
   rejectButton: ViewStyle;
-  centered: ViewStyle;
+  loadingContainer: ViewStyle;
+  loadingText: TextStyle;
+  errorContainer: ViewStyle;
   errorText: TextStyle;
   retryButton: ViewStyle;
   retryButtonText: TextStyle;
@@ -64,57 +71,52 @@ export const DoctorRequestsScreen: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<DoctorRequest[]>([]);
-  const [processing, setProcessing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const token = await getToken();
-      const response = await apiClient.get<DoctorRequestsResponse>('/admin/doctor-requests', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response =
+        await apiClient.get<ApiResponse<DoctorRequestsResponse>>('/admin/doctor-requests');
 
-      if (response.status === 'success' && response.data) {
-        setRequests(response.data.requests);
-      } else {
-        throw new Error(response.message || 'Failed to fetch requests');
+      if (response.data?.data) {
+        setRequests(response.data.data.data);
       }
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-      setError('Failed to load requests');
+    } catch (err) {
+      console.error('Ошибка при загрузке запросов:', err);
+      setError(t('errors.requestsLoadError'));
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [t]);
 
-  const handleRequest = async (requestId: string, action: 'approve' | 'reject') => {
-    try {
-      setProcessing(true);
-      setError(null);
-      const token = await getToken();
-      const response = await apiClient.put<ApiResponse<void>>(
-        `/admin/doctor-requests/${requestId}`,
-        { approved: action === 'approve' },
-        {
-          headers: { Authorization: `Bearer ${token}` },
+  const handleRequestAction = useCallback(
+    async (requestId: string, action: 'approve' | 'reject') => {
+      try {
+        const response = await apiClient.post<ApiResponse<void>>(
+          `/admin/doctor-requests/${requestId}`,
+          { action }
+        );
+
+        if (response.data?.data !== undefined) {
+          await fetchRequests();
+          Alert.alert(t('success'), t('requests.actionSuccess'));
         }
-      );
-
-      if (response.status === 'success') {
-        await fetchRequests();
-        Alert.alert('Success', action === 'approve' ? 'Request approved' : 'Request rejected');
-      } else {
-        throw new Error(response.message || 'Failed to process request');
+      } catch (err) {
+        console.error('Ошибка при обработке запроса:', err);
+        Alert.alert(t('error'), t('errors.requestActionError'));
       }
-    } catch (error) {
-      console.error('Error processing request:', error);
-      setError('Failed to process request');
-    } finally {
-      setProcessing(false);
-    }
-  };
+    },
+    [t, fetchRequests]
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchRequests();
+    setRefreshing(false);
+  }, [fetchRequests]);
 
   useEffect(() => {
     fetchRequests();
@@ -132,73 +134,73 @@ export const DoctorRequestsScreen: React.FC = () => {
   };
 
   const renderRequestItem = ({ item }: { item: DoctorRequest }) => (
-    <View style={[styles.requestItem, { backgroundColor: theme.colors.cardBackground }]}>
+    <View style={[styles.requestCard, { backgroundColor: theme.colors.background }]}>
       <View style={styles.requestHeader}>
-        <Text style={[styles.requestTitle, { color: theme.colors.text }]}>
+        <Text style={[styles.requestTitle, { color: theme.colors.text.primary }]}>
           {item.user.firstName} {item.user.lastName}
         </Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{t(`status.${item.status}`)}</Text>
-        </View>
-      </View>
-      <View style={styles.infoRow}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-          {t('specialization')}:
+        <Text style={[styles.requestDate, { color: theme.colors.text.secondary }]}>
+          {new Date(item.createdAt).toLocaleDateString()}
         </Text>
-        <Text style={[styles.value, { color: theme.colors.text }]}>{item.specialization}</Text>
       </View>
-      <View style={styles.infoRow}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-          {t('experience')}:
+
+      <View style={styles.requestInfo}>
+        <Text style={[styles.infoLabel, { color: theme.colors.text.secondary }]}>
+          {t('requests.specialization')}:
         </Text>
-        <Text style={[styles.value, { color: theme.colors.text }]}>{item.experience}</Text>
-      </View>
-      <View style={styles.infoRow}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>{t('education')}:</Text>
-        <Text style={[styles.value, { color: theme.colors.text }]}>{item.education}</Text>
-      </View>
-      <View style={styles.infoRow}>
-        <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-          {t('licenseNumber')}:
+        <Text style={[styles.infoValue, { color: theme.colors.text.primary }]}>
+          {item.specialization}
         </Text>
-        <Text style={[styles.value, { color: theme.colors.text }]}>{item.licenseNumber}</Text>
       </View>
-      <View style={styles.aboutSection}>
-        <Text style={[styles.aboutTitle, { color: theme.colors.text }]}>{t('about')}</Text>
-        <Text style={[styles.aboutText, { color: theme.colors.textSecondary }]}>{item.about}</Text>
+
+      <View style={styles.requestInfo}>
+        <Text style={[styles.infoLabel, { color: theme.colors.text.secondary }]}>
+          {t('requests.experience')}:
+        </Text>
+        <Text style={[styles.infoValue, { color: theme.colors.text.primary }]}>
+          {item.experience} {t('years')}
+        </Text>
       </View>
-      {item.status === 'pending' && (
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.approveButton]}
-            onPress={() => handleRequest(item._id, 'approve')}
-            disabled={processing}
-          >
-            <Text style={styles.actionButtonText}>{t('approve')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.rejectButton]}
-            onPress={() => handleRequest(item._id, 'reject')}
-            disabled={processing}
-          >
-            <Text style={styles.actionButtonText}>{t('reject')}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
+      <View style={styles.requestInfo}>
+        <Text style={[styles.infoLabel, { color: theme.colors.text.secondary }]}>
+          {t('requests.education')}:
+        </Text>
+        <Text style={[styles.infoValue, { color: theme.colors.text.primary }]}>
+          {item.education}
+        </Text>
+      </View>
+
+      <View style={styles.requestActions}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.approveButton]}
+          onPress={() => handleRequestAction(item._id, 'approve')}
+        >
+          <Text style={styles.actionButtonText}>{t('requests.approve')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.rejectButton]}
+          onPress={() => handleRequestAction(item._id, 'reject')}
+        >
+          <Text style={styles.actionButtonText}>{t('requests.reject')}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   if (loading) {
     return (
-      <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <Text style={[styles.loadingText, { color: theme.colors.text.primary }]}>
+          {t('loading')}
+        </Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.errorContainer, { backgroundColor: theme.colors.background }]}>
         <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
         <TouchableOpacity
           style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
@@ -216,13 +218,13 @@ export const DoctorRequestsScreen: React.FC = () => {
         style={[
           styles.header,
           {
-            backgroundColor: theme.colors.cardBackground,
+            backgroundColor: theme.colors.background,
             borderBottomColor: theme.colors.border,
           },
         ]}
       >
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+          <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
             {t('doctorRequests')}
           </Text>
         </TouchableOpacity>
@@ -232,9 +234,10 @@ export const DoctorRequestsScreen: React.FC = () => {
         renderItem={renderRequestItem}
         keyExtractor={item => item._id}
         contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>
+            <Text style={[styles.emptyText, { color: theme.colors.text.secondary }]}>
               {t('noRequests')}
             </Text>
           </View>
@@ -267,78 +270,51 @@ const styles = StyleSheet.create<Styles>({
   listContent: {
     padding: 16,
   },
-  requestItem: {
+  requestCard: {
     borderRadius: 8,
-    elevation: 3,
-    marginBottom: 16,
     padding: 16,
+    marginBottom: 16,
+    elevation: 2,
     shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   requestHeader: {
-    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   requestTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
-  statusBadge: {
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  requestDate: {
+    fontSize: 14,
   },
-  statusText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  infoRow: {
+  requestInfo: {
     flexDirection: 'row',
     marginBottom: 8,
   },
-  label: {
+  infoLabel: {
     fontSize: 14,
     width: 100,
   },
-  value: {
+  infoValue: {
+    fontSize: 14,
     flex: 1,
-    fontSize: 14,
   },
-  aboutSection: {
-    marginTop: 12,
-  },
-  aboutTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  aboutText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  actionsContainer: {
+  requestActions: {
     flexDirection: 'row',
-    gap: 12,
     justifyContent: 'flex-end',
     marginTop: 16,
   },
   actionButton: {
-    borderRadius: 4,
     paddingHorizontal: 16,
     paddingVertical: 8,
-  },
-  actionButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontWeight: '500',
+    borderRadius: 4,
+    marginLeft: 8,
   },
   approveButton: {
     backgroundColor: COLORS.success,
@@ -346,14 +322,27 @@ const styles = StyleSheet.create<Styles>({
   rejectButton: {
     backgroundColor: COLORS.danger,
   },
-  centered: {
-    alignItems: 'center',
+  actionButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   errorText: {
     fontSize: 16,
-    marginBottom: 16,
     textAlign: 'center',
   },
   retryButton: {

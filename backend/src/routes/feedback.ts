@@ -6,7 +6,7 @@ import {
   markFeedbackAsRead,
   addAdminNotes,
 } from '../controllers/feedbackController';
-import { auth, checkRole, AuthRequest } from '../middleware/auth';
+import { auth, isAdmin, AuthRequest } from '../middleware/auth';
 import { UserRole } from '../types/user';
 
 const router = Router();
@@ -15,26 +15,12 @@ const router = Router();
 router.post('/', (req: Request, res: Response) => createFeedback(req, res));
 
 // Защищенные маршруты для администраторов
-router.get('/', auth, checkRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) =>
-  getAllFeedback(req, res)
-);
-router.get(
-  '/:id',
-  auth,
-  checkRole([UserRole.ADMIN]),
-  (req: AuthRequest & { params: { id: string } }, res: Response) => getFeedbackById(req, res)
-);
-router.patch(
-  '/:id/read',
-  auth,
-  checkRole([UserRole.ADMIN]),
-  (req: AuthRequest & { params: { id: string } }, res: Response) => markFeedbackAsRead(req, res)
-);
-router.patch(
-  '/:id/note',
-  auth,
-  checkRole([UserRole.ADMIN]),
-  (req: AuthRequest & { params: { id: string } }, res: Response) => addAdminNotes(req, res)
-);
+router.get('/', auth, isAdmin, getAllFeedback);
+
+router.get('/:id', auth, isAdmin, getFeedbackById);
+
+router.patch('/:id/read', auth, isAdmin, markFeedbackAsRead);
+
+router.patch('/:id/note', auth, isAdmin, addAdminNotes);
 
 export default router;

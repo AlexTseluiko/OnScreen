@@ -1,41 +1,51 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Linking,
-} from 'react-native';
+import { View, FlatList, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../theme/ThemeContext';
 import styles from './EmergencyAIAssistantScreen.styles';
+import { ChatMessage } from '../components/molecules/ChatMessage';
+import { ChatInputBar } from '../components/molecules/ChatInputBar';
+import { EmergencyActionButton } from '../components/molecules/EmergencyActionButton';
 
 const OPENAI_API_KEY =
   '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';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
+  timestamp: Date;
 }
 
 export const EmergencyAIAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: t('emergencyAI.greeting') },
+    {
+      role: 'assistant',
+      content: t('emergencyAI.greeting'),
+      timestamp: new Date(),
+    },
+    {
+      role: 'system',
+      content: t('emergencyAI.systemWelcome'),
+      timestamp: new Date(),
+    },
   ]);
-  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    const newMessages: Message[] = [...messages, { role: 'user' as const, content: input }];
+  const sendMessage = async (inputText: string) => {
+    if (!inputText.trim()) return;
+
+    const userMessage: Message = {
+      role: 'user',
+      content: inputText,
+      timestamp: new Date(),
+    };
+
+    const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
-    setInput('');
     setLoading(true);
+
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -50,33 +60,53 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
           temperature: 0.2,
         }),
       });
+
       if (response.status === 429) {
         setMessages([
           ...newMessages,
-          { role: 'assistant' as const, content: t('emergencyAI.error429') },
-        ]);
-        return;
-      }
-      if (!response.ok) {
-        setMessages([
-          ...newMessages,
           {
-            role: 'assistant' as const,
-            content: t('emergencyAI.errorOpenAI', {
-              status: response.status,
-              statusText: response.statusText,
-            }),
+            role: 'assistant',
+            content: t('emergencyAI.error429'),
+            timestamp: new Date(),
           },
         ]);
         return;
       }
+
+      if (!response.ok) {
+        setMessages([
+          ...newMessages,
+          {
+            role: 'assistant',
+            content: t('emergencyAI.errorOpenAI', {
+              status: response.status,
+              statusText: response.statusText,
+            }),
+            timestamp: new Date(),
+          },
+        ]);
+        return;
+      }
+
       const data = await response.json();
       const aiMessage = data.choices?.[0]?.message?.content || t('emergencyAI.errorNetwork');
-      setMessages([...newMessages, { role: 'assistant' as const, content: aiMessage }]);
-    } catch (e) {
+
       setMessages([
         ...newMessages,
-        { role: 'assistant' as const, content: t('emergencyAI.errorNetwork') },
+        {
+          role: 'assistant',
+          content: aiMessage,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      setMessages([
+        ...newMessages,
+        {
+          role: 'assistant',
+          content: t('emergencyAI.errorNetwork'),
+          timestamp: new Date(),
+        },
       ]);
     } finally {
       setLoading(false);
@@ -99,85 +129,56 @@ export const EmergencyAIAssistantScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.contentContainer}>
         <FlatList
           data={messages}
           keyExtractor={(_, idx) => idx.toString()}
           renderItem={({ item }) => (
-            <View
-              style={[
-                styles.message,
-                item.role === 'user' ? styles.userMessage : styles.aiMessage,
-                {
-                  backgroundColor:
-                    item.role === 'user' ? theme.colors.primary + '20' : theme.colors.surface,
-                },
-              ]}
-            >
-              <Text style={[styles.messageText, { color: theme.colors.text.primary }]}>
-                {item.content}
-              </Text>
-            </View>
+            <ChatMessage
+              content={item.content}
+              role={item.role}
+              timestamp={item.timestamp}
+              isLoading={
+                loading && item === messages[messages.length - 1] && item.role === 'assistant'
+              }
+            />
           )}
           contentContainerStyle={styles.listContent}
         />
+
         <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
+          <EmergencyActionButton
+            label={t('emergencyAI.call103')}
+            iconName="call"
+            iconFamily="ionicons"
             onPress={handleCall}
-          >
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-              {t('emergencyAI.call103')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
-            onPress={handleShowHospitals}
-          >
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-              {t('emergencyAI.showHospitals')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.colors.background }]}
-            onPress={handleSendLocation}
-          >
-            <Text style={[styles.actionButtonText, { color: theme.colors.primary }]}>
-              {t('emergencyAI.sendLocation')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[styles.inputContainer, { backgroundColor: theme.colors.background }]}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                color: theme.colors.text.primary,
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            value={input}
-            onChangeText={setInput}
-            placeholder={t('emergencyAI.inputPlaceholder')}
-            placeholderTextColor={theme.colors.text.secondary}
-            editable={!loading}
-            onSubmitEditing={sendMessage}
-            returnKeyType="send"
+            variant="danger"
           />
-          <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: theme.colors.primary }]}
-            onPress={sendMessage}
-            disabled={loading}
-          >
-            <Text style={[styles.sendButtonText, { color: theme.colors.text.inverse }]}>
-              {loading ? '...' : t('common.submit')}
-            </Text>
-          </TouchableOpacity>
+          <EmergencyActionButton
+            label={t('emergencyAI.showHospitals')}
+            iconName="medkit"
+            iconFamily="ionicons"
+            onPress={handleShowHospitals}
+            variant="primary"
+          />
+          <EmergencyActionButton
+            label={t('emergencyAI.sendLocation')}
+            iconName="location"
+            iconFamily="ionicons"
+            onPress={handleSendLocation}
+            variant="secondary"
+          />
         </View>
+
+        <ChatInputBar
+          onSendMessage={sendMessage}
+          placeholder={t('emergencyAI.inputPlaceholder')}
+          disabled={loading}
+        />
       </View>
     </KeyboardAvoidingView>
   );

@@ -1,44 +1,40 @@
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { User, UserRole } from '../models/User';
+import mongoose from 'mongoose';
+import { User } from '../models/User';
+import { UserRole } from '../types/user';
 
 dotenv.config();
 
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/medical-map';
+
 async function createAdmin() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await mongoose.connect(MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    const adminEmail = 'admin@onscreen.com';
-    const adminPassword = 'admin123'; // Это временный пароль, его нужно будет изменить после первого входа
+    const adminData = {
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com',
+      password: 'admin123',
+      role: UserRole.ADMIN,
+      phone: '+79001234567',
+    };
 
-    // Проверяем, существует ли уже администратор
-    const existingAdmin = await User.findOne({ email: adminEmail });
+    const existingAdmin = await User.findOne({ email: adminData.email });
     if (existingAdmin) {
-      console.log('Администратор уже существует');
-      process.exit(0);
+      console.log('Admin user already exists');
+      return;
     }
 
-    // Создаем нового администратора
-    const admin = new User({
-      firstName: 'Администратор',
-      lastName: 'Системы',
-      email: adminEmail,
-      password: adminPassword, // Пароль будет автоматически захеширован в pre-save хуке
-      role: UserRole.ADMIN,
-      isVerified: true,
-      verificationToken: undefined,
-    });
-
+    const admin = new User(adminData);
     await admin.save();
-    console.log('Администратор успешно создан');
-    console.log('Email:', adminEmail);
-    console.log('Пароль:', adminPassword);
-    console.log('Пожалуйста, измените пароль после первого входа!');
+    console.log('Admin user created successfully');
   } catch (error) {
-    console.error('Ошибка при создании администратора:', error);
+    console.error('Error creating admin:', error);
   } finally {
     await mongoose.disconnect();
+    console.log('Disconnected from MongoDB');
   }
 }
 

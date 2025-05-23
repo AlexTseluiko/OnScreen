@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -79,6 +79,9 @@ import MedicationsScreen from '../screens/MedicationsScreen';
 import AddMedicationScreen from '../screens/AddMedicationScreen';
 import EditMedicationScreen from '../screens/EditMedicationScreen';
 
+// Импортируем новый экран администратора
+import AdminScreeningScreen from '../screens/AdminScreeningScreen';
+
 const Stack = createStackNavigator<RootStackParamList>();
 const PatientTab = createBottomTabNavigator<PatientTabParamList>();
 const DoctorTab = createBottomTabNavigator<DoctorTabParamList>();
@@ -105,8 +108,8 @@ const PatientTabNavigator = () => {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Facilities') {
-            iconName = focused ? 'medical' : 'medical-outline';
+          } else if (route.name === 'FacilitiesMap') {
+            iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'EmergencyAIAssistant') {
             iconName = focused ? 'alert-circle' : 'alert-circle-outline';
           } else if (route.name === 'ScreeningPrograms') {
@@ -130,10 +133,10 @@ const PatientTabNavigator = () => {
         }}
       />
       <PatientTab.Screen
-        name="Facilities"
-        component={FacilitiesScreen}
+        name="FacilitiesMap"
+        component={FacilitiesMapScreen}
         options={{
-          title: 'Клиники',
+          title: 'Карты',
           headerShown: true,
         }}
       />
@@ -304,6 +307,11 @@ export const AppNavigator: React.FC = () => {
   const { userRole } = useUserRole();
   const { t } = useTranslation();
 
+  // Добавляем эффект для отслеживания изменений роли
+  useEffect(() => {
+    console.log('AppNavigator: роль изменилась на', userRole);
+  }, [userRole]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -312,18 +320,26 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
+  // Определяем тип навигатора в зависимости от роли
+  const getInitialRouteName = () => {
+    if (!user) return 'Login' as keyof RootStackParamList;
+
+    switch (userRole) {
+      case 'doctor':
+        return 'DoctorTabs' as keyof RootStackParamList;
+      case 'admin':
+        return 'AdminTabs' as keyof RootStackParamList;
+      case 'patient':
+      default:
+        return 'PatientTabs' as keyof RootStackParamList;
+    }
+  };
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={
-          user
-            ? userRole === 'patient'
-              ? 'PatientTabs'
-              : userRole === 'doctor'
-                ? 'DoctorTabs'
-                : 'AdminTabs'
-            : 'Login'
-        }
+        key={`navigator-${userRole || 'guest'}`}
+        initialRouteName={getInitialRouteName()}
       >
         {!user ? (
           // Стек для неавторизованных пользователей
@@ -594,6 +610,14 @@ export const AppNavigator: React.FC = () => {
                   component={DoctorRequestDetailsScreen}
                   options={{ title: t('requestDetails') }}
                 />
+                <Stack.Screen
+                  name="AdminScreening"
+                  component={AdminScreeningScreen}
+                  options={{
+                    title: 'Управление скринингами',
+                    headerShown: true,
+                  }}
+                />
               </>
             )}
           </>
@@ -602,3 +626,4 @@ export const AppNavigator: React.FC = () => {
     </NavigationContainer>
   );
 };
+export type { RootStackParamList };

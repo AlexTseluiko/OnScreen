@@ -125,6 +125,9 @@
             <a class="nav-link" href="#doctor-requests" data-section="doctor-requests">
                 <i class="bi bi-person-badge me-2"></i>Запросы врачей
             </a>
+            <a class="nav-link" href="#screening-programs" data-section="screening-programs">
+                <i class="bi bi-clipboard2-pulse me-2"></i>Программы скрининга
+            </a>
             <a class="nav-link" href="#settings" data-section="settings">
                 <i class="bi bi-gear me-2"></i>Настройки
             </a>
@@ -186,7 +189,7 @@
                         </div>
                     </div>
                 </div>
-                <table class="table">
+                <table class="table" id="usersTable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -197,32 +200,26 @@
                             <th>Действия</th>
                         </tr>
                     </thead>
-                    <tbody id="usersList">
-                        <!-- Пользователи будут добавлены динамически -->
+                    <tbody>
+                        <!-- Здесь будут отображаться пользователи -->
                     </tbody>
                 </table>
-                <!-- Добавляем блок пагинации -->
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <div>
-                        <span id="usersTotal">0</span> пользователей
-                    </div>
-                    <div id="usersPagination" class="d-flex align-items-center">
-                        <!-- Пагинация будет добавлена динамически -->
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- Клиники -->
         <div id="clinics" class="section d-none">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Клиники</h2>
+            <h2 class="mb-4">Управление клиниками</h2>
+            <div class="mb-3">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClinicModal">
                     <i class="bi bi-plus"></i> Добавить клинику
                 </button>
             </div>
             <div class="row" id="clinicsList">
-                <!-- Клиники будут добавлены динамически -->
+                <!-- Здесь будут отображаться клиники -->
+            </div>
+            <div id="clinicsPagination" class="mt-4">
+                <!-- Здесь будет отображаться пагинация -->
             </div>
         </div>
 
@@ -409,6 +406,65 @@
                     </tbody>
                 </table>
                 <div id="doctorRequestsPagination" class="d-flex justify-content-center mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Программы скрининга -->
+        <div id="screening-programs" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Программы скрининга</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScreeningProgramModal">
+                    <i class="bi bi-plus"></i> Добавить программу
+                </button>
+            </div>
+            <div class="table-container">
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select id="screeningCategoryFilter" class="form-select" onchange="loadScreeningPrograms()">
+                                <option value="">Все категории</option>
+                                <option value="Общее">Общее</option>
+                                <option value="Сердечно-сосудистые">Сердечно-сосудистые</option>
+                                <option value="Онкологические">Онкологические</option>
+                                <option value="Диабет">Диабет</option>
+                                <option value="Респираторные">Респираторные</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" id="screeningSearchInput" class="form-control" placeholder="Поиск программ..." onkeyup="loadScreeningPrograms()">
+                        </div>
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Категория</th>
+                            <th>Периодичность</th>
+                            <th>Кол-во тестов</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="screeningProgramsList">
+                        <!-- Программы скрининга будут добавлены динамически -->
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span id="screeningProgramsCount">0</span> программ
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary" onclick="changeScreeningProgramsPage(-1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" disabled>
+                            <span id="screeningProgramsCurrentPage">1</span>
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="changeScreeningProgramsPage(1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -750,6 +806,274 @@
         </div>
     </div>
 
+    <!-- Модальное окно добавления/редактирования программы скрининга -->
+    <div class="modal fade" id="addScreeningProgramModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="screeningProgramModalTitle">Добавить программу скрининга</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="screeningProgramForm">
+                        <input type="hidden" id="screeningProgramId">
+                        <ul class="nav nav-tabs mb-3" id="screeningProgramTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">Общая информация</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="translations-tab" data-bs-toggle="tab" data-bs-target="#translations" type="button" role="tab" aria-controls="translations" aria-selected="false">Переводы</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="false">Детали</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tests-tab" data-bs-toggle="tab" data-bs-target="#tests" type="button" role="tab" aria-controls="tests" aria-selected="false">Тесты</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="screeningProgramTabContent">
+                            <!-- Вкладка основной информации -->
+                            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Название (EN)</label>
+                                            <input type="text" class="form-control" id="title" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Категория (EN)</label>
+                                            <input type="text" class="form-control" id="category" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Описание (EN)</label>
+                                    <textarea class="form-control" id="description" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Детальное описание (EN)</label>
+                                    <textarea class="form-control" id="details" rows="5" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Периодичность (EN)</label>
+                                    <input type="text" class="form-control" id="frequency" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Подготовка (EN)</label>
+                                    <textarea class="form-control" id="preparation" rows="3" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Послепроцедурный уход (EN)</label>
+                                    <textarea class="form-control" id="aftercare" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Вкладка переводов -->
+                            <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="translations-tab">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Русский</h5>
+                                        <div class="mb-3">
+                                            <label class="form-label">Название (RU)</label>
+                                            <input type="text" class="form-control" id="titleRu" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Категория (RU)</label>
+                                            <input type="text" class="form-control" id="categoryRu" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Описание (RU)</label>
+                                            <textarea class="form-control" id="descriptionRu" rows="3" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Детальное описание (RU)</label>
+                                            <textarea class="form-control" id="detailsRu" rows="4" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Периодичность (RU)</label>
+                                            <input type="text" class="form-control" id="frequencyRu" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Подготовка (RU)</label>
+                                            <textarea class="form-control" id="preparationRu" rows="3" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Послепроцедурный уход (RU)</label>
+                                            <textarea class="form-control" id="aftercareRu" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>Украинский</h5>
+                                        <div class="mb-3">
+                                            <label class="form-label">Название (UK)</label>
+                                            <input type="text" class="form-control" id="titleUk" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Категория (UK)</label>
+                                            <input type="text" class="form-control" id="categoryUk" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Описание (UK)</label>
+                                            <textarea class="form-control" id="descriptionUk" rows="3" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Детальное описание (UK)</label>
+                                            <textarea class="form-control" id="detailsUk" rows="4" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Периодичность (UK)</label>
+                                            <input type="text" class="form-control" id="frequencyUk" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Подготовка (UK)</label>
+                                            <textarea class="form-control" id="preparationUk" rows="3" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Послепроцедурный уход (UK)</label>
+                                            <textarea class="form-control" id="aftercareUk" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Вкладка деталей -->
+                            <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+                                <div class="mb-3">
+                                    <label class="form-label">Факторы риска (EN)</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="riskFactorInput">
+                                        <button class="btn btn-outline-primary" type="button" onclick="addToList('riskFactors', 'riskFactorInput')">Добавить</button>
+                                    </div>
+                                    <div id="riskFactorsList" class="list-group mb-3"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Факторы риска (RU)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="riskFactorRuInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('riskFactorsRu', 'riskFactorRuInput')">Добавить</button>
+                                            </div>
+                                            <div id="riskFactorsRuList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Факторы риска (UK)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="riskFactorUkInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('riskFactorsUk', 'riskFactorUkInput')">Добавить</button>
+                                            </div>
+                                            <div id="riskFactorsUkList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Преимущества (EN)</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="benefitInput">
+                                        <button class="btn btn-outline-primary" type="button" onclick="addToList('benefits', 'benefitInput')">Добавить</button>
+                                    </div>
+                                    <div id="benefitsList" class="list-group mb-3"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Преимущества (RU)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="benefitRuInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('benefitsRu', 'benefitRuInput')">Добавить</button>
+                                            </div>
+                                            <div id="benefitsRuList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Преимущества (UK)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="benefitUkInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('benefitsUk', 'benefitUkInput')">Добавить</button>
+                                            </div>
+                                            <div id="benefitsUkList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Рекомендовано для (EN)</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="recommendedForInput">
+                                        <button class="btn btn-outline-primary" type="button" onclick="addToList('recommendedFor', 'recommendedForInput')">Добавить</button>
+                                    </div>
+                                    <div id="recommendedForList" class="list-group mb-3"></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Рекомендовано для (RU)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="recommendedForRuInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('recommendedForRu', 'recommendedForRuInput')">Добавить</button>
+                                            </div>
+                                            <div id="recommendedForRuList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Рекомендовано для (UK)</label>
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" id="recommendedForUkInput">
+                                                <button class="btn btn-outline-primary" type="button" onclick="addToList('recommendedForUk', 'recommendedForUkInput')">Добавить</button>
+                                            </div>
+                                            <div id="recommendedForUkList" class="list-group mb-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Вкладка тестов -->
+                            <div class="tab-pane fade" id="tests" role="tabpanel" aria-labelledby="tests-tab">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5>Тесты в программе</h5>
+                                    <button type="button" class="btn btn-primary" onclick="addNewTest()">
+                                        <i class="bi bi-plus"></i> Добавить тест
+                                    </button>
+                                </div>
+                                <div id="testsList" class="mb-3">
+                                    <!-- Список тестов будет добавлен динамически -->
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveScreeningProgram()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно просмотра скрининговой программы -->
+    <div class="modal fade" id="viewScreeningProgramModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewScreeningProgramTitle">Просмотр программы скрининга</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewScreeningProgramBody">
+                    <!-- Содержимое будет добавлено динамически -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" onclick="editScreeningProgram()">Редактировать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/bootstrap.bundle.min.js"></script>
     <script src="/js/socket.io.min.js"></script>
     <script>
@@ -842,6 +1166,7 @@
         let socket = null;
         let currentClinicId = null;
         let currentPage = 1;
+        let itemsPerPage = 10; // Добавляем определение itemsPerPage
         let totalPages = 1;
 
         // Инициализируем приложение после авторизации
@@ -880,6 +1205,8 @@
                         loadUsers();
                     } else if (section === 'doctor-requests') {
                         loadDoctorRequests();
+                    } else if (section === 'screening-programs') {
+                        loadScreeningPrograms();
                     }
                 });
             });
@@ -893,7 +1220,17 @@
 
         // Получение базового URL API
         function getApiBaseUrl() {
-            return `http://${currentHost}:${port}/api`;
+            const hostname = window.location.hostname;
+            const port = window.location.port;
+            const protocol = window.location.protocol;
+            
+            // Если мы на localhost, используем порт 5000 для API
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return `${protocol}//${hostname}:5000/api`;
+            }
+            
+            // В противном случае используем тот же хост и порт
+            return `${protocol}//${hostname}${port ? ':' + port : ''}/api`;
         }
 
         // Инициализация WebSocket
@@ -935,11 +1272,22 @@
         // Загрузка данных
         async function loadDashboardData() {
             try {
+                if (!await checkToken()) return;
+
                 const response = await fetch(`${getApiBaseUrl()}/admin/test-stats`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
+                    throw new Error(`Ошибка загрузки данных: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
                 
                 document.getElementById('totalClinics').textContent = data.totalClinics;
@@ -951,17 +1299,51 @@
             }
         }
 
+        // Функция для проверки токена
+        async function checkToken() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showLoginModal();
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    localStorage.removeItem('token');
+                    showLoginModal();
+                    return false;
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Ошибка при проверке токена:', error);
+                showLoginModal();
+                return false;
+            }
+        }
+
         // Загрузка клиник
         async function loadClinics() {
             try {
-                const response = await fetch(`${getApiBaseUrl()}/clinics`, {
+                if (!await checkToken()) return;
+
+                const response = await fetch(`${getApiBaseUrl()}/admin/clinics?page=${currentPage}&limit=${itemsPerPage}`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'X-Is-Admin': 'true' // Добавляем заголовок для идентификации запроса от админки
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 
                 if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
                     throw new Error(`Ошибка загрузки клиник: ${response.status} ${response.statusText}`);
                 }
                 
@@ -1000,6 +1382,11 @@
                         </div>
                     </div>
                 `).join('');
+
+                // Обновляем пагинацию
+                if (data.total && data.pages) {
+                    updatePagination(data.total, data.pages, 'clinicsPagination');
+                }
             } catch (error) {
                 console.error('Ошибка при загрузке клиник:', error);
                 document.getElementById('clinicsList').innerHTML = `
@@ -1015,11 +1402,22 @@
         // Загрузка отзывов
         async function loadReviews() {
             try {
+                if (!await checkToken()) return;
+
                 const response = await fetch(`${getApiBaseUrl()}/admin/reviews`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
+                    throw new Error(`Ошибка загрузки отзывов: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
                 const reviews = Array.isArray(data) ? data : [];
                 
@@ -1046,11 +1444,22 @@
         // Загрузка уведомлений
         async function loadNotifications() {
             try {
+                if (!await checkToken()) return;
+
                 const response = await fetch(`${getApiBaseUrl()}/admin/notifications`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
+                    throw new Error(`Ошибка загрузки уведомлений: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
                 const notifications = Array.isArray(data) ? data : [];
                 
@@ -1077,6 +1486,8 @@
 
         // Добавление клиники
         async function addClinic() {
+            if (!await checkToken()) return;
+
             const form = document.getElementById('addClinicForm');
             
             // Создаем объект FormData
@@ -1139,8 +1550,13 @@
                     alert('Клиника успешно добавлена!');
                     loadClinics();
                 } else {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
                     console.error('Ошибка при добавлении клиники:', responseData);
                     alert(`Ошибка при добавлении клиники: ${responseData.error || 'Неизвестная ошибка'}`);
+                    return;
                 }
             } catch (error) {
                 console.error('Error adding clinic:', error);
@@ -1150,12 +1566,14 @@
 
         // Отправка уведомления всем пользователям
         async function sendBroadcastNotification() {
+            if (!await checkToken()) return;
+
             const title = prompt('Введите заголовок уведомления:');
             const message = prompt('Введите текст уведомления:');
             
             if (title && message) {
                 try {
-                    await fetch(`${getApiBaseUrl()}/admin/notifications/broadcast`, {
+                    const response = await fetch(`${getApiBaseUrl()}/admin/notifications/broadcast`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -1163,10 +1581,19 @@
                         },
                         body: JSON.stringify({ title, message })
                     });
+
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            showLoginModal();
+                            return;
+                        }
+                        throw new Error(`Ошибка отправки уведомления: ${response.status} ${response.statusText}`);
+                    }
                     
                     loadNotifications();
                 } catch (error) {
                     console.error('Error sending broadcast notification:', error);
+                    alert('Ошибка при отправке уведомления');
                 }
             }
         }
@@ -1174,33 +1601,55 @@
         // Отметка уведомления как прочитанного
         async function markNotificationAsRead(notificationId) {
             try {
-                await fetch(`${getApiBaseUrl()}/admin/notifications/${notificationId}/read`, {
+                if (!await checkToken()) return;
+
+                const response = await fetch(`${getApiBaseUrl()}/admin/notifications/${notificationId}/read`, {
                     method: 'PATCH',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
+                    throw new Error(`Ошибка отметки уведомления: ${response.status} ${response.statusText}`);
+                }
                 
                 loadNotifications();
             } catch (error) {
                 console.error('Error marking notification as read:', error);
+                alert('Ошибка при отметке уведомления как прочитанного');
             }
         }
 
         // Удаление отзыва
         async function deleteReview(reviewId) {
+            if (!await checkToken()) return;
+
             if (confirm('Вы уверены, что хотите удалить этот отзыв?')) {
                 try {
-                    await fetch(`${getApiBaseUrl()}/admin/reviews/${reviewId}`, {
+                    const response = await fetch(`${getApiBaseUrl()}/admin/reviews/${reviewId}`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`
                         }
                     });
+
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            showLoginModal();
+                            return;
+                        }
+                        throw new Error(`Ошибка удаления отзыва: ${response.status} ${response.statusText}`);
+                    }
                     
                     loadReviews();
                 } catch (error) {
                     console.error('Error deleting review:', error);
+                    alert('Ошибка при удалении отзыва');
                 }
             }
         }
@@ -1585,7 +2034,11 @@
                 }
                 
                 if (publishedFilter) {
-                    url += `&published=${publishedFilter}`;
+                    if (publishedFilter === "true") {
+                        url += `&status=published`;
+                    } else if (publishedFilter === "false") {
+                        url += `&status=draft`;
+                    }
                 }
                 
                 if (searchQuery) {
@@ -1603,6 +2056,7 @@
                 }
                 
                 const data = await response.json();
+                console.log('Получены данные статей:', data); // Добавляем для отладки
                 
                 // Проверяем формат ответа API
                 let articles = [];
@@ -1614,12 +2068,12 @@
                 } else {
                     // Новый формат ответа - объект с пагинацией
                     articles = data.articles || [];
-                    totalPages = data.totalPages || 1;
-                    articlesCurrentPage = data.page || 1;
+                    totalPages = data.pages || 1;
+                    articlesCurrentPage = data.currentPage || 1;
                 }
                 
                 // Обновление счетчика и пагинации
-                document.getElementById('articlesCount').textContent = data.totalArticles || articles.length;
+                document.getElementById('articlesCount').textContent = data.total || articles.length;
                 document.getElementById('articlesCurrentPage').textContent = articlesCurrentPage;
                 articlesTotalPages = totalPages;
                 
@@ -1654,8 +2108,8 @@
                         <td>${article.category}</td>
                         <td>${author}</td>
                         <td>
-                            <span class="badge ${article.published ? 'bg-success' : 'bg-secondary'}">
-                                ${article.published ? 'Опубликовано' : 'Черновик'}
+                            <span class="badge ${article.status === 'published' ? 'bg-success' : 'bg-secondary'}">
+                                ${article.status === 'published' ? 'Опубликовано' : 'Черновик'}
                             </span>
                         </td>
                         <td>${createdDate}</td>
@@ -1667,9 +2121,9 @@
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle('${article._id}')">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-${article.published ? 'warning' : 'success'}" 
-                                        onclick="toggleArticlePublishStatus('${article._id}', ${!article.published})">
-                                    <i class="bi bi-${article.published ? 'eye-slash' : 'eye'}"></i>
+                                <button class="btn btn-sm btn-outline-${article.status === 'published' ? 'warning' : 'success'}" 
+                                        onclick="toggleArticlePublishStatus('${article._id}', ${article.status !== 'published'})">
+                                    <i class="bi bi-${article.status === 'published' ? 'eye-slash' : 'eye'}"></i>
                                 </button>
                             </div>
                         </td>
@@ -1704,12 +2158,13 @@
                 
                 // Заполняем форму
                 document.getElementById('articleId').value = article._id;
+                document.getElementById('articleId').setAttribute('data-status', article.status);
                 document.getElementById('articleTitle').value = article.title;
                 document.getElementById('articleCategory').value = article.category;
                 document.getElementById('articleTags').value = article.tags.join(', ');
                 document.getElementById('articleContent').value = article.content;
                 document.getElementById('articleImageUrl').value = article.imageUrl || '';
-                document.getElementById('articlePublished').checked = article.published;
+                document.getElementById('articlePublished').checked = article.status === 'published';
                 
                 // Обновляем заголовок модального окна
                 document.getElementById('addArticleModalLabel').textContent = 'Редактирование статьи';
@@ -1742,13 +2197,12 @@
                 // Разбиваем строку тегов на массив
                 const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
                 
-                const articleData = {
+                let articleData = {
                     title,
                     category,
                     tags,
                     content,
-                    imageUrl,
-                    published
+                    imageUrl
                 };
                 
                 let url = `${getApiBaseUrl()}/articles`;
@@ -1758,6 +2212,19 @@
                 if (articleId) {
                     url += `/${articleId}`;
                     method = 'PUT';
+                    // Получаем текущий статус из data-status
+                    const currentStatus = document.getElementById('articleId').getAttribute('data-status');
+                    if (currentStatus === null) {
+                        // fallback для старых статей
+                        articleData.status = published ? 'published' : 'draft';
+                    } else if ((currentStatus === 'published' && !published) || (currentStatus === 'draft' && published)) {
+                        articleData.status = published ? 'published' : 'draft';
+                    } else {
+                        articleData.status = currentStatus;
+                    }
+                } else {
+                    // Для новых статей статус по чекбоксу
+                    articleData.status = published ? 'published' : 'draft';
                 }
                 
                 const response = await fetch(url, {
@@ -1780,6 +2247,7 @@
                 // Сбрасываем форму
                 document.getElementById('articleForm').reset();
                 document.getElementById('articleId').value = '';
+                document.getElementById('articleId').removeAttribute('data-status');
                 document.getElementById('addArticleModalLabel').textContent = 'Создание статьи';
                 
                 // Перезагружаем список статей
@@ -1802,7 +2270,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        published: newStatus
+                        status: newStatus ? 'published' : 'draft'
                     })
                 });
                 
@@ -1843,6 +2311,46 @@
             }
         }
         
+        // Функции для работы со списками скрининговых программ
+        function addToList(listName, inputId) {
+            const input = document.getElementById(inputId);
+            const value = input.value.trim();
+            
+            if (!value) return;
+            
+            // Добавляем элемент в список
+            const listEl = document.getElementById(`${listName}List`);
+            const itemId = `${listName}-${Date.now()}`;
+            
+            listEl.innerHTML += `
+                <div class="list-group-item d-flex justify-content-between align-items-center" id="${itemId}">
+                    <span>${value}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFromList('${itemId}')">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Очищаем поле ввода
+            input.value = '';
+        }
+        
+        function removeFromList(itemId) {
+            document.getElementById(itemId).remove();
+        }
+        
+        // Собирает все элементы списка в массив
+        function getListItems(listName) {
+            const listEl = document.getElementById(`${listName}List`);
+            const items = [];
+            
+            for (const child of listEl.children) {
+                items.push(child.querySelector('span').textContent);
+            }
+            
+            return items;
+        }
+        
         // Загружаем статьи при загрузке соответствующего раздела
         document.querySelector('a[data-section="articles"]').addEventListener('click', () => {
             loadArticles();
@@ -1861,133 +2369,64 @@
 
         // Загрузка пользователей
         async function loadUsers() {
-            console.log('Загрузка пользователей');
-            const usersList = document.getElementById('usersList');
-            const roleFilter = document.getElementById('userRoleFilter').value;
-            const searchInput = document.getElementById('userSearchInput').value;
-            
-            // Показываем индикатор загрузки
-            usersList.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Загрузка...</span>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            
             try {
-                // Формируем URL с параметрами для фильтрации и поиска
-                let url = `${getApiBaseUrl()}/admin/users?page=${currentPage}&limit=10`;
-                
-                if (roleFilter) {
-                    url += `&role=${roleFilter}`;
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
                 }
-                
-                if (searchInput) {
-                    url += `&search=${encodeURIComponent(searchInput)}`;
-                }
-                
-                console.log('Запрос пользователей по URL:', url);
-                
+
+                const roleFilter = document.getElementById('userRoleFilter').value;
+                const searchQuery = document.getElementById('userSearchInput').value;
+
+                let url = `${getApiBaseUrl()}/users`;
+                const params = new URLSearchParams();
+                if (roleFilter) params.append('role', roleFilter);
+                if (searchQuery) params.append('search', searchQuery);
+                if (params.toString()) url += `?${params.toString()}`;
+
                 const response = await fetch(url, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
-                
-                // Проверяем статус ответа
+
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
                     throw new Error(`Ошибка HTTP: ${response.status}`);
                 }
-                
-                const data = await response.json();
-                console.log('Получены данные пользователей:', data);
-                
-                // Обработка различных форматов ответа
-                let users = [];
-                let pagination = { total: 0, page: 1, pages: 1 };
-                
-                if (data) {
-                    if (data.users && Array.isArray(data.users)) {
-                        // Стандартный формат с массивом пользователей и пагинацией
-                        users = data.users;
-                        pagination = data.pagination || pagination;
-                    } else if (Array.isArray(data)) {
-                        // Просто массив пользователей
-                        users = data;
-                    } else if (data.users) {
-                        // Если users есть, но не массив
-                        users = Array.isArray(data.users) ? data.users : [data.users].filter(Boolean);
-                    }
-                }
-                
-                console.log('Обработанные пользователи:', { 
-                    count: users.length, 
-                    pagination: pagination 
-                });
-                
-                // Обновляем информацию о страницах
-                totalPages = pagination.pages;
-                currentPage = pagination.page;
-                
-                // Если нет данных, показываем сообщение
-                if (users.length === 0) {
-                    usersList.innerHTML = `
+
+                const users = await response.json();
+                const tbody = document.querySelector('#usersTable tbody');
+                tbody.innerHTML = '';
+
+                users.forEach(user => {
+                    tbody.innerHTML += `
                         <tr>
-                            <td colspan="6" class="text-center">
-                                <p class="my-3">Пользователи не найдены</p>
+                            <td>${user._id}</td>
+                            <td>${user.firstName} ${user.lastName}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role}</td>
+                            <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user._id}')">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user._id}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
-                    return;
-                }
-                
-                // Отображаем данные пользователей
-                usersList.innerHTML = users.map(user => `
-                    <tr>
-                        <td>${user._id}</td>
-                        <td>${user.firstName || ''} ${user.lastName || ''}</td>
-                        <td>${user.email}</td>
-                        <td>
-                            <span class="badge ${getUserRoleBadge(user.role)}">${getUserRole(user.role)}</span>
-                            ${user.isBlocked ? '<span class="badge bg-danger ms-1">Заблокирован</span>' : ''}
-                        </td>
-                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-primary" onclick="showChangeRoleModal('${user._id}', '${user.role}')">
-                                    <i class="bi bi-person-badge"></i>
-                                </button>
-                                <button class="btn ${user.isBlocked ? 'btn-success' : 'btn-warning'}" 
-                                        onclick="toggleUserBlocked('${user._id}', ${!user.isBlocked})">
-                                    <i class="bi ${user.isBlocked ? 'bi-unlock' : 'bi-lock'}"></i>
-                                </button>
-                                <button class="btn btn-danger" onclick="deleteUser('${user._id}')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-                
-                // Обновляем пагинацию
-                updatePagination();
-                
-                // Обновляем счетчик общего количества пользователей
-                document.getElementById('usersTotal').textContent = pagination.total;
+                });
             } catch (error) {
                 console.error('Ошибка при загрузке пользователей:', error);
-                usersList.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center">
-                            <div class="alert alert-danger my-3">
-                                Ошибка при загрузке пользователей: ${error.message}
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                alert('Ошибка при загрузке пользователей: ' + error.message);
             }
         }
 
@@ -2012,29 +2451,37 @@
         }
 
         // Функция для обновления элементов пагинации
-        function updatePagination() {
-            const paginationElement = document.getElementById('usersPagination');
-            if (!paginationElement) return;
+        function updatePagination(total, pages, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            let html = '<ul class="pagination justify-content-center">';
             
-            // Если всего одна страница, скрываем пагинацию
-            if (totalPages <= 1) {
-                paginationElement.innerHTML = '';
-                return;
-            }
-            
-            let paginationHtml = `
-                <button class="btn btn-sm btn-outline-primary me-2 ${currentPage === 1 ? 'disabled' : ''}" 
-                        onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                <span class="mx-2">Страница ${currentPage} из ${totalPages}</span>
-                <button class="btn btn-sm btn-outline-primary ms-2 ${currentPage === totalPages ? 'disabled' : ''}" 
-                        onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    <i class="bi bi-chevron-right"></i>
-                </button>
+            // Кнопка "Предыдущая"
+            html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Предыдущая</a>
+                </li>
             `;
-            
-            paginationElement.innerHTML = paginationHtml;
+
+            // Номера страниц
+            for (let i = 1; i <= pages; i++) {
+                html += `
+                    <li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+
+            // Кнопка "Следующая"
+            html += `
+                <li class="page-item ${currentPage === pages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Следующая</a>
+                </li>
+            `;
+
+            html += '</ul>';
+            container.innerHTML = html;
         }
         
         // Обновляем функцию для отображения модального окна изменения роли
@@ -2109,12 +2556,9 @@
         }
 
         // Функция для смены страницы
-        function changePage(newPage) {
-            if (newPage < 1 || newPage > totalPages) {
-                return;
-            }
-            
-            currentPage = newPage;
+        function changePage(page) {
+            if (page < 1) return;
+            currentPage = page;
             loadUsers();
         }
 
@@ -2416,6 +2860,417 @@
             
             rejectRequest(requestId);
             bootstrap.Modal.getInstance(document.getElementById('doctorRequestModal')).hide();
+        }
+
+        // Добавляем функции для загрузки и управления запросами скрининга
+        let screeningProgramsCurrentPage = 1;
+        let screeningProgramsTotalPages = 1;
+
+        // Функция для загрузки запросов скрининга
+        async function loadScreeningPrograms() {
+            try {
+                const categoryFilter = document.getElementById('screeningCategoryFilter').value;
+                const searchQuery = document.getElementById('screeningSearchInput').value;
+                
+                let url = `${getApiBaseUrl()}/screening-programs?page=${screeningProgramsCurrentPage}`;
+                
+                if (categoryFilter) {
+                    url += `&category=${encodeURIComponent(categoryFilter)}`;
+                }
+                
+                if (searchQuery) {
+                    url += `&search=${encodeURIComponent(searchQuery)}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось загрузить программы скрининга');
+                }
+                
+                const data = await response.json();
+                
+                // Проверяем формат ответа API
+                let programs = [];
+                let totalPages = 1;
+                
+                if (Array.isArray(data)) {
+                    // Старый формат ответа - массив программ
+                    programs = data;
+                } else {
+                    // Новый формат ответа - объект с пагинацией
+                    programs = data.programs || [];
+                    totalPages = data.totalPages || 1;
+                    screeningProgramsCurrentPage = data.page || 1;
+                }
+                
+                // Обновление счетчика и пагинации
+                document.getElementById('screeningProgramsCount').textContent = data.totalPrograms || programs.length;
+                document.getElementById('screeningProgramsCurrentPage').textContent = screeningProgramsCurrentPage;
+                screeningProgramsTotalPages = totalPages;
+                
+                renderScreeningPrograms(programs);
+            } catch (error) {
+                console.error('Ошибка при загрузке программ скрининга:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Отрисовка списка программ скрининга
+        function renderScreeningPrograms(programs) {
+            const programsList = document.getElementById('screeningProgramsList');
+            programsList.innerHTML = '';
+            
+            if (programs.length === 0) {
+                programsList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center">Программы скрининга не найдены</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            for (const program of programs) {
+                const createdDate = new Date(program.createdAt).toLocaleDateString('ru-RU');
+                const category = program.category ? `${program.category} (${program.subcategory})` : 'Без категории';
+                
+                programsList.innerHTML += `
+                    <tr>
+                        <td>${program.title}</td>
+                        <td>${category}</td>
+                        <td>${program.frequency}</td>
+                        <td>${program.tests.length}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="showScreeningProgram('${program._id}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="editScreeningProgram('${program._id}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteScreeningProgram('${program._id}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Изменение страницы для программ скрининга
+        function changeScreeningProgramsPage(direction) {
+            const newPage = screeningProgramsCurrentPage + direction;
+            if (newPage >= 1 && newPage <= screeningProgramsTotalPages) {
+                screeningProgramsCurrentPage = newPage;
+                loadScreeningPrograms();
+            }
+        }
+
+        // Редактирование программы скрининга
+        async function editScreeningProgram(id) {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/screening-programs/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось получить данные программы скрининга');
+                }
+                
+                const program = await response.json();
+                
+                // Заполняем форму
+                document.getElementById('screeningProgramId').value = program._id;
+                document.getElementById('title').value = program.title;
+                document.getElementById('category').value = program.category;
+                document.getElementById('description').value = program.description;
+                document.getElementById('details').value = program.details;
+                document.getElementById('frequency').value = program.frequency;
+                document.getElementById('preparation').value = program.preparation;
+                document.getElementById('aftercare').value = program.aftercare;
+                
+                // Обновляем заголовок модального окна
+                document.getElementById('screeningProgramModalTitle').textContent = 'Редактирование программы скрининга';
+                
+                // Открываем модальное окно
+                const modal = new bootstrap.Modal(document.getElementById('addScreeningProgramModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Ошибка при загрузке программы скрининга:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Сохранение программы скрининга (создание или обновление)
+        async function saveScreeningProgram() {
+            try {
+                const programId = document.getElementById('screeningProgramId').value;
+                
+                // Основные поля на английском
+                const title = document.getElementById('title').value;
+                const category = document.getElementById('category').value;
+                const description = document.getElementById('description').value;
+                const details = document.getElementById('details').value;
+                const frequency = document.getElementById('frequency').value;
+                const preparation = document.getElementById('preparation').value;
+                const aftercare = document.getElementById('aftercare').value;
+                
+                // Переводы на русский
+                const titleRu = document.getElementById('titleRu').value;
+                const categoryRu = document.getElementById('categoryRu').value;
+                const descriptionRu = document.getElementById('descriptionRu').value;
+                const detailsRu = document.getElementById('detailsRu').value;
+                const frequencyRu = document.getElementById('frequencyRu').value;
+                const preparationRu = document.getElementById('preparationRu').value;
+                const aftercareRu = document.getElementById('aftercareRu').value;
+                
+                // Переводы на украинский
+                const titleUk = document.getElementById('titleUk').value;
+                const categoryUk = document.getElementById('categoryUk').value;
+                const descriptionUk = document.getElementById('descriptionUk').value;
+                const detailsUk = document.getElementById('detailsUk').value;
+                const frequencyUk = document.getElementById('frequencyUk').value;
+                const preparationUk = document.getElementById('preparationUk').value;
+                const aftercareUk = document.getElementById('aftercareUk').value;
+                
+                // Проверяем обязательные поля
+                if (!title || !titleRu || !titleUk || 
+                    !category || !categoryRu || !categoryUk || 
+                    !description || !descriptionRu || !descriptionUk || 
+                    !details || !detailsRu || !detailsUk || 
+                    !frequency || !frequencyRu || !frequencyUk || 
+                    !preparation || !preparationRu || !preparationUk || 
+                    !aftercare || !aftercareRu || !aftercareUk) {
+                    alert('Пожалуйста, заполните все обязательные поля на всех языках');
+                    return;
+                }
+                
+                // Получаем списки
+                const riskFactors = getListItems('riskFactors');
+                const riskFactorsRu = getListItems('riskFactorsRu');
+                const riskFactorsUk = getListItems('riskFactorsUk');
+                const benefits = getListItems('benefits');
+                const benefitsRu = getListItems('benefitsRu');
+                const benefitsUk = getListItems('benefitsUk');
+                const recommendedFor = getListItems('recommendedFor');
+                const recommendedForRu = getListItems('recommendedForRu');
+                const recommendedForUk = getListItems('recommendedForUk');
+                
+                // Формируем объект программы
+                const programData = {
+                    title,
+                    titleRu,
+                    titleUk,
+                    description,
+                    descriptionRu,
+                    descriptionUk,
+                    details,
+                    detailsRu,
+                    detailsUk,
+                    category,
+                    categoryRu,
+                    categoryUk,
+                    frequency,
+                    frequencyRu,
+                    frequencyUk,
+                    preparation,
+                    preparationRu,
+                    preparationUk,
+                    aftercare,
+                    aftercareRu,
+                    aftercareUk,
+                    riskFactors,
+                    riskFactorsRu,
+                    riskFactorsUk,
+                    benefits,
+                    benefitsRu,
+                    benefitsUk,
+                    recommendedFor,
+                    recommendedForRu,
+                    recommendedForUk,
+                    tests: [] // TODO: Реализовать добавление тестов
+                };
+                
+                let url = `${getApiBaseUrl()}/screening/programs`;
+                let method = 'POST';
+                
+                // Если это редактирование существующей программы
+                if (programId) {
+                    url += `/${programId}`;
+                    method = 'PUT';
+                }
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(programData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось сохранить программу скрининга');
+                }
+                
+                // Закрываем модальное окно
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addScreeningProgramModal'));
+                modal.hide();
+                
+                // Сбрасываем форму
+                document.getElementById('screeningProgramForm').reset();
+                document.getElementById('screeningProgramId').value = '';
+                document.getElementById('screeningProgramModalTitle').textContent = 'Добавить программу скрининга';
+                
+                // Очищаем все списки
+                document.getElementById('riskFactorsList').innerHTML = '';
+                document.getElementById('riskFactorsRuList').innerHTML = '';
+                document.getElementById('riskFactorsUkList').innerHTML = '';
+                document.getElementById('benefitsList').innerHTML = '';
+                document.getElementById('benefitsRuList').innerHTML = '';
+                document.getElementById('benefitsUkList').innerHTML = '';
+                document.getElementById('recommendedForList').innerHTML = '';
+                document.getElementById('recommendedForRuList').innerHTML = '';
+                document.getElementById('recommendedForUkList').innerHTML = '';
+                
+                // Перезагружаем список программ скрининга
+                loadScreeningPrograms();
+                
+                alert('Программа скрининга успешно сохранена');
+            } catch (error) {
+                console.error('Ошибка при сохранении программы скрининга:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Удаление программы скрининга
+        async function deleteScreeningProgram(id) {
+            if (!confirm('Вы уверены, что хотите удалить эту программу скрининга?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/screening-programs/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось удалить программу скрининга');
+                }
+                
+                loadScreeningPrograms();
+                alert('Программа скрининга успешно удалена');
+            } catch (error) {
+                console.error('Ошибка при удалении программы скрининга:', error);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Добавление нового теста в программу скрининга
+        function addNewTest() {
+            // TODO: Реализовать модальное окно для добавления нового теста
+            alert('Функционал добавления нового теста в разработке');
+        }
+
+        // Добавление вызова loadScreeningPrograms в основную функцию загрузки данных приложения, если пользователь находится в разделе программ скрининга
+        document.addEventListener('DOMContentLoaded', function() {
+            // Существующий код инициализации
+            // ...
+
+            // Проверяем, нужно ли загрузить программы скрининга сразу
+            if (window.location.hash === '#screening-programs') {
+                document.querySelector('a[data-section="screening-programs"]').click();
+            }
+        });
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Загрузка данных для панели управления
+            loadDashboardStats();
+            loadUsers();
+            loadClinics();
+            loadReviews();
+            loadNotifications();
+            
+            // Обработка переключения вкладок
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Убираем активный класс у всех ссылок
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    
+                    // Добавляем активный класс текущей ссылке
+                    this.classList.add('active');
+                    
+                    // Скрываем все секции
+                    document.querySelectorAll('.section').forEach(section => section.classList.add('d-none'));
+                    
+                    // Показываем нужную секцию
+                    const sectionId = this.getAttribute('data-section');
+                    document.getElementById(sectionId).classList.remove('d-none');
+                    
+                    // Загружаем данные для выбранной секции
+                    switch(sectionId) {
+                        case 'dashboard':
+                            loadDashboardStats();
+                            break;
+                        case 'users':
+                            loadUsers();
+                            break;
+                        case 'clinics':
+                            loadClinics();
+                            break;
+                        case 'reviews':
+                            loadReviews();
+                            break;
+                        case 'notifications':
+                            loadNotifications();
+                            break;
+                    }
+                });
+            });
+        });
+
+        // Загрузка данных для дашборда
+        async function loadDashboardStats() {
+            try {
+                if (!await checkToken()) return;
+
+                const response = await fetch(`${getApiBaseUrl()}/admin/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        showLoginModal();
+                        return;
+                    }
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Обновляем статистику на странице
+                document.getElementById('totalClinics').textContent = data.totalClinics || 0;
+                document.getElementById('totalReviews').textContent = data.totalReviews || 0;
+                document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+                document.getElementById('totalNotifications').textContent = data.totalNotifications || 0;
+            } catch (error) {
+                console.error('Ошибка при загрузке статистики:', error);
+            }
         }
     </script>
 </body>

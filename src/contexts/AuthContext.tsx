@@ -54,14 +54,17 @@ const adaptUser = (apiUser: ApiUser): User => {
   };
 };
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
+  token: string | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   register: (userData: Partial<User>) => Promise<void>;
   updateUserProfile: (userData: Partial<User>) => Promise<void>;
+  getToken: () => Promise<string | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -70,6 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { saveUserData, getUserData, clearUserData } = useUserStorage();
 
   useEffect(() => {
@@ -78,6 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = (await getUserData()) as unknown as StoredUserData;
         if (userData && userData.user) {
           setUser(userData.user);
+          setToken(userData.token);
+          setIsAuthenticated(true);
         }
       } catch (err) {
         console.error('Ошибка при загрузке пользователя:', err);
@@ -107,6 +114,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         console.log('Установка состояния пользователя...');
         setUser(adaptedUser);
+        setToken(response.token);
+        setIsAuthenticated(true);
         console.log('Пользователь успешно авторизован:', adaptedUser);
 
         // Возвращаем ответ
@@ -130,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       await clearUserData();
       setUser(null);
+      setToken(null);
+      setIsAuthenticated(false);
       // Роль пользователя сбрасывается в AuthRoleBridge
     } catch (err) {
       console.error('Ошибка при выходе:', err);
@@ -156,6 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           refreshToken: response.token,
         });
         setUser(adaptedUser);
+        setToken(response.token);
+        setIsAuthenticated(true);
       } else {
         setError(response.message || 'Ошибка при регистрации');
       }
@@ -226,16 +239,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const getToken = async (): Promise<string | null> => {
+    try {
+      const userData = (await getUserData()) as unknown as StoredUserData;
+      return userData?.token || null;
+    } catch (err) {
+      console.error('Ошибка при получении токена:', err);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         error,
+        token,
+        isAuthenticated,
         login,
         logout,
         register,
         updateUserProfile,
+        getToken,
       }}
     >
       {children}

@@ -5,8 +5,7 @@ export interface Article {
   category: string;
   tags: string[];
   imageUrl?: string;
-  published: boolean;
-  publishedAt?: string;
+  status: 'published' | 'draft';
   createdAt: string;
   updatedAt: string;
   author: {

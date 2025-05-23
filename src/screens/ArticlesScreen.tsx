@@ -20,17 +20,20 @@ import { useTranslation } from 'react-i18next';
 import { articlesApi } from '../api/articlesApi';
 import { Article } from '../types/article';
 import { COLORS } from '../theme/colors';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+import { apiClient } from '../services/apiClient';
+import { API_ENDPOINTS } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 
 type SortOption = 'date' | 'likes' | 'comments';
-
-const INACTIVE_CATEGORY_COLOR = '#E3EFFF';
-const TRANSPARENT_PRIMARY_COLOR = 'rgba(0, 122, 255, 0.2)';
-const MODAL_OVERLAY_COLOR = 'rgba(0, 0, 0, 0.5)';
-const TRANSPARENT_COLOR = 'transparent';
+type ArticlesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Articles'>;
 
 export const ArticlesScreen: React.FC = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const { token } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -45,43 +48,43 @@ export const ArticlesScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Функция для загрузки статей
   const fetchArticles = useCallback(
-    async (page = 1, refresh = false) => {
-      if (refresh) {
-        setRefreshing(true);
-      } else if (!refresh && page === 1) {
-        setLoading(true);
-      }
-
+    async (page = 1, shouldRefresh = false) => {
       try {
-        const params = {
+        if (shouldRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+        setError(null);
+
+        const response = await articlesApi.getArticles({
           page,
           limit: 10,
-          search: searchQuery || undefined,
           category: selectedCategory !== 'all' ? selectedCategory : undefined,
+          search: searchQuery || undefined,
           sortBy,
-        };
+        });
 
-        const response = await articlesApi.getArticles(params);
-
-        if (response?.data?.articles) {
-          const articlesWithBookmarks = response.data.articles.map(article => ({
-            ...article,
-            isBookmarked: false,
-          }));
-
-          if (page === 1 || refresh) {
-            setArticles(articlesWithBookmarks);
+        if (response.data) {
+          const newArticles = response.data.articles || [];
+          if (shouldRefresh || page === 1) {
+            setArticles(newArticles.filter((article: Article) => article.status === 'published'));
           } else {
-            setArticles(prev => [...prev, ...articlesWithBookmarks]);
+            setArticles(prev => [
+              ...prev,
+              ...newArticles.filter((article: Article) => article.status === 'published'),
+            ]);
           }
 
-          setCurrentPage(response.data.pagination?.page || 1);
-          setTotalPages(response.data.pagination?.pages || 1);
+          if (response.data.pagination) {
+            setCurrentPage(response.data.pagination.page);
+            setTotalPages(response.data.pagination.pages);
+            setHasMore(response.data.pagination.page < response.data.pagination.pages);
+          }
 
-          // Загружаем категории, если это первая загрузка
           if (categories.length === 1) {
             try {
               const categoriesResponse = await articlesApi.getCategories();
@@ -94,18 +97,15 @@ export const ArticlesScreen: React.FC = () => {
             }
           }
         }
-
-        setError(null);
-      } catch (error) {
-        console.error('Ошибка при загрузке статей:', error);
-        setError(t('articles.loadError'));
-        Alert.alert(t('common.error'), t('articles.loadError'), [{ text: t('common.ok') }]);
+      } catch (err) {
+        console.error('Error fetching articles:', err);
+        setError(t('articles.errorLoading'));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [searchQuery, selectedCategory, sortBy, categories.length, t]
+    [selectedCategory, searchQuery, sortBy, t, categories.length]
   );
 
   // Загружаем статьи при первом рендере
@@ -169,7 +169,7 @@ export const ArticlesScreen: React.FC = () => {
   };
 
   const loadMoreArticles = () => {
-    if (currentPage < totalPages && !loading && !refreshing) {
+    if (currentPage < totalPages && !loading && !refreshing && hasMore) {
       fetchArticles(currentPage + 1);
     }
   };
@@ -252,6 +252,26 @@ export const ArticlesScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
+  if (loading && !refreshing && articles.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>{t('articles.loading')}</Text>
+      </View>
+    );
+  }
+
+  if (error && articles.length === 0) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+          <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.card }]}>
@@ -304,60 +324,30 @@ export const ArticlesScreen: React.FC = () => {
         ))}
       </ScrollView>
 
-      {loading && !refreshing ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={48} color={theme.colors.error} />
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-            onPress={onRefresh}
-          >
-            <Text style={[styles.retryButtonText, { color: theme.colors.white }]}>
-              {t('common.retry')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      ) : filteredArticles.length === 0 ? (
-        <View style={styles.noResultsContainer}>
-          <Ionicons name="document-text-outline" size={64} color={theme.colors.textSecondary} />
-          <Text style={[styles.noResultsText, { color: theme.colors.textSecondary }]}>
-            {searchQuery
-              ? t('articles.noSearchResults')
-              : selectedCategory !== 'all'
-                ? t('articles.noCategoryResults')
-                : t('articles.noArticles')}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredArticles}
-          renderItem={renderArticle}
-          keyExtractor={item => item._id}
-          contentContainerStyle={styles.articlesList}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[COLORS.palette.primary]}
+      <FlatList
+        data={filteredArticles}
+        renderItem={renderArticle}
+        keyExtractor={item => item._id}
+        contentContainerStyle={styles.articlesList}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.palette.primary]}
+          />
+        }
+        onEndReached={loadMoreArticles}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          currentPage < totalPages ? (
+            <ActivityIndicator
+              style={styles.footerLoader}
+              size="small"
+              color={theme.colors.primary}
             />
-          }
-          onEndReached={loadMoreArticles}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            currentPage < totalPages ? (
-              <ActivityIndicator
-                style={styles.footerLoader}
-                size="small"
-                color={theme.colors.primary}
-              />
-            ) : null
-          }
-        />
-      )}
+          ) : null
+        }
+      />
 
       <Modal
         animationType="slide"
@@ -619,28 +609,22 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   inactiveCategoryButton: {
-    backgroundColor: INACTIVE_CATEGORY_COLOR,
+    backgroundColor: COLORS.palette.gray[100],
   },
-  loaderContainer: {
+  loadingContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+  },
+  loadingText: {
+    color: COLORS.palette.secondary,
+    fontSize: 16,
+    marginTop: 12,
   },
   modalOverlay: {
-    backgroundColor: MODAL_OVERLAY_COLOR,
+    backgroundColor: COLORS.palette.black + '80',
     flex: 1,
     justifyContent: 'flex-end',
-  },
-  noResultsContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 16,
-  },
-  noResultsText: {
-    fontSize: 16,
-    marginTop: 16,
-    textAlign: 'center',
   },
   retryButton: {
     borderRadius: 8,
@@ -665,7 +649,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   selectedSortOption: {
-    backgroundColor: TRANSPARENT_PRIMARY_COLOR,
+    backgroundColor: COLORS.palette.primary,
   },
   sortButton: {
     marginLeft: 8,
@@ -718,7 +702,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   transparentBackground: {
-    backgroundColor: TRANSPARENT_COLOR,
+    backgroundColor: COLORS.palette.transparent,
   },
 });
 

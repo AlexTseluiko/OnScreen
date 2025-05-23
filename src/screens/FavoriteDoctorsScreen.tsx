@@ -26,7 +26,7 @@ const FavoriteDoctorsScreen: React.FC = () => {
       rating: 4.8,
       reviewsCount: 124,
       experience: 15,
-      imageUrl: 'https://via.placeholder.com/100',
+      imageUrl: 'https://placehold.co/100/teal/white',
       clinicName: 'Медицинский центр "Здоровье"',
       isAvailable: true,
     },
@@ -37,7 +37,7 @@ const FavoriteDoctorsScreen: React.FC = () => {
       rating: 4.9,
       reviewsCount: 89,
       experience: 12,
-      imageUrl: 'https://via.placeholder.com/100',
+      imageUrl: 'https://placehold.co/100/teal/white',
       clinicName: 'Клиника "Кардио"',
       isAvailable: false,
     },
@@ -89,7 +89,7 @@ const FavoriteDoctorsScreen: React.FC = () => {
         {doctors.map(doctor => (
           <View key={doctor.id} style={styles.doctorCard}>
             <View style={styles.doctorHeader}>
-              <Image source={{ uri: doctor.imageUrl }} style={styles.doctorImage} />
+              <Image source={{ uri: doctor.imageUrl }} style={styles.doctorImageStyle} />
               <View style={styles.doctorInfo}>
                 <Text style={styles.doctorName}>{doctor.name}</Text>
                 <Text style={styles.specialty}>{doctor.specialty}</Text>
@@ -108,11 +108,11 @@ const FavoriteDoctorsScreen: React.FC = () => {
 
             <View style={styles.doctorDetails}>
               <View style={styles.detailRow}>
-                <Ionicons name="business" size={16} color={COLORS.light.textSecondary} />
+                <Ionicons name="business" size={16} color={COLORS.light.secondary} />
                 <Text style={styles.detailText}>{doctor.clinicName}</Text>
               </View>
               <View style={styles.detailRow}>
-                <Ionicons name="time" size={16} color={COLORS.light.textSecondary} />
+                <Ionicons name="time" size={16} color={COLORS.light.secondary} />
                 <Text style={styles.detailText}>Опыт работы: {doctor.experience} лет</Text>
               </View>
             </View>
@@ -149,13 +149,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.light.border,
   },
   bookButtonText: {
-    color: COLORS.light.whiteBackground,
+    color: COLORS.palette.white,
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
   },
   bookButtonTextDisabled: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
   },
   container: {
     backgroundColor: COLORS.light.background,
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   detailText: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[800],
     fontSize: 14,
     marginLeft: 8,
   },
   doctorCard: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     borderRadius: 12,
     marginBottom: 12,
     padding: 16,
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   doctorHeader: {
     flexDirection: 'row',
   },
-  doctorImage: {
+  doctorImageStyle: {
     borderRadius: 25,
     height: 50,
     width: 50,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   doctorName: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[900],
     fontSize: 16,
     fontWeight: '500',
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   header: {
-    backgroundColor: COLORS.light.whiteBackground,
+    backgroundColor: COLORS.light.background,
     padding: 20,
   },
   ratingContainer: {
@@ -213,12 +213,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   reviewsCount: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
     fontSize: 12,
     marginLeft: 8,
   },
   specialty: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statLabel: {
-    color: COLORS.light.textSecondary,
+    color: COLORS.light.secondary,
     fontSize: 14,
     marginTop: 4,
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   title: {
-    color: COLORS.light.text,
+    color: COLORS.palette.gray[900],
     fontSize: 24,
     fontWeight: 'bold',
   },
