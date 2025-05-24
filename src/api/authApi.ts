@@ -1,27 +1,23 @@
 import { AuthResponse } from '../types/auth';
 import { User } from '../types/user';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api';
+import { API_URL, API_ENDPOINTS } from '../config/api';
 
 export const authApi = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при входе:', error);
-      return {
-        success: false,
-        message: 'Ошибка при входе',
-      };
+    const response = await fetch(`${API_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при входе');
     }
+
+    return response.json();
   },
 
   async register(
@@ -30,33 +26,28 @@ export const authApi = {
     firstName: string,
     lastName: string
   ): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, firstName, lastName }),
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при регистрации:', error);
-      return {
-        success: false,
-        message: 'Ошибка при регистрации',
-      };
+    const response = await fetch(`${API_URL}${API_ENDPOINTS.AUTH.REGISTER}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password, firstName, lastName }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при регистрации');
     }
+
+    return response.json();
   },
 
   async logout(): Promise<void> {
-    try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Ошибка при выходе:', error);
-      throw error;
-    }
+    await fetch(`${API_URL}${API_ENDPOINTS.AUTH.LOGOUT}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   },
 
   async updateProfile(
@@ -64,58 +55,60 @@ export const authApi = {
     userData: Partial<User>,
     token: string
   ): Promise<AuthResponse> {
-    try {
-      const response = await fetch(`${API_URL}/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(userData),
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при обновлении профиля:', error);
-      return {
-        success: false,
-        message: 'Ошибка при обновлении профиля',
-      };
+    const response = await fetch(`${API_URL}${API_ENDPOINTS.USER.PROFILE}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при обновлении профиля');
     }
+
+    return response.json();
   },
 
-  async uploadAvatar(userId: string, imageUri: string, token: string): Promise<AuthResponse> {
-    try {
-      // Создаем FormData для загрузки файла
-      const formData = new FormData();
+  async uploadAvatar(userId: string, avatarUri: string, token: string): Promise<AuthResponse> {
+    const formData = new FormData();
+    formData.append('avatar', {
+      uri: avatarUri,
+      type: 'image/jpeg',
+      name: 'avatar.jpg',
+    } as any);
 
-      // Получаем расширение файла из URI
-      const fileName = imageUri.split('/').pop();
-      const fileType = imageUri.split('.').pop();
+    const response = await fetch(`${API_URL}${API_ENDPOINTS.USER.AVATAR}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
-      // @ts-expect-error - Добавляем изображение в FormData
-      formData.append('avatar', {
-        uri: imageUri,
-        name: fileName,
-        type: `image/${fileType}`,
-      });
-
-      const response = await fetch(`${API_URL}/users/${userId}/avatar`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-
-      return await response.json();
-    } catch (error) {
-      console.error('Ошибка при загрузке аватара:', error);
-      return {
-        success: false,
-        message: 'Ошибка при загрузке аватара',
-      };
+    if (!response.ok) {
+      throw new Error('Ошибка при загрузке аватара');
     }
+
+    return response.json();
+  },
+
+  async resetPassword(email: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_URL}${API_ENDPOINTS.AUTH.RESET_PASSWORD}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Ошибка при сбросе пароля');
+    }
+
+    return response.json();
   },
 };
 
@@ -134,7 +127,7 @@ export const updateProfile = async (
 ): Promise<UpdateProfileResponse> => {
   try {
     const response = await axios.put<UpdateProfileResponse>(
-      `${API_URL}/users/${userId}`,
+      `${API_URL}${API_ENDPOINTS.USER.PROFILE}`,
       userData,
       {
         headers: {
@@ -161,22 +154,15 @@ export const uploadAvatar = async (
   token: string
 ): Promise<UpdateProfileResponse> => {
   try {
-    // Создаем FormData для загрузки файла
     const formData = new FormData();
-
-    // Добавляем файл изображения
-    const filenameParts = avatarUri.split('/');
-    const filename = filenameParts[filenameParts.length - 1];
-
-    // @ts-expect-error - React Native FormData is different from standard FormData
     formData.append('avatar', {
       uri: avatarUri,
-      name: filename,
-      type: 'image/jpeg', // Предположим, что это JPEG. В реальном приложении определите тип
-    });
+      type: 'image/jpeg',
+      name: 'avatar.jpg',
+    } as any);
 
     const response = await axios.post<UpdateProfileResponse>(
-      `${API_URL}/users/${userId}/avatar`,
+      `${API_URL}${API_ENDPOINTS.USER.AVATAR}`,
       formData,
       {
         headers: {

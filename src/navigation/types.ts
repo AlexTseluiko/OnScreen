@@ -1,17 +1,17 @@
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Clinic } from '../types/clinic';
 import { Article } from '../types/article';
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 /**
  * Общий список параметров для всех навигационных стеков
  * Поддерживает все экраны приложения с их параметрами
  */
 export type RootStackParamList = {
-  // Экраны авторизации
-  Login: undefined;
-  Register: undefined;
-  ForgotPassword: undefined;
-  ResetPassword: { token: string };
+  Auth: NavigatorScreenParams<AuthStackParamList>;
+  Patient: NavigatorScreenParams<PatientTabParamList>;
+  Doctor: NavigatorScreenParams<DoctorTabParamList>;
+  Admin: NavigatorScreenParams<AdminTabParamList>;
 
   // Основные экраны
   MainTabs: undefined;
@@ -100,10 +100,17 @@ export type RootStackParamList = {
 // Типы для навигации (для useNavigation)
 export type RootStackNavigationProp = StackNavigationProp<RootStackParamList>;
 
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token: string };
+};
+
 // Типизация для вкладок пациента
 export type PatientTabParamList = {
   Home: undefined;
-  FacilitiesMap: { filter?: 'all' | 'hospital' | 'clinic' | 'pharmacy' };
+  FacilitiesMap: undefined;
   EmergencyAIAssistant: undefined;
   ScreeningPrograms: undefined;
   Settings: undefined;

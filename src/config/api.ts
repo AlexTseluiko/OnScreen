@@ -4,70 +4,81 @@
  * Содержит настройки для работы с API сервера.
  */
 
-// Определяем базовый URL API в зависимости от окружения и платформы
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-// Жестко заданный IP для отладки
-const DEV_SERVER_IP = '192.168.0.234';
-
-// Функция для получения IP хост-машины в dev-режиме
-const getDevServerHost = () => {
-  // Для веб-версии используем текущий хост
+// Получаем текущий хост
+const getCurrentHost = () => {
   if (Platform.OS === 'web') {
-    // Получаем текущий хост из window.location
-    try {
-      const currentHost = window.location.hostname;
-      console.log('Web host detected:', currentHost);
-
-      // Если это не localhost, используем его напрямую
-      if (currentHost && currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-        return currentHost;
-      }
-
-      // Иначе для локальной разработки используем заданный IP
-      return DEV_SERVER_IP;
-    } catch (e) {
-      console.log('Error detecting web host:', e);
-      return DEV_SERVER_IP;
-    }
+    return window.location.hostname;
   }
-
-  // Для Expo можно получить IP через Constants.expoConfig
-  if (Constants.expoConfig?.hostUri) {
-    const hostUri = Constants.expoConfig.hostUri;
-    const host = hostUri.split(':')[0];
-    // Проверяем, является ли это локальным IP
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return host;
-    }
-  }
-
-  // Если IP не получен через Expo, используем явно указанный IP
-  return DEV_SERVER_IP;
+  return null;
 };
 
-// URL API-сервера - устанавливаем localhost:5000
+const currentHost = getCurrentHost();
+
+// Определяем базовый URL API
 export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+export const BASE_URL = process.env.REACT_APP_BASE_URL || 'https://api.onscreen.com';
+export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.onscreen.com/v1';
+
 // Сообщаем о текущем API URL в консоль для диагностики
 console.log('API URL установлен на:', API_URL);
 
-// Базовый URL API
-export const BASE_URL = 'https://api.onscreen.com/v1';
-export const API_BASE_URL = 'https://api.onscreen.com';
-
 // Общие настройки API
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
-  TIMEOUT: 10000,
-  AUTH: {
-    TOKEN_KEY: 'auth_token',
-    REFRESH_TOKEN_KEY: 'refresh_token',
+  baseURL: API_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
   },
-} as const;
+};
+
+// Конфигурация OpenAI
+export const OPENAI_CONFIG = {
+  apiUrl: process.env.REACT_APP_OPENAI_API_URL,
+  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+};
+
+// Конфигурация Google Maps
+export const GOOGLE_MAPS_CONFIG = {
+  apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+};
+
+// Конфигурация изображений по умолчанию
+export const DEFAULT_IMAGES = {
+  avatar: process.env.REACT_APP_DEFAULT_AVATAR_URL,
+  clinic: process.env.REACT_APP_DEFAULT_CLINIC_IMAGE,
+  article: process.env.REACT_APP_DEFAULT_ARTICLE_IMAGE,
+};
+
+// Эндпоинты API
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    LOGOUT: '/auth/logout',
+    RESET_PASSWORD: '/auth/reset-password',
+    VERIFY: '/auth/verify',
+  },
+  USER: {
+    PROFILE: '/users/profile',
+    AVATAR: '/users/avatar',
+    PASSWORD: '/users/password',
+  },
+  SCREENING: {
+    PROGRAMS: '/screening/programs',
+    SCHEDULE: '/screening/schedule',
+  },
+  NOTIFICATIONS: {
+    LIST: '/notifications',
+    READ: '/notifications/read',
+    READ_ALL: '/notifications/read-all',
+  },
+};
 
 // Экспортируем API_TIMEOUT для удобства доступа
-export const API_TIMEOUT = API_CONFIG.TIMEOUT;
+export const API_TIMEOUT = API_CONFIG.timeout;
 
 // Максимальное количество попыток повторного запроса
 export const MAX_RETRY_ATTEMPTS = 3;
@@ -91,47 +102,3 @@ export const HEADERS = {
   ACCEPT: 'Accept',
   ACCEPT_LANGUAGE: 'Accept-Language',
 } as const;
-
-export const API_ENDPOINTS = {
-  AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
-  },
-  USER: {
-    PROFILE: '/user/profile',
-    UPDATE_PROFILE: '/user/profile',
-    CHANGE_PASSWORD: '/user/change-password',
-    FAVORITES: '/user/favorites',
-    UPDATE: '/user/update',
-  },
-  CLINICS: {
-    LIST: '/clinics',
-    DETAILS: (id: string) => `/clinics/${id}`,
-    REVIEWS: (id: string) => `/clinics/${id}/reviews`,
-    SERVICES: (id: string) => `/clinics/${id}/services`,
-  },
-  ARTICLES: {
-    LIST: '/articles',
-    DETAILS: (id: string) => `/articles/${id}`,
-    CREATE: '/articles',
-    UPDATE: (id: string) => `/articles/${id}`,
-    DELETE: (id: string) => `/articles/${id}`,
-  },
-  SCREENING: {
-    PROGRAMS: '/screening/programs',
-    SCHEDULE: '/screening/schedule',
-    RESULTS: '/screening/results',
-  },
-  CHAT: {
-    MESSAGES: '/chat/messages',
-    SEND: '/chat/send',
-  },
-  NOTIFICATIONS: {
-    LIST: '/notifications',
-    MARK_READ: (id: string) => `/notifications/${id}/read`,
-  },
-};

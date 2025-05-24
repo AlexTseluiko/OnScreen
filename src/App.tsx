@@ -1,40 +1,37 @@
-import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider } from 'react-redux';
-import { store } from './store/index';
-import { Navigation } from './navigation';
-import { ThemeProvider } from './theme/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { ProfileProvider } from './contexts/ProfileContext';
-import { ErrorProvider } from './contexts/ErrorContext';
-import { UserRoleProvider } from './contexts/UserRoleContext';
+import React, { useState, useEffect } from 'react';
+import { AppProviders } from './providers/AppProviders';
+import { AppNavigator } from './navigation/AppNavigator';
+import { SplashScreen } from './screens/SplashScreen';
 import { AuthRoleBridge } from './contexts/AuthRoleBridge';
-import GlobalErrorDisplay from './components/molecules/GlobalErrorDisplay';
-import ErrorBoundary from './components/organisms/ErrorBoundary';
-import './i18n';
 
-function App() {
+export default function App() {
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    // Здесь можно добавить дополнительную инициализацию приложения
+    const initializeApp = async () => {
+      try {
+        // Имитация загрузки ресурсов
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Ошибка при инициализации приложения:', error);
+        setIsInitialized(true); // В случае ошибки все равно показываем приложение
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  if (!isInitialized) {
+    return <SplashScreen />;
+  }
+
   return (
-    <ErrorBoundary>
-      <SafeAreaProvider>
-        <Provider store={store}>
-          <ThemeProvider>
-            <ErrorProvider>
-              <UserRoleProvider>
-                <AuthProvider>
-                  <AuthRoleBridge />
-                  <ProfileProvider>
-                    <Navigation />
-                    <GlobalErrorDisplay />
-                  </ProfileProvider>
-                </AuthProvider>
-              </UserRoleProvider>
-            </ErrorProvider>
-          </ThemeProvider>
-        </Provider>
-      </SafeAreaProvider>
-    </ErrorBoundary>
+    <AppProviders>
+      <AuthRoleBridge>
+        <AppNavigator />
+      </AuthRoleBridge>
+    </AppProviders>
   );
 }
-
-export default App;
